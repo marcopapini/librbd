@@ -48,7 +48,7 @@ extern "C" {
  * Parameters:
  *      reliabilities: this matrix contains the input reliabilities of all components
  *                      at the provided time instants. The matrix shall be provided as
- *                      a TxN one, where N is the number of components of Series RBD
+ *                      a NxT one, where N is the number of components of Series RBD
  *                      system and T is the number of time instants
  *      output: this array contains the reliabilities of Series RBD system computed at
  *                      the provided time instants
@@ -110,7 +110,7 @@ extern int rbdSeriesIdentical(double *reliabilities, double *output, unsigned ch
  * Parameters:
  *      reliabilities: this matrix contains the input reliabilities of all components
  *                      at the provided time instants. The matrix shall be provided as
- *                      a TxN one, where N is the number of components of Parallel RBD
+ *                      a NxT one, where N is the number of components of Parallel RBD
  *                      system and T is the number of time instants
  *      output: this array contains the reliabilities of Parallel RBD system computed at
  *                      the provided time instants

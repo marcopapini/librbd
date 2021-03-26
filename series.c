@@ -68,7 +68,7 @@ static void *rbdSeriesIdenticalWorker(void *arg);
  * Parameters:
  *      reliabilities: this matrix contains the input reliabilities of all components
  *                      at the provided time instants. The matrix shall be provided as
- *                      a TxN one, where N is the number of components of Series RBD
+ *                      a NxT one, where N is the number of components of Series RBD
  *                      system and T is the number of time instants
  *      output: this array contains the reliabilities of Series RBD system computed at
  *                      the provided time instants
@@ -279,16 +279,15 @@ static void *rbdSeriesGenericWorker(void *arg)
     time = (data->batchSize * data->batchIdx);
     /* Retrieve last time instant to be processed by worker */
     timeLimit = ((time + data->batchSize) < data->numTimes) ? (time + data->batchSize) : data->numTimes;
+    /* Retrieve matrix of reliabilities */
+    reliabilities = &data->reliabilities[0];
 
     /* For each time instant to be processed... */
     while(time < timeLimit) {
-        /* Retrieve array of reliabilities over which worker shall work */
-        reliabilities = &data->reliabilities[time * data->numComponents];
-
         /* Compute reliability of Series RBD at current time instant */
         reliability = 1.0;
         for(component = 0; component < data->numComponents; ++component) {
-            reliability *= reliabilities[component];
+            reliability *= reliabilities[(component * data->numTimes) + time];
         }
 
         /* Cap computed reliability to accepted bounds [0, 1] */

@@ -78,14 +78,14 @@ struct rbdKooNIdenticalData
 
 
 static void *rbdKooNFillWorker(void *arg);
-static void *rbdKooNGenericFastWorker(void *arg);
+static void *rbdKooNGenericIterativeWorker(void *arg);
 static void *rbdKooNGenericRecursiveWorker(void *arg);
 static void *rbdKooNIdenticalWorker(void *arg);
-static double rbdKooNGenericSuccessStep(unsigned char n, unsigned char k, unsigned char *combination, double *reliabilities);
-static double rbdKooNGenericFailStep(unsigned char n, unsigned char k, unsigned char *combination, double *reliabilities);
+static double rbdKooNGenericSuccessStep(unsigned char n, unsigned char k, unsigned int numTimes, unsigned int t, unsigned char *c, double *r);
+static double rbdKooNGenericFailStep(unsigned char n, unsigned char k, unsigned int numTimes, unsigned int t, unsigned char *c, double *r);
 static double rbdKooNIdenticalSuccessStep(unsigned char n, unsigned char k, unsigned long long nck, double reliability);
 static double rbdKooNIdenticalFailStep(unsigned char n, unsigned char k, unsigned long long nck, double reliability);
-static double rbdKooNRecursiveStep(double *r, unsigned char n, unsigned char k);
+static double rbdKooNRecursiveStep(double *r, unsigned char n, unsigned char k, unsigned int numTimes, unsigned int t);
 
 
 /**
@@ -109,7 +109,7 @@ static double rbdKooNRecursiveStep(double *r, unsigned char n, unsigned char k);
  * Parameters:
  *      reliabilities: this matrix contains the input reliabilities of all components
  *                      at the provided time instants. The matrix shall be provided as
- *                      a TxN one, where N is the number of components of KooN RBD
+ *                      a NxT one, where N is the number of components of KooN RBD
  *                      system and T is the number of time instants
  *      output: this array contains the reliabilities of KooN RBD system computed at
  *                      the provided time instants
@@ -332,7 +332,7 @@ int rbdKooNGeneric(double *reliabilities, double *output, unsigned char numCompo
             /* Iterative computation used to compute data? */
             if(bRecursive == 0) {
                 /* Create the generic KooN RBD Fast Worker thread */
-                if(pthread_create(&thread_id[idx], NULL, &rbdKooNGenericFastWorker, &koonData[idx]) < 0) {
+                if(pthread_create(&thread_id[idx], NULL, &rbdKooNGenericIterativeWorker, &koonData[idx]) < 0) {
                     res = -1;
                 }
             }
@@ -369,7 +369,7 @@ int rbdKooNGeneric(double *reliabilities, double *output, unsigned char numCompo
         /* Iterative computation used to compute data? */
         if(bRecursive == 0) {
             /* Directly invoke the generic KooN RBD Fast Worker */
-            (void)rbdKooNGenericFastWorker(&koonData[0]);
+            (void)rbdKooNGenericIterativeWorker(&koonData[0]);
         }
         else {
             /* Directly invoke the generic KooN RBD Recursive Worker */
@@ -716,9 +716,9 @@ static void *rbdKooNFillWorker(void *arg)
 
 
 /**
- * rbdKooNGenericFastWorker
+ * rbdKooNGenericIterativeWorker
  *
- * Generic KooN RBD Fast Worker function
+ * Generic KooN RBD Iterative Worker function
  *
  * Input:
  *      void *arg
@@ -727,7 +727,7 @@ static void *rbdKooNFillWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Fast Worker.
+ *  This function implements the generic KooN RBD Iterative Worker.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system by using
  *  previously computed combinations of K out of N components
  *
@@ -739,7 +739,7 @@ static void *rbdKooNFillWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-static void *rbdKooNGenericFastWorker(void *arg)
+static void *rbdKooNGenericIterativeWorker(void *arg)
 {
     struct rbdKooNGenericData *data;
     double stepResult;
@@ -768,13 +768,13 @@ static void *rbdKooNGenericFastWorker(void *arg)
     /* Prepare common data for steps computation */
     n = data->numComponents;
 
+    /* Retrieve matrix of reliabilities */
+    reliabilities = &data->reliabilities[0];
+
     /* If compute unreliability flag is not set... */
     if(data->bComputeUnreliability == 0) {
         /* For each time instant to be processed... */
         while(time < timeLimit) {
-            /* Prepare time-dependent data for steps computation */
-            reliabilities = &data->reliabilities[time * data->numComponents];
-
             /* Initialize reliability of each time instant to 0 */
             reliability = 0.0;
 
@@ -791,7 +791,7 @@ static void *rbdKooNGenericFastWorker(void *arg)
                     combination = &buffer[offset];
 
                     /* Resolve single step for KooN (success) computation */
-                    stepResult = rbdKooNGenericSuccessStep(n, k, combination, reliabilities);
+                    stepResult = rbdKooNGenericSuccessStep(n, k, data->numTimes, time, combination, reliabilities);
                     /* Perform partial sum for computation of KooN reliability */
                     reliability += stepResult;
                     /* Increment offset for combination access */
@@ -817,9 +817,6 @@ static void *rbdKooNGenericFastWorker(void *arg)
     else {
         /* For each time instant to be processed... */
         while(time < timeLimit) {
-            /* Prepare time-dependent data for steps computation */
-            reliabilities = &data->reliabilities[time * data->numComponents];
-
             /* Initialize reliability of each time instant to 1 */
             reliability = 1.0;
 
@@ -836,7 +833,7 @@ static void *rbdKooNGenericFastWorker(void *arg)
                     combination = &buffer[offset];
 
                     /* Resolve single step for KooN (fail) computation */
-                    stepResult = rbdKooNGenericFailStep(n, k, combination, reliabilities);
+                    stepResult = rbdKooNGenericFailStep(n, k, data->numTimes, time, combination, reliabilities);
                     /* Perform partial difference for computation of KooN reliability */
                     reliability -= stepResult;
                     /* Increment offset for combination access */
@@ -907,13 +904,13 @@ static void *rbdKooNGenericRecursiveWorker(void *arg)
     n = data->numComponents;
     k = data->minComponents;
 
+    /* Retrieve matrix of reliabilities */
+    reliabilities = &data->reliabilities[0];
+
     /* For each time instant to be processed... */
     while(time < timeLimit) {
-        /* Retrieve array of reliabilities over which worker shall work */
-        reliabilities = &data->reliabilities[time * data->numComponents];
-
         /* Recursively compute reliability of each time instant */
-        reliability = rbdKooNRecursiveStep(reliabilities, n, k);
+        reliability = rbdKooNRecursiveStep(reliabilities, n, k, data->numTimes, time);
 
         /* Cap computed reliability to accepted bounds [0, 1] */
         if(isnan(reliability) != 0) {
@@ -1052,8 +1049,10 @@ static void *rbdKooNIdenticalWorker(void *arg)
  * Input:
  *      unsigned char n
  *      unsigned char k
- *      unsigned char *combination
- *      double *reliabilities
+ *      unsigned int numTimes
+ *      unsigned int t
+ *      unsigned char *c
+ *      double *r
  *
  * Output:
  *      None
@@ -1064,13 +1063,15 @@ static void *rbdKooNIdenticalWorker(void *arg)
  * Parameters:
  *      n: total number of components in KooN system (N)
  *      k: current number of working components in KooN system
- *      combination: combination to be used for the single step computation
- *      reliabilities: array of reliabilities of the N components
+ *      numTimes: total number of time instants for RBD analysis (T)
+ *      t: current time instant for RBD analysis
+ *      c: combination to be used for the single step computation
+ *      r: matrix of reliabilities of the N components
  *
  * Return (double):
  *  Reliability computed by generic KooN (success) single step
  */
-static double rbdKooNGenericSuccessStep(unsigned char n, unsigned char k, unsigned char *combination, double *reliabilities)
+static double rbdKooNGenericSuccessStep(unsigned char n, unsigned char k, unsigned int numTimes, unsigned int t, unsigned char *c, double *r)
 {
     double res;
     int ii;
@@ -1082,9 +1083,9 @@ static double rbdKooNGenericSuccessStep(unsigned char n, unsigned char k, unsign
     /* For each component... */
     for(ii = 0, idx = 0; ii < n; ++ii) {
         /* Does the component belong to the working components for current combination? */
-        if(combination[idx] == ii) {
+        if(c[idx] == ii) {
             /* Multiply step reliability for reliability of current component */
-            res *= reliabilities[ii];
+            res *= r[(ii * numTimes) + t];
             /* Advance to next working component in combination */
             if(++idx == k) {
                 idx = 0;
@@ -1092,7 +1093,7 @@ static double rbdKooNGenericSuccessStep(unsigned char n, unsigned char k, unsign
         }
         else {
             /* Multiply step reliability for unreliability of current component */
-            res *= (1.0 - reliabilities[ii]);
+            res *= (1.0 - r[(ii * numTimes) + t]);
         }
     }
 
@@ -1118,8 +1119,10 @@ static double rbdKooNGenericSuccessStep(unsigned char n, unsigned char k, unsign
  * Input:
  *      unsigned char n
  *      unsigned char k
- *      unsigned char *combination
- *      double *reliabilities
+ *      unsigned int numTimes
+ *      unsigned int t
+ *      unsigned char *c
+ *      double *r
  *
  * Output:
  *      None
@@ -1130,13 +1133,15 @@ static double rbdKooNGenericSuccessStep(unsigned char n, unsigned char k, unsign
  * Parameters:
  *      n: total number of components in KooN system (N)
  *      k: current number of failed components in KooN system
- *      combination: combination to be used for the single step computation
- *      reliabilities: array of reliabilities of the N components
+ *      numTimes: total number of time instants for RBD analysis (T)
+ *      t: current time instant for RBD analysis
+ *      c: combination to be used for the single step computation
+ *      r: matrix of reliabilities of the N components
  *
  * Return (double):
  *  Unreliability computed by generic KooN (fail) single step
  */
-static double rbdKooNGenericFailStep(unsigned char n, unsigned char k, unsigned char *combination, double *reliabilities)
+static double rbdKooNGenericFailStep(unsigned char n, unsigned char k, unsigned int numTimes, unsigned int t, unsigned char *c, double *r)
 {
     double res;
     int ii;
@@ -1148,9 +1153,9 @@ static double rbdKooNGenericFailStep(unsigned char n, unsigned char k, unsigned 
     /* For each component... */
     for(ii = 0, idx = 0; ii < n; ++ii) {
         /* Does the component belong to the failed components for current combination? */
-        if(combination[idx] == ii) {
+        if(c[idx] == ii) {
             /* Multiply step unreliability for unreliability of current component */
-            res *= (1.0 - reliabilities[ii]);
+            res *= (1.0 - r[(ii * numTimes) + t]);
             /* Advance to next failed component in combination */
             if(++idx == k) {
                 idx = 0;
@@ -1158,7 +1163,7 @@ static double rbdKooNGenericFailStep(unsigned char n, unsigned char k, unsigned 
         }
         else {
             /* Multiply step unreliability for reliability of current component */
-            res *= reliabilities[ii];
+            res *= r[(ii * numTimes) + t];
         }
     }
 
@@ -1311,6 +1316,8 @@ static double rbdKooNIdenticalFailStep(unsigned char n, unsigned char k, unsigne
  *      double *r
  *      unsigned char n
  *      unsigned char k
+ *      unsigned int numTimes
+ *      unsigned int t
  *
  * Output:
  *      None
@@ -1323,11 +1330,13 @@ static double rbdKooNIdenticalFailStep(unsigned char n, unsigned char k, unsigne
  *      r: pointer to reliabilities of components for the given time instant
  *      n: current number of components in RBD KooN block
  *      k: minimum number of working components in RBD KooN block
+ *      numTimes: total number of time instants for RBD analysis (T)
+ *      t: current time instant for RBD analysis
  *
  * Return (double):
  *  Computed reliability over the single time instant
  */
-static double rbdKooNRecursiveStep(double *r, unsigned char n, unsigned char k)
+static double rbdKooNRecursiveStep(double *r, unsigned char n, unsigned char k, unsigned int numTimes, unsigned int t)
 {
     /* If K is 0 then reliability is 1 */
     if (k == 0)
@@ -1338,6 +1347,6 @@ static double rbdKooNRecursiveStep(double *r, unsigned char n, unsigned char k)
         return 0.0;
 
     /* Recursively compute the Reliability */
-    return (((1.0 - r[n-1]) * rbdKooNRecursiveStep(r, n-1, k))   +
-            ((r[n-1])       * rbdKooNRecursiveStep(r, n-1, k-1)));
+    return (((1.0 - r[((n-1) * numTimes) + t]) * rbdKooNRecursiveStep(r, n-1, k, numTimes, t))   +
+            ((r[((n-1) * numTimes) + t])       * rbdKooNRecursiveStep(r, n-1, k-1, numTimes, t)));
 }

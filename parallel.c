@@ -35,7 +35,7 @@ struct rbdParallelData
 {
     unsigned char batchIdx;             /* Index of work batch */
     unsigned int batchSize;             /* Size of work batch */
-    double *reliabilities;              /* Reliabilities of Parallel RBD system (matrix for generic Series, array for identical Series) */
+    double *reliabilities;              /* Reliabilities of Parallel RBD system (matrix for generic Parallel, array for identical Parallel) */
     double *output;                     /* Array of computed reliabilities */
     unsigned char numComponents;        /* Number of components of Parallel RBD system N */
     unsigned int numTimes;              /* Number of time instants to compute T */
@@ -67,7 +67,7 @@ static void *rbdParallelIdenticalWorker(void *arg);
  * Parameters:
  *      reliabilities: this matrix contains the input reliabilities of all components
  *                      at the provided time instants. The matrix shall be provided as
- *                      a TxN one, where N is the number of components of Parallel RBD
+ *                      a NxT one, where N is the number of components of Parallel RBD
  *                      system and T is the number of time instants
  *      output: this array contains the reliabilities of Parallel RBD system computed at
  *                      the provided time instants
@@ -278,16 +278,15 @@ static void *rbdParallelGenericWorker(void *arg)
     time = (data->batchSize * data->batchIdx);
     /* Retrieve last time instant to be processed by worker */
     timeLimit = ((time + data->batchSize) < data->numTimes) ? (time + data->batchSize) : data->numTimes;
+    /* Retrieve matrix of reliabilities */
+    reliabilities = &data->reliabilities[0];
 
     /* For each time instant to be processed... */
     while(time < timeLimit) {
-        /* Retrieve array of reliabilities over which worker shall work */
-        reliabilities = &data->reliabilities[time * data->numComponents];
-
         /* Compute reliability of Parallel RBD at current time instant */
         reliability = 1.0;
         for(component = 0; component < data->numComponents; ++component) {
-            reliability *= (1.0 - reliabilities[component]);
+            reliability *= (1.0 - reliabilities[(component * data->numTimes) + time]);
         }
 
         /* Cap computed reliability to accepted bounds [0, 1] */
@@ -326,7 +325,7 @@ static void *rbdParallelGenericWorker(void *arg)
  * Parameters:
  *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a
  *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Series RBD
+ *                      SMP computation of Parallel RBD
  *
  * Return (void *):
  *  NULL
