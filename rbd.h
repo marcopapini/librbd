@@ -28,6 +28,9 @@ extern "C" {
 #endif
 
 
+#define RBD_BRIDGE_COMPONENTS       5       /* Nomber of components in Bridge RBD block */
+
+
 /**
  * rbdSeriesGeneric
  *
@@ -217,6 +220,68 @@ extern int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
  *  0 in case of successful computation, < 0 otherwise
  */
 extern int rbdKooNIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes);
+
+/**
+ * rbdBridgeIdentical
+ *
+ * Compute reliability of an identical Bridge RBD system
+ *
+ * Input:
+ *      double *reliabilities
+ *      unsigned char numComponents
+ *      unsigned int numTimes
+ *
+ * Output:
+ *      double *output
+ *
+ * Description:
+ *  This function computes the reliabilities over time of an identical Bridge RBD system,
+ *  i.e. a system for which the components are identical
+ *
+ * Parameters:
+ *      reliabilities: this array contains the input reliabilities of all components
+ *                      at the provided time instants
+ *      output: this array contains the reliabilities of Bridge RBD system computed at
+ *                      the provided time instants
+ *      numComponents: number of components in Bridge RBD system
+ *      numTimes: number of time instants over which Bridge RBD shall be computed
+ *
+ * Return (int):
+ *  0 in case of successful computation, < 0 otherwise
+ */
+extern int rbdBridgeIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
+
+/**
+ * rbdBridgeGeneric
+ *
+ * Compute reliability of a generic Bridge RBD system
+ *
+ * Input:
+ *      double *reliabilities
+ *      unsigned char numComponents
+ *      unsigned int numTimes
+ *
+ * Output:
+ *      double *output
+ *
+ * Description:
+ *  This function computes the reliabilities over time of a generic Bridge RBD system,
+ *  i.e. a system for which the components are not identical
+ *
+ * Parameters:
+ *      reliabilities: this matrix contains the input reliabilities of all components
+ *                      at the provided time instants. The matrix shall be provided as
+ *                      a NxT one, where N is the number of components of Bridge RBD
+ *                      system and T is the number of time instants
+ *      output: this array contains the reliabilities of Bridge RBD system computed at
+ *                      the provided time instants
+ *      numComponents: number of components in Bridge RBD system (N)
+ *      numTimes: number of time instants over which Bridge RBD shall be computed (T)
+ *
+ * Return (int):
+ *  0 in case of successful computation, < 0 otherwise
+ */
+extern int rbdBridgeGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
 
 
 #ifdef  __cplusplus
