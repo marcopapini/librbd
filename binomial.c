@@ -3,7 +3,7 @@
  *  Binomial Coefficient computation
  *
  *  librbd - Reliability Block Diagrams evaluation library
- *  Copyright (C) 2020 by Marco Papini <papini.m@gmail.com>
+ *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as published
@@ -20,9 +20,7 @@
  */
 
 
-
 #include "binomial.h"
-
 
 #include <limits.h>
 #include <stdlib.h>
@@ -64,27 +62,27 @@ __attribute__((visibility ("hidden"))) unsigned long long binomialCoefficient(un
     unsigned char dividends[UCHAR_MAX];
 
     /* In case k is greater than n, nCk computation is not possible. Return 0 */
-    if(k > n) {
+    if (k > n) {
         return 0ULL;
     }
 
     /* 0C0 is equal to 1. */
-    if(n == 0) {
+    if (n == 0) {
         return 1ULL;
     }
 
     /* nCk is equal to nC(n-k). Resolve for k=min(k, n-k) */
-    if((n - k) < k) {
+    if ((n - k) < k) {
         k = n - k;
     }
 
     /* nC0 is equal to 1. */
-    if(k == 0) {
+    if (k == 0) {
         return 1ULL;
     }
 
     /* Initialize array values from 1 to k */
-    for(idx = k - 1; idx >= 0; --idx) {
+    for (idx = k - 1; idx >= 0; --idx) {
         dividends[idx] = idx + 1;
     }
 
@@ -94,7 +92,7 @@ __attribute__((visibility ("hidden"))) unsigned long long binomialCoefficient(un
 
     /* For i=0, ..., k */
     do {
-        if(res > (18446744073709551615ULL / (n - i))) {
+        if (res > (18446744073709551615ULL / (n - i))) {
             /* Overflow condition detected, return 0. */
             return 0ULL;
         }
@@ -103,17 +101,16 @@ __attribute__((visibility ("hidden"))) unsigned long long binomialCoefficient(un
         /* Divide partial result using all dividends */
         divideBy(&res, dividends, k);
     }
-    while(--i > 0);
+    while (--i > 0);
 
     /* Divide partial result by remaining dividends */
-    for(idx = k - 1; idx >= 0; --idx) {
+    for (idx = k - 1; idx >= 0; --idx) {
         res /= dividends[idx];
     }
 
     /* Return nCk */
     return res;
 }
-
 
 /**
  * computeGcd
@@ -142,7 +139,7 @@ static unsigned char computeGcd(unsigned long long a, unsigned char b)
     unsigned int temp;
 
     /* Compute GCD(a,b) using Euclid's algorithm */
-    while(b != 0) {
+    while (b != 0) {
         temp = b;
         b = a % b;
         a = temp;
@@ -150,7 +147,6 @@ static unsigned char computeGcd(unsigned long long a, unsigned char b)
 
     return (unsigned char)a;
 }
-
 
 /**
  * divideBy
@@ -180,7 +176,7 @@ static void divideBy(unsigned long long *res, unsigned char *dividends, unsigned
     unsigned char gcd;
 
     /* For each divisor... */
-    for(idx = numDividends - 1; idx >= 0; --idx) {
+    for (idx = numDividends - 1; idx >= 0; --idx) {
         /* Compute GCD between partial result and current divisor */
         gcd = computeGcd(*res, dividends[idx]);
         /* Divide partial result by GCD */

@@ -3,7 +3,7 @@
  *  Computation of combinations of k elements out of n
  *
  *  librbd - Reliability Block Diagrams evaluation library
- *  Copyright (C) 2020 by Marco Papini <papini.m@gmail.com>
+ *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as published
@@ -20,14 +20,12 @@
  */
 
 
-
 #include "combinations.h"
 
 #include "binomial.h"
 
 #include <stdlib.h>
 #include <string.h>
-
 #include <stddef.h>
 
 
@@ -71,19 +69,19 @@ __attribute__((visibility ("hidden"))) struct combinations *computeCombinations(
 
     /* Compute number of combinations nCk and check for its return value */
     numCombinations = binomialCoefficient(n, k);
-    if(numCombinations == 0) {
+    if (numCombinations == 0) {
         return NULL;
     }
 
     /* Compute size of combinations data structure and check for its return value */
     combSize = combinationsGetSize(numCombinations, k);
-    if(combSize == 0) {
+    if (combSize == 0) {
         return NULL;
     }
 
     /* Allocate combinations data structure and check for its return value */
     combinations = (struct combinations *)malloc(sizeof(struct combinations) + combSize);
-    if(combinations == NULL) {
+    if (combinations == NULL) {
         return NULL;
     }
 
@@ -103,11 +101,10 @@ __attribute__((visibility ("hidden"))) struct combinations *computeCombinations(
         /* Compute next combination */
         res = nextCombination(n, k, &buff[0]);
     }
-    while(res >= 0);
+    while (res >= 0);
 
     return combinations;
 }
-
 
 /**
  * firstCombination
@@ -136,11 +133,10 @@ __attribute__((visibility ("hidden"))) void firstCombination(unsigned char k, un
     int i;
 
     /* Compute first combination */
-    for(i = 0; i < k; i++) {
+    for (i = 0; i < k; i++) {
         combination[i] = i;
     }
 }
-
 
 /**
  * nextCombination
@@ -179,25 +175,24 @@ __attribute__((visibility ("hidden"))) int nextCombination(unsigned char n, unsi
      * This check allows to speed up next combination computation in case last element
      * of combination buffer is not equal to n
      */
-    if(++combination[i] < n) {
+    if (++combination[i] < n) {
         return 0;
     }
 
     /* Search for first index into combinations buffer that can be updated */
-    while(combination[i] >= n + i - k) {
-        if(--i < 0) {
+    while (combination[i] >= n + i - k) {
+        if (--i < 0) {
             /* All combinations have been computed, return -1 */
             return -1;
         }
     }
     /* Update combination: slow path */
-    for(++combination[i]; i < k - 1; ++i) {
+    for (++combination[i]; i < k - 1; ++i) {
         combination[i + 1] = combination[i] + 1;
     }
 
     return 0;
 }
-
 
 /**
  * combinationsGetSize
@@ -226,7 +221,7 @@ __attribute__((visibility ("hidden"))) int nextCombination(unsigned char n, unsi
 static unsigned long long combinationsGetSize(unsigned long long numCombinations, unsigned char k)
 {
     /* Check for overflow in size computation */
-    if(numCombinations > ((18446744073709551615ULL - sizeof(struct combinations)) / k)) {
+    if (numCombinations > ((18446744073709551615ULL - sizeof(struct combinations)) / k)) {
         /* Overflow detected, return 0 */
         return 0ULL;
     }

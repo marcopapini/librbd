@@ -3,7 +3,7 @@
  *  Computation of combinations of k elements out of n
  *
  *  librbd - Reliability Block Diagrams evaluation library
- *  Copyright (C) 2020 by Marco Papini <papini.m@gmail.com>
+ *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as published
@@ -21,7 +21,6 @@
 
 #ifndef COMBINATIONS_H_
 #define COMBINATIONS_H_
-
 
 
 struct combinations
@@ -61,7 +60,6 @@ struct combinations
  */
 struct combinations *computeCombinations(unsigned char n, unsigned char k);
 
-
 /**
  * firstCombination
  *
@@ -85,7 +83,6 @@ struct combinations *computeCombinations(unsigned char n, unsigned char k);
  * Return: None.
  */
 void firstCombination(unsigned char k, unsigned char *combination);
-
 
 /**
  * nextCombination
@@ -115,4 +112,4 @@ void firstCombination(unsigned char k, unsigned char *combination);
 int nextCombination(unsigned char n, unsigned char k, unsigned char *combination);
 
 
-#endif  /* COMBINATIONS_H_ */
+#endif /* COMBINATIONS_H_ */

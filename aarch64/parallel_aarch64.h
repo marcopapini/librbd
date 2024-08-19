@@ -1,6 +1,6 @@
 /*
- *  Component: binomial.h
- *  Binomial Coefficient computation
+ *  Component: parallel_aarch64.h
+ *  Parallel RBD management - AArch64 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,34 +19,19 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BINOMIAL_H_
-#define BINOMIAL_H_
+#ifndef PARALLEL_AARCH64_H_
+#define PARALLEL_AARCH64_H_
 
 
-/**
- * binomialCoefficient
- *
- * Computation of Binomial Coefficient
- *
- * Input:
- *      unsigned char n
- *      unsigned char k
- *
- * Output:
- *      None
- *
- * Description:
- *  This function computes the Binomial Coefficient nCk.
- *  In case the nCk computation encounters an error, this function returns 0.
- *
- * Parameters:
- *      n: n parameter of nCk
- *      k: k parameter of nCk. RANGE: (0 <= k <= n)
- *
- * Return (unsigned long long):
- *  The computed nCk if no error is encountered, 0 otherwise.
- */
-unsigned long long binomialCoefficient(unsigned char n, unsigned char k);
+#include "../rbd_internal.h"
+#include "../parallel.h"
 
 
-#endif /* BINOMIAL_H_ */
+#if CPU_AARCH64_NEON != 0
+/* Platform-specific functions for AArch64 NEON instruction set */
+void rbdParallelGenericStepV2dNeon(struct rbdParallelData *data, unsigned int time);
+void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int time);
+#endif /* CPU_AARCH64_NEON */
+
+
+#endif /* PARALLEL_AARCH64_H_ */

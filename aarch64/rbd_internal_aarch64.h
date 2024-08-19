@@ -1,6 +1,6 @@
 /*
- *  Component: binomial.h
- *  Binomial Coefficient computation
+ *  Component: rbd_internal_aarch64.h
+ *  Internal APIs used by RBD library - Optimized using AArch64 platform-specific instruction sets
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,34 +19,36 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BINOMIAL_H_
-#define BINOMIAL_H_
+#ifndef RBD_INTERNAL_AARCH64_H_
+#define RBD_INTERNAL_AARCH64_H_
 
 
-/**
- * binomialCoefficient
- *
- * Computation of Binomial Coefficient
- *
- * Input:
- *      unsigned char n
- *      unsigned char k
- *
- * Output:
- *      None
- *
- * Description:
- *  This function computes the Binomial Coefficient nCk.
- *  In case the nCk computation encounters an error, this function returns 0.
- *
- * Parameters:
- *      n: n parameter of nCk
- *      k: k parameter of nCk. RANGE: (0 <= k <= n)
- *
- * Return (unsigned long long):
- *  The computed nCk if no error is encountered, 0 otherwise.
- */
-unsigned long long binomialCoefficient(unsigned char n, unsigned char k);
+#if CPU_AARCH64_NEON != 0
 
 
-#endif /* BINOMIAL_H_ */
+#include <arm_neon.h>
+
+
+/* Save GCC target and optimization options and add ARM v8-A architecture */
+#pragma GCC push_options
+#pragma GCC target ("arch=armv8-a")
+
+
+
+extern const float64x2_t v2dZeros;
+extern const float64x2_t v2dOnes;
+extern const float64x2_t v2dTwos;
+extern const float64x2_t v2dMinusTwos;
+
+
+float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);
+
+
+/* Restore GCC target and optimization options */
+#pragma GCC pop_options
+
+
+#endif /* CPU_AARCH64_NEON */
+
+
+#endif /* RBD_INTERNAL_AARCH64_H_ */

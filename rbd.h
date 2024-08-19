@@ -3,7 +3,7 @@
  *  RBD library APIs
  *
  *  librbd - Reliability Block Diagrams evaluation library
- *  Copyright (C) 2020 by Marco Papini <papini.m@gmail.com>
+ *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as published
@@ -28,7 +28,7 @@ extern "C" {
 #endif
 
 
-#define RBD_BRIDGE_COMPONENTS       5       /* Nomber of components in Bridge RBD block */
+#define RBD_BRIDGE_COMPONENTS       5       /* Number of components in Bridge RBD block */
 
 
 /**
@@ -289,4 +289,4 @@ extern int rbdBridgeGeneric(double *reliabilities, double *output, unsigned char
 #endif
 
 
-#endif  /* RBD_H_ */
+#endif /* RBD_H_ */

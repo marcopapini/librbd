@@ -3,7 +3,7 @@
  *  Internal APIs used by RBD library
  *
  *  librbd - Reliability Block Diagrams evaluation library
- *  Copyright (C) 2020 by Marco Papini <papini.m@gmail.com>
+ *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as published
@@ -23,19 +23,69 @@
 #define RBD_INTERNAL_H_
 
 
-/*< If CPU_SMP flag has not been provided, enable SMP */
+#define V2D_SIZE                    (2)         /* Size of vector of 2 doubles (128bit) */
+#define V4D_SIZE                    (4)         /* Size of vector of 4 doubles (256bit) */
+#define V8D_SIZE                    (8)         /* Size of vector of 8 doubles (512bit) */
+
+
+/*< If CPU_SMP flag has not been provided, disable SMP */
 #ifndef CPU_SMP
-#define CPU_SMP                     1
-#endif
+#define CPU_SMP                         0
+#endif /* CPU_SMP */
+
+/*< If CPU_X86_AVX flag has not been provided, disable x86 AVX */
+#ifndef CPU_X86_AVX
+#define CPU_X86_AVX                     0
+#endif /* CPU_X86_AVX */
+
+/*< If CPU_X86_FMA flag has not been provided, disable x86 FMA */
+#ifndef CPU_X86_FMA
+#define CPU_X86_FMA                     0
+#endif /* CPU_X86_FMA */
+
+/*< If CPU_X86_AVX512F flag has not been provided, disable x86 AVX512F */
+#ifndef CPU_X86_AVX512F
+#define CPU_X86_AVX512F                 0
+#endif /* CPU_X86_AVX512F */
+
+/*< If CPU_AARCH64_NEON flag has not been provided, disable AArch64 NEON */
+#ifndef CPU_AARCH64_NEON
+#define CPU_AARCH64_NEON                0
+#endif /* CPU_AARCH64_NEON */
+
+#if CPU_X86_AVX == 0
+#if CPU_X86_FMA != 0
+#error "FMA instruction set cannot be enabled without AVX instruction set!"
+#endif /* CPU_X86_FMA */
+#if CPU_X86_AVX512F != 0
+#error "AVX512F instruction set cannot be enabled without AVX instruction set!"
+#endif /* CPU_X86_AVX512F */
+#endif /* CPU_X86_AVX */
+
+#if CPU_X86_FMA == 0
+#if CPU_X86_AVX512F != 0
+#error "AVX512F instruction set cannot be enabled without FMA instruction set!"
+#endif /* CPU_X86_AVX512F */
+#endif /* CPU_X86_FMA */
+
+#if CPU_X86_AVX != 0
+#define DISABLE_GENERIC_FUNCTIONS
+#endif /* CPU_X86_AVX */
+#if CPU_AARCH64_NEON != 0
+#define DISABLE_GENERIC_FUNCTIONS
+#endif /* CPU_AARCH64_NEON */
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
 #define MIN_BATCH_SIZE              (10000)     /* Minimum batch size in SMP RBD resolution */
-#endif  /* CPU_SMP */
 
+#include <pthread.h>
+#endif /* CPU_SMP */
+
+#include <math.h>
+#include <stdlib.h>
 
 
 typedef void *(*fpWorker)(void *);
-
 
 
 /**
@@ -60,10 +110,35 @@ typedef void *(*fpWorker)(void *);
  * Return (int):
  *  Minimum value
  */
-static inline int min(int a, int b) {
+static inline __attribute__((always_inline)) int min(int a, int b) {
     return (a <= b) ? a : b;
 }
 
+/**
+ * max
+ *
+ * Compute maximum between two numbers
+ *
+ * Input:
+ *      int a
+ *      int b
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  Computes the maximum between two numbers
+ *
+ * Parameters:
+ *      a: first value for maximum computation
+ *      b: second value for maximum computation
+ *
+ * Return (int):
+ *  maximum value
+ */
+static inline __attribute__((always_inline)) int max(int a, int b) {
+    return (a >= b) ? a : b;
+}
 
 /**
  * floorDivision
@@ -87,10 +162,9 @@ static inline int min(int a, int b) {
  * Return (int):
  *  Floor value of division
  */
-static inline int floorDivision(int dividend, int divisor) {
+static inline __attribute__((always_inline)) int floorDivision(int dividend, int divisor) {
     return (dividend / divisor);
 }
-
 
 /**
  * ceilDivision
@@ -114,37 +188,84 @@ static inline int floorDivision(int dividend, int divisor) {
  * Return (int):
  *  Ceil value of division
  */
-static inline int ceilDivision(int dividend, int divisor) {
-    return floorDivision((dividend + divisor - 1), divisor);
+static inline __attribute__((always_inline)) int ceilDivision(int dividend, int divisor) {
+    return floorDivision(dividend + divisor - 1, divisor);
 }
 
 
 /**
- * postProcessReliability
+ * capReliabilityS1d
  *
- * Post-process output Reliability, i.e. ensure that it is non-increasing
+ * Cap reliability to accepted bounds [0.0, 1.0]
+ *
+ * Input:
+ *      double s1dR
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function caps the provided reliability (scalar value, double-precision FP)
+ *      to the accepted bounds
+ *
+ * Parameters:
+ *      s1dR: Reliability
+ *
+ * Return (double):
+ *  Reliability within accepted bounds
+ */
+double capReliabilityS1d(double s1dR);
+
+/**
+ * prefetchRead
+ *
+ * Prefetch reliability for read
  *
  * Input:
  *      double *reliability
+ *      unsigned char numComponents
  *      unsigned int numTimes
+ *      unsigned int time
  *
  * Output:
- *      double *reliability
+ *      None
  *
  * Description:
- *  This function ensures that the output Reliability is non-increasing
+ *  This function prefetch reliability for read operations
  *
  * Parameters:
- *      reliability: pointer to output Reliability
- *      numTimes: number of time instants over which output Reliability has been sampled
- *
- * Return:
- *  None
+ *      reliability: reliability to be fetched
+ *      numComponents: number of components in reliability matrix
+ *      numTimes: number of times in reliability matrix
+ *      time: current time to prefetch
  */
-void postProcessReliability(double *reliability, unsigned int numTimes);
+void prefetchRead(double *reliability, unsigned char numComponents, unsigned int numTimes, unsigned int time);
 
+/**
+ * prefetchWrite
+ *
+ * Prefetch reliability for write
+ *
+ * Input:
+ *      double *reliability
+ *      unsigned char numComponents
+ *      unsigned int numTimes
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function prefetch reliability for write operations
+ *
+ * Parameters:
+ *      reliability: reliability to be fetched
+ *      numComponents: number of components in reliability matrix
+ *      numTimes: number of times in reliability matrix
+ *      time: current time to prefetch
+ */
+void prefetchWrite(double *reliability, unsigned char numComponents, unsigned int numTimes, unsigned int time);
 
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
 /**
  * getNumberOfCores
  *
@@ -166,7 +287,96 @@ void postProcessReliability(double *reliability, unsigned int numTimes);
  *  Number of cores in SMP system
  */
 unsigned int getNumberOfCores(void);
-#endif  /* CPU_SMP */
+
+/**
+ * getX86AvxSupported
+ *
+ * AVX instruction set supported by the system
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function retrieves the availability of AVX instruction set
+ *
+ * Parameters:
+ *      None
+ *
+ * Return (unsigned int):
+ *  1 if AVX instruction set is available, 0 otherwise
+ */
+unsigned int x86AvxSupported(void);
+
+/**
+ * getFmaSupported
+ *
+ * FMA instruction set supported by the system
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function retrieves the availability of FMA instruction set
+ *
+ * Parameters:
+ *      None
+ *
+ * Return (unsigned int):
+ *  1 if FMA instruction set is available, 0 otherwise
+ */
+unsigned int x86FmaSupported(void);
+
+/**
+ * x86Avx512fSupported
+ *
+ * x86 AVX512F instruction set supported by the system
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function retrieves the availability of x86 AVX512F instruction set
+ *
+ * Parameters:
+ *      None
+ *
+ * Return (unsigned int):
+ *  1 if x86 AVX512F instruction set is available, 0 otherwise
+ */
+unsigned int x86Avx512fSupported(void);
+
+#if CPU_SMP != 0
+/**
+ * computeNumCores
+ *
+ * Compute the number of cores in SMP system used to analyze RBD block
+ *
+ * Input:
+ *      int numTimes
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  Computes the number of cores when SMP is used
+ *
+ * Parameters:
+ *      numTimes: total number of time instants
+ *
+ * Return (int):
+ *  Batch size
+ */
+int computeNumCores(int numTimes);
+#endif /* CPU_SMP */
 
 
-#endif  /* RBD_INTERNAL_H_ */
+#endif /* RBD_INTERNAL_H_ */
