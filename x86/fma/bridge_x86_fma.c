@@ -201,7 +201,7 @@ __attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV2dFma(struct rb
     v2dRes = _mm_fmadd_pd(v2dR5, v2dRes, v2dTmp1);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 /**
@@ -248,7 +248,7 @@ __attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV2dFma(struct 
     v2dRes = _mm_mul_pd(v2dTmp, v2dR);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 

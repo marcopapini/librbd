@@ -358,7 +358,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV2dFma(stru
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 /**
@@ -434,7 +434,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV2dFma(struct 
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 /**
@@ -467,7 +467,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNRecursionV2dFma(struct rbdKoo
     /* Recursively compute reliability of KooN RBD at current time instant */
     v2dRes = rbdKooNRecursiveStepV2dFma(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 /**
@@ -531,7 +531,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV2dFma(st
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 /**

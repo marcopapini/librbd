@@ -27,24 +27,22 @@
 #include "../bridge.h"
 
 
+#if CPU_X86_SSE2 != 0
+/* Platform-specific functions for x86 SSE2 instruction set */
+void rbdBridgeGenericStepV2dSse2(struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeIdenticalStepV2dSse2(struct rbdBridgeData *data, unsigned int time);
+#endif /* CPU_X86_SSE2 */
+
 #if CPU_X86_AVX != 0
 /* Platform-specific functions for x86 AVX instruction set */
 void rbdBridgeGenericStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
+#endif /* CPU_X86_AVX */
 
-void rbdBridgeGenericStepV2dAvx(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV2dAvx(struct rbdBridgeData *data, unsigned int time);
-
-/* Platform-specific functions for x86 prefetch */
-void rbdBridgeGenericPrefetch(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalPrefetch(struct rbdBridgeData *data, unsigned int time);
-#endif
-
-#if CPU_X86_FMA != 0
+#if CPU_X86_AVX != 0
 /* Platform-specific functions for x86 FMA instruction set */
 void rbdBridgeGenericStepV4dFma(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV4dFma(struct rbdBridgeData *data, unsigned int time);
-
 void rbdBridgeGenericStepV2dFma(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV2dFma(struct rbdBridgeData *data, unsigned int time);
 #endif /* CPU_X86_FMA */

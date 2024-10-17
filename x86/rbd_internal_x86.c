@@ -22,13 +22,18 @@
 
 #include "../rbd_internal.h"
 
-#if CPU_X86_AVX != 0
+#if CPU_X86_SSE2 != 0
 #include "rbd_internal_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX instruction set */
+/* Save GCC target and optimization options */
 #pragma GCC push_options
+/* Add x86 SSE2 instruction set */
+#pragma GCC target ("sse2")
+#if CPU_X86_AVX != 0
+/* Add x86 AVX instruction set */
 #pragma GCC target ("avx")
+#endif /* CPU_X86_AVX */
 #if CPU_X86_FMA != 0
 /* Add x86 FMA instruction set */
 #pragma GCC target ("fma")
@@ -42,6 +47,7 @@
 const __m128d v2dZeros = {0.0, 0.0};
 const __m128d v2dOnes = {1.0, 1.0};
 const __m128d v2dTwos = {2.0, 2.0};
+#if CPU_X86_AVX != 0
 const __m256d v4dZeros = {0.0, 0.0, 0.0, 0.0};
 const __m256d v4dOnes = {1.0, 1.0, 1.0, 1.0};
 const __m256d v4dTwos = {2.0, 2.0, 2.0, 2.0};
@@ -50,12 +56,13 @@ const __m512d v8dZeros = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 const __m512d v8dOnes = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 const __m512d v8dTwos = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
 #endif /* CPU_X86_AVX512F */
+#endif /* CPU_X86_AVX */
 
 
 /**
- * capReliabilityV2dAvx
+ * capReliabilityV2dSse2
  *
- * Cap reliability to accepted bounds [0.0, 1.0] with x86 AVX 128bit
+ * Cap reliability to accepted bounds [0.0, 1.0] with x86 SSE2 128bit
  *
  * Input:
  *      __m128d v2dR
@@ -65,7 +72,7 @@ const __m512d v8dTwos = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
  *
  * Description:
  *  This function caps the provided reliability (vector of 2 values, double-precision FP)
- *      to the accepted bounds exploiting x86 AVX 128bit
+ *      to the accepted bounds exploiting x86 SSE2 128bit
  *
  * Parameters:
  *      v2dR: Reliability
@@ -73,11 +80,12 @@ const __m512d v8dTwos = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
  * Return (__m128d):
  *  Reliability within accepted bounds
  */
-__attribute__((visibility ("hidden"))) __m128d capReliabilityV2dAvx(__m128d v2dR) {
+__attribute__((visibility ("hidden"))) __m128d capReliabilityV2dSse2(__m128d v2dR) {
     /* Cap computed reliability to accepted bounds [0, 1] */
     return _mm_max_pd(_mm_min_pd(v2dOnes, v2dR), v2dZeros);
 }
 
+#if CPU_X86_AVX != 0
 /**
  * capReliabilityV4dAvx
  *
@@ -131,10 +139,11 @@ __attribute__((visibility ("hidden"))) __m512d capReliabilityV8dAvx512f(__m512d 
     return _mm512_max_pd(_mm512_min_pd(v8dOnes, v8dR), v8dZeros);
 }
 #endif /* CPU_X86_AVX512F */
+#endif /* CPU_X86_AVX */
 
 
 /* Restore GCC target and optimization options */
 #pragma GCC pop_options
 
 
-#endif /* CPU_X86_AVX */
+#endif /* CPU_X86_SSE2 */

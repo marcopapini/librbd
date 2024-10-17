@@ -23,15 +23,20 @@
 #define RBD_INTERNAL_X86_H_
 
 
-#if CPU_X86_AVX != 0
+#if CPU_X86_SSE2 != 0
 
 
 #include <immintrin.h>
 
 
-/* Save GCC target and optimization options and add x86 AVX instruction set */
+/* Save GCC target and optimization options */
 #pragma GCC push_options
+/* Add x86 SSE2 instruction set */
+#pragma GCC target ("sse2")
+#if CPU_X86_AVX != 0
+/* Add x86 AVX instruction set */
 #pragma GCC target ("avx")
+#endif /* CPU_X86_AVX */
 #if CPU_X86_FMA != 0
 /* Add x86 FMA instruction set */
 #pragma GCC target ("fma")
@@ -41,10 +46,10 @@
 #pragma GCC target ("avx512f")
 #endif /* CPU_X86_AVX512F */
 
-
 extern const __m128d v2dZeros;
 extern const __m128d v2dOnes;
 extern const __m128d v2dTwos;
+#if CPU_X86_AVX != 0
 extern const __m256d v4dZeros;
 extern const __m256d v4dOnes;
 extern const __m256d v4dTwos;
@@ -53,9 +58,10 @@ extern const __m512d v8dZeros;
 extern const __m512d v8dOnes;
 extern const __m512d v8dTwos;
 #endif /* CPU_X86_AVX512F */
+#endif /* CPU_X86_AVX */
 
 
-__m128d capReliabilityV2dAvx(__m128d v2dR);
+__m128d capReliabilityV2dSse2(__m128d v2dR);
 __m256d capReliabilityV4dAvx(__m256d v4dR);
 #if CPU_X86_AVX512F != 0
 __m512d capReliabilityV8dAvx512f(__m512d v8dR);
@@ -66,7 +72,7 @@ __m512d capReliabilityV8dAvx512f(__m512d v8dR);
 #pragma GCC pop_options
 
 
-#endif /* CPU_X86_AVX */
+#endif /* CPU_X86_SSE2 */
 
 
 #endif /* RBD_INTERNAL_X86_H_ */

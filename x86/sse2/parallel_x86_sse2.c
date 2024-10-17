@@ -1,6 +1,6 @@
 /*
- *  Component: parallel_x86_avx.c
- *  Parallel RBD management - Optimized using x86 AVX instruction set
+ *  Component: parallel_x86_sse2.c
+ *  Parallel RBD management - Optimized using x86 SSE2 instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -22,20 +22,20 @@
 
 #include "../../rbd_internal.h"
 
-#if CPU_X86_AVX != 0
+#if CPU_X86_SSE2 != 0
 #include "../rbd_internal_x86.h"
 #include "../parallel_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX instruction set */
+/* Save GCC target and optimization options and add x86 SSE2 instruction set */
 #pragma GCC push_options
-#pragma GCC target ("avx")
+#pragma GCC target ("sse2")
 
 
 /**
- * rbdParallelGenericStepV4dAvx
+ * rbdParallelGenericStepV2dSse2
  *
- * Generic Parallel RBD step function with x86 AVX 256bit
+ * Generic Parallel RBD step function with x86 SSE2 128bit
  *
  * Input:
  *      struct rbdParallelData *data
@@ -45,7 +45,7 @@
  *      None
  *
  * Description:
- *  This function implements the generic Parallel RBD step exploiting x86 AVX 256bit.
+ *  This function implements the generic Parallel RBD step exploiting x86 SSE2 128bit.
  *  It is responsible to compute the reliability of a Parallel block with generic components
  *  given their reliabilities
  *
@@ -53,30 +53,30 @@
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelGenericStepV4dAvx(struct rbdParallelData *data, unsigned int time)
+__attribute__((visibility ("hidden"))) void rbdParallelGenericStepV2dSse2(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
-    __m256d v4dTmp;
-    __m256d v4dRes;
+    __m128d v2dTmp;
+    __m128d v2dRes;
 
     /* Compute reliability of Parallel RBD at current time instant */
-    v4dRes = _mm256_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
-    v4dRes = _mm256_sub_pd(v4dOnes, v4dRes);
+    v2dRes = _mm_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
+    v2dRes = _mm_sub_pd(v2dOnes, v2dRes);
     for (component = 1; component < data->numComponents; ++component) {
-        v4dTmp = _mm256_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
-        v4dTmp = _mm256_sub_pd(v4dOnes, v4dTmp);
-        v4dRes = _mm256_mul_pd(v4dRes, v4dTmp);
+        v2dTmp = _mm_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
+        v2dTmp = _mm_sub_pd(v2dOnes, v2dTmp);
+        v2dRes = _mm_mul_pd(v2dRes, v2dTmp);
     }
-    v4dRes = _mm256_sub_pd(v4dOnes, v4dRes);
+    v2dRes = _mm_sub_pd(v2dOnes, v2dRes);
 
     /* Cap the computed reliability and set it into output array */
-    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 /**
- * rbdParallelIdenticalStepV4dAvx
+ * rbdParallelIdenticalStepV2dSse2
  *
- * Identical Parallel RBD step function with x86 AVX 256bit
+ * Identical Parallel RBD step function with x86 SSE2 128bit
  *
  * Input:
  *      struct rbdParallelData *data
@@ -86,7 +86,7 @@ __attribute__((visibility ("hidden"))) void rbdParallelGenericStepV4dAvx(struct 
  *      None
  *
  * Description:
- *  This function implements the identical Parallel RBD step exploiting x86 AVX 256bit.
+ *  This function implements the identical Parallel RBD step exploiting x86 SSE2 128bit.
  *  It is responsible to compute the reliability of a Parallel block with identical components
  *  given their reliability
  *
@@ -94,25 +94,25 @@ __attribute__((visibility ("hidden"))) void rbdParallelGenericStepV4dAvx(struct 
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelIdenticalStepV4dAvx(struct rbdParallelData *data, unsigned int time)
+__attribute__((visibility ("hidden"))) void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
-    __m256d v4dU;
-    __m256d v4dRes;
+    __m128d v2dU;
+    __m128d v2dRes;
 
     /* Load unreliability */
-    v4dU = _mm256_loadu_pd(&data->reliabilities[time]);
-    v4dU = _mm256_sub_pd(v4dOnes, v4dU);
+    v2dU = _mm_loadu_pd(&data->reliabilities[time]);
+    v2dU = _mm_sub_pd(v2dOnes, v2dU);
 
     /* Compute reliability of Parallel RBD at current time instant */
-    v4dRes = v4dU;
+    v2dRes = v2dU;
     for (component = (data->numComponents - 1); component > 0; --component) {
-        v4dRes = _mm256_mul_pd(v4dRes, v4dU);
+        v2dRes = _mm_mul_pd(v2dRes, v2dU);
     }
-    v4dRes = _mm256_sub_pd(v4dOnes, v4dRes);
+    v2dRes = _mm_sub_pd(v2dOnes, v2dRes);
 
     /* Cap the computed reliability and set it into output array */
-    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 
@@ -120,4 +120,4 @@ __attribute__((visibility ("hidden"))) void rbdParallelIdenticalStepV4dAvx(struc
 #pragma GCC pop_options
 
 
-#endif /* CPU_X86_AVX */
+#endif /* CPU_X86_SSE2 */

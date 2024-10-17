@@ -22,7 +22,7 @@
 
 #include "../rbd_internal.h"
 
-#if CPU_X86_AVX != 0
+#if CPU_X86_SSE2 != 0
 #include "rbd_internal_x86.h"
 #include "series_x86.h"
 #include "../series.h"
@@ -90,7 +90,7 @@ __attribute__((visibility ("hidden"))) void *rbdSeriesGenericWorker(void *arg)
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
             /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesGenericStepV2dAvx(data, time);
+            rbdSeriesGenericStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
@@ -104,6 +104,7 @@ __attribute__((visibility ("hidden"))) void *rbdSeriesGenericWorker(void *arg)
     }
 #endif /* CPU_X86_AVX512F */
 
+#if CPU_X86_AVX != 0
     if (x86AvxSupported()) {
         time *= V4D_SIZE;
         /* For each time instant to be processed (blocks of 4 time instants)... */
@@ -119,9 +120,31 @@ __attribute__((visibility ("hidden"))) void *rbdSeriesGenericWorker(void *arg)
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
             /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesGenericStepV2dAvx(data, time);
+            rbdSeriesGenericStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
+        }
+        /* Is 1 time instant remaining? */
+        if (time < timeLimit) {
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepS1d(data, time);
+        }
+
+        return NULL;
+    }
+#endif /* CPU_X86_AVX */
+
+    if (x86Sse2Supported()) {
+        time *= V2D_SIZE;
+        /* For each time instant to be processed (blocks of 2 time instants)... */
+        while ((time + V2D_SIZE) <= timeLimit) {
+            /* Prefetch for next iteration */
+            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D_SIZE));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepV2dSse2(data, time);
+            /* Increment current time instant */
+            time += (numCores * V2D_SIZE);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
@@ -205,7 +228,7 @@ __attribute__((visibility ("hidden"))) void *rbdSeriesIdenticalWorker(void *arg)
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
             /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesIdenticalStepV2dAvx(data, time);
+            rbdSeriesIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
@@ -219,6 +242,7 @@ __attribute__((visibility ("hidden"))) void *rbdSeriesIdenticalWorker(void *arg)
     }
 #endif /* CPU_X86_AVX512F */
 
+#if CPU_X86_AVX != 0
     if (x86AvxSupported()) {
         time *= V4D_SIZE;
         /* For each time instant to be processed (blocks of 4 time instants)... */
@@ -234,9 +258,31 @@ __attribute__((visibility ("hidden"))) void *rbdSeriesIdenticalWorker(void *arg)
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
             /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesIdenticalStepV2dAvx(data, time);
+            rbdSeriesIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
+        }
+        /* Is 1 time instant remaining? */
+        if (time < timeLimit) {
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepS1d(data, time);
+        }
+
+        return NULL;
+    }
+#endif /* CPU_X86_AVX */
+
+    if (x86Sse2Supported()) {
+        time *= V2D_SIZE;
+        /* For each time instant to be processed (blocks of 2 time instants)... */
+        while ((time + V2D_SIZE) <= timeLimit) {
+            /* Prefetch for next iteration */
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D_SIZE));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepV2dSse2(data, time);
+            /* Increment current time instant */
+            time += (numCores * V2D_SIZE);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {

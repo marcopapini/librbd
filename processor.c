@@ -38,6 +38,7 @@ struct processor
 {
     unsigned int initialized;       /* Processor information acquired */
     unsigned int numCores;          /* Number of cores available */
+    unsigned int sse2Supported;     /* x86 SSE2 instruction set supported */
     unsigned int avxSupported;      /* x86 AVX instruction set supported */
     unsigned int fmaSupported;      /* x86 FMA instruction set supported */
     unsigned int avx512fSupported;  /* x86 AVX512F instruction set supported */
@@ -82,6 +83,40 @@ __attribute__((visibility ("hidden"))) unsigned int getNumberOfCores(void)
 
     /* Return number of cores in SMP system */
     return processor.numCores;
+}
+
+/**
+ * x86Sse2Supported
+ *
+ * x86 SSE2 instruction set supported by the system
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function retrieves the availability of x86 SSE2 instruction set
+ *
+ * Parameters:
+ *      None
+ *
+ * Return (unsigned int):
+ *  1 if x86 SSE2 instruction set is available, 0 otherwise
+ */
+__attribute__((visibility ("hidden"))) unsigned int x86Sse2Supported(void)
+{
+    /* Is processor info module not initialized? */
+    if (processor.initialized == 0) {
+        /* Retrieve processor information */
+        getProcessorInfo();
+        /* Set processor info module as initialized */
+        processor.initialized = 1;
+    }
+
+    /* Return x86 SSE2 instruction set supported by the system */
+    return processor.sse2Supported;
 }
 
 /**
@@ -234,9 +269,10 @@ static void getProcessorInfo(void)
     /**
      * Default processor info:
      * - 1 core
-     * - x86 instruction set: no AVX, no FMA, no AVX512F
+     * - x86 instruction set: no SSE2, no AVX, no FMA, no AVX512F
      */
     processor.numCores = 1;
+    processor.sse2Supported = 0;
     processor.avxSupported = 0;
     processor.fmaSupported = 0;
     processor.avx512fSupported = 0;
@@ -274,18 +310,21 @@ static void getProcessorInfo(void)
 #endif /* CPU_SMP */
 
 #if CPU_X86_AVX != 0
-    if (__builtin_cpu_supports("avx") > 0) {
-        processor.avxSupported = 1;
+    if (__builtin_cpu_supports("sse2") > 0) {
+        processor.sse2Supported = 1;
+        if (__builtin_cpu_supports("avx") > 0) {
+            processor.avxSupported = 1;
 #if CPU_X86_FMA != 0
-        if (__builtin_cpu_supports("fma") > 0) {
-            processor.fmaSupported = 1;
+            if (__builtin_cpu_supports("fma") > 0) {
+                processor.fmaSupported = 1;
 #if CPU_X86_AVX512F != 0
-            if (__builtin_cpu_supports("avx512f") > 0) {
-                processor.avx512fSupported = 1;
-            }
+                if (__builtin_cpu_supports("avx512f") > 0) {
+                    processor.avx512fSupported = 1;
+                }
 #endif /* CPU_X86_AVX512F */
-        }
+            }
 #endif /* CPU_X86_FMA */
+        }
     }
 #endif /* CPU_X86_AVX */
 }

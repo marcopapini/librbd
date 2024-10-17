@@ -27,6 +27,15 @@
 #include "../koon.h"
 
 
+#if CPU_X86_SSE2 != 0
+/* Platform-specific functions for x86 SSE2 instruction set */
+void rbdKooNGenericSuccessStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericFailStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNRecursionV2dSse2(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNIdenticalSuccessStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
+#endif /* CPU_X86_SSE2 */
+
 #if CPU_X86_AVX != 0
 /* Platform-specific functions for x86 AVX instruction set */
 void rbdKooNGenericSuccessStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time);
@@ -34,13 +43,7 @@ void rbdKooNGenericFailStepV4dAvx(struct rbdKooNGenericData *data, unsigned int 
 void rbdKooNRecursionV4dAvx(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time);
-
-void rbdKooNGenericSuccessStepV2dAvx(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNGenericFailStepV2dAvx(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNRecursionV2dAvx(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNIdenticalSuccessStepV2dAvx(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNIdenticalFailStepV2dAvx(struct rbdKooNIdenticalData *data, unsigned int time);
-#endif
+#endif /* CPU_X86_AVX */
 
 #if CPU_X86_FMA != 0
 /* Platform-specific functions for x86 FMA instruction set */
@@ -48,7 +51,6 @@ void rbdKooNGenericSuccessStepV4dFma(struct rbdKooNGenericData *data, unsigned i
 void rbdKooNGenericFailStepV4dFma(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNRecursionV4dFma(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV4dFma(struct rbdKooNIdenticalData *data, unsigned int time);
-
 void rbdKooNGenericSuccessStepV2dFma(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNGenericFailStepV2dFma(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNRecursionV2dFma(struct rbdKooNGenericData *data, unsigned int time);

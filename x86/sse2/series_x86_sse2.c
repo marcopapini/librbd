@@ -1,6 +1,6 @@
 /*
- *  Component: series_x86_avx.c
- *  Series RBD management - Optimized using x86 AVX instruction set
+ *  Component: series_x86_sse2.c
+ *  Series RBD management - Optimized using x86 SSE2 instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -22,20 +22,20 @@
 
 #include "../../rbd_internal.h"
 
-#if CPU_X86_AVX != 0
+#if CPU_X86_SSE2 != 0
 #include "../rbd_internal_x86.h"
 #include "../series_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX instruction set */
+/* Save GCC target and optimization options and add x86 SSE2 instruction set */
 #pragma GCC push_options
-#pragma GCC target ("avx")
+#pragma GCC target ("sse2")
 
 
 /**
- * rbdSeriesGenericStepV4dAvx
+ * rbdSeriesGenericStepV2dSse2
  *
- * Generic Series RBD step function with x86 AVX 256bit
+ * Generic Series RBD step function with x86 SSE2 128bit
  *
  * Input:
  *      struct rbdSeriesData *data
@@ -45,7 +45,7 @@
  *      None
  *
  * Description:
- *  This function implements the generic Series RBD step exploiting x86 AVX 256bit.
+ *  This function implements the generic Series RBD step exploiting x86 SSE2 128bit.
  *  It is responsible to compute the reliability of a Series block with generic components
  *  given their reliabilities
  *
@@ -53,27 +53,27 @@
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
+__attribute__((visibility ("hidden"))) void rbdSeriesGenericStepV2dSse2(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
-    __m256d v4dTmp;
-    __m256d v4dRes;
+    __m128d v2dTmp;
+    __m128d v2dRes;
 
     /* Compute reliability of Series RBD at current time instant */
-    v4dRes = _mm256_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
+    v2dRes = _mm_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
     for (component = 1; component < data->numComponents; ++component) {
-        v4dTmp = _mm256_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
-        v4dRes = _mm256_mul_pd(v4dRes, v4dTmp);
+        v2dTmp = _mm_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
+        v2dRes = _mm_mul_pd(v2dRes, v2dTmp);
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 /**
- * rbdSeriesIdenticalStepV4dAvx
+ * rbdSeriesIdenticalStepV2dSse2
  *
- * Identical Series RBD step function with x86 AVX 256bit
+ * Identical Series RBD step function with x86 SSE2 128bit
  *
  * Input:
  *      struct rbdSeriesData *data
@@ -83,7 +83,7 @@ __attribute__((visibility ("hidden"))) void rbdSeriesGenericStepV4dAvx(struct rb
  *      None
  *
  * Description:
- *  This function implements the identical Series RBD step exploiting x86 AVX 256bit.
+ *  This function implements the identical Series RBD step exploiting x86 SSE2 128bit.
  *  It is responsible to compute the reliability of a Series block with identical components
  *  given their reliability
  *
@@ -91,23 +91,23 @@ __attribute__((visibility ("hidden"))) void rbdSeriesGenericStepV4dAvx(struct rb
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
+__attribute__((visibility ("hidden"))) void rbdSeriesIdenticalStepV2dSse2(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
-    __m256d v4dTmp;
-    __m256d v4dRes;
+    __m128d v2dTmp;
+    __m128d v2dRes;
 
     /* Load reliability */
-    v4dTmp = _mm256_loadu_pd(&data->reliabilities[time]);
+    v2dTmp = _mm_loadu_pd(&data->reliabilities[time]);
 
     /* Compute reliability of Series RBD at current time instant */
-    v4dRes = v4dTmp;
+    v2dRes = v2dTmp;
     for (component = (data->numComponents - 1); component > 0; --component) {
-        v4dRes = _mm256_mul_pd(v4dRes, v4dTmp);
+        v2dRes = _mm_mul_pd(v2dRes, v2dTmp);
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 
@@ -115,4 +115,4 @@ __attribute__((visibility ("hidden"))) void rbdSeriesIdenticalStepV4dAvx(struct 
 #pragma GCC pop_options
 
 
-#endif /* CPU_X86_AVX */
+#endif /* CPU_X86_SSE2 */

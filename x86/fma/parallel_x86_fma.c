@@ -109,7 +109,7 @@ __attribute__((visibility ("hidden"))) void rbdParallelGenericStepV2dFma(struct 
     v2dRes = _mm_sub_pd(v2dOnes, v2dRes);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 
