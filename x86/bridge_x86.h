@@ -39,7 +39,7 @@ void rbdBridgeGenericStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
 #endif /* CPU_X86_AVX */
 
-#if CPU_X86_AVX != 0
+#if CPU_X86_FMA != 0
 /* Platform-specific functions for x86 FMA instruction set */
 void rbdBridgeGenericStepV4dFma(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV4dFma(struct rbdBridgeData *data, unsigned int time);

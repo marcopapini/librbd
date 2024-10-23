@@ -309,9 +309,10 @@ static void getProcessorInfo(void)
     processor.numCores = (unsigned int)count;
 #endif /* CPU_SMP */
 
-#if CPU_X86_AVX != 0
+#if CPU_X86_SSE2 != 0
     if (__builtin_cpu_supports("sse2") > 0) {
         processor.sse2Supported = 1;
+#if CPU_X86_AVX != 0
         if (__builtin_cpu_supports("avx") > 0) {
             processor.avxSupported = 1;
 #if CPU_X86_FMA != 0
@@ -325,6 +326,7 @@ static void getProcessorInfo(void)
             }
 #endif /* CPU_X86_FMA */
         }
-    }
 #endif /* CPU_X86_AVX */
+    }
+#endif /* CPU_X86_SSE2 */
 }
