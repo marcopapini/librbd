@@ -27,12 +27,7 @@
 #include "../koon_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX/FMA/AVX512F instruction sets */
-#pragma GCC push_options
-#pragma GCC target ("avx", "fma", "avx512f")
-
-
-static __m512d rbdKooNRecursiveStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
+static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
@@ -59,7 +54,7 @@ static __m512d rbdKooNRecursiveStepV8dAvx512f(struct rbdKooNGenericData *data, u
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericSuccessStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m512d v8dStep;
     __m512d v8dTmp;
@@ -135,7 +130,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV8dAvx512f(
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericFailStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m512d v8dStep;
     __m512d v8dTmp;
@@ -210,7 +205,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV8dAvx512f(str
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNRecursionV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNRecursionV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m512d v8dRes;
 
@@ -244,7 +239,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNRecursionV8dAvx512f(struct rb
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalSuccessStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m512d v8dR;
     __m512d v8dTmp1, v8dTmp2;
@@ -308,7 +303,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV8dAvx512
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalFailStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m512d v8dU;
     __m512d v8dTmp1, v8dTmp2;
@@ -377,7 +372,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalFailStepV8dAvx512f(s
  * Return (__m512d):
  *  Computed reliability
  */
-static __m512d rbdKooNRecursiveStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
 {
     __m512d v8dTmp1, v8dTmp2;
     __m512d v8dRes;
@@ -397,10 +392,6 @@ static __m512d rbdKooNRecursiveStepV8dAvx512f(struct rbdKooNGenericData *data, u
     }
     return v8dRes;
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_AVX512F */

@@ -27,11 +27,6 @@
 #include "../parallel_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX/FMA/AVX512F instruction sets */
-#pragma GCC push_options
-#pragma GCC target ("avx", "fma", "avx512f")
-
-
 /**
  * rbdParallelGenericStepV8dAvx512f
  *
@@ -53,7 +48,7 @@
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelGenericStepV8dAvx512f(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdParallelGenericStepV8dAvx512f(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m512d v8dTmp;
@@ -93,7 +88,7 @@ __attribute__((visibility ("hidden"))) void rbdParallelGenericStepV8dAvx512f(str
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelIdenticalStepV8dAvx512f(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdParallelIdenticalStepV8dAvx512f(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m512d v8dU;
@@ -113,10 +108,6 @@ __attribute__((visibility ("hidden"))) void rbdParallelIdenticalStepV8dAvx512f(s
     /* Cap the computed reliability and set it into output array */
     _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_AVX512F */

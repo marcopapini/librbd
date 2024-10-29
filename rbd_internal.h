@@ -95,6 +95,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "compiler/compiler.h"
+
 
 typedef void *(*fpWorker)(void *);
 
@@ -121,7 +123,7 @@ typedef void *(*fpWorker)(void *);
  * Return (int):
  *  Minimum value
  */
-static inline __attribute__((always_inline)) int min(int a, int b) {
+static inline ALWAYS_INLINE int min(int a, int b) {
     return (a <= b) ? a : b;
 }
 
@@ -147,7 +149,7 @@ static inline __attribute__((always_inline)) int min(int a, int b) {
  * Return (int):
  *  maximum value
  */
-static inline __attribute__((always_inline)) int max(int a, int b) {
+static inline ALWAYS_INLINE int max(int a, int b) {
     return (a >= b) ? a : b;
 }
 
@@ -173,7 +175,7 @@ static inline __attribute__((always_inline)) int max(int a, int b) {
  * Return (int):
  *  Floor value of division
  */
-static inline __attribute__((always_inline)) int floorDivision(int dividend, int divisor) {
+static inline ALWAYS_INLINE int floorDivision(int dividend, int divisor) {
     return (dividend / divisor);
 }
 
@@ -199,7 +201,7 @@ static inline __attribute__((always_inline)) int floorDivision(int dividend, int
  * Return (int):
  *  Ceil value of division
  */
-static inline __attribute__((always_inline)) int ceilDivision(int dividend, int divisor) {
+static inline ALWAYS_INLINE int ceilDivision(int dividend, int divisor) {
     return floorDivision(dividend + divisor - 1, divisor);
 }
 

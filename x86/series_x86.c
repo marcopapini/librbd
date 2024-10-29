@@ -51,7 +51,7 @@
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdSeriesGenericWorker(void *arg)
+HIDDEN void *rbdSeriesGenericWorker(void *arg)
 {
     struct rbdSeriesData *data;
     unsigned int time;
@@ -189,7 +189,7 @@ __attribute__((visibility ("hidden"))) void *rbdSeriesGenericWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdSeriesIdenticalWorker(void *arg)
+HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 {
     struct rbdSeriesData *data;
     unsigned int time;

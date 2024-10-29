@@ -27,12 +27,7 @@
 #include "../koon_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 SSE2 instruction set */
-#pragma GCC push_options
-#pragma GCC target ("sse2")
-
-
-static __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
+static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 
@@ -60,7 +55,7 @@ static __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsi
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericSuccessStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m128d v2dStep;
     __m128d v2dTmp;
@@ -137,7 +132,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV2dSse2(str
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericFailStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m128d v2dStep;
     __m128d v2dTmp;
@@ -213,7 +208,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV2dSse2(struct
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNRecursionV2dSse2(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("sse2") void rbdKooNRecursionV2dSse2(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m128d v2dRes;
 
@@ -247,7 +242,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNRecursionV2dSse2(struct rbdKo
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m128d v2dR;
     __m128d v2dTmp1, v2dTmp2;
@@ -312,7 +307,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV2dSse2(s
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m128d v2dU;
     __m128d v2dTmp1, v2dTmp2;
@@ -381,7 +376,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalFailStepV2dSse2(stru
  * Return (__m128d):
  *  Computed reliability
  */
-static __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
 {
     __m128d v2dTmp1, v2dTmp2;
     __m128d v2dRes;
@@ -402,10 +397,6 @@ static __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsi
     }
     return v2dRes;
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_SSE2 */

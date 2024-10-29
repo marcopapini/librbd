@@ -58,7 +58,7 @@
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-int rbdKooNGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes)
+EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes)
 {
     unsigned char ii;
     struct combinationsKooN combs;
@@ -390,7 +390,7 @@ int rbdKooNGeneric(double *reliabilities, double *output, unsigned char numCompo
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-int rbdKooNIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes)
+EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes)
 {
     unsigned short ii;
     unsigned int idx;

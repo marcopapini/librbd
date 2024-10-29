@@ -1,6 +1,6 @@
 /*
- *  Component: cores.c
- *  Number of cores retrieval in an SMP system
+ *  Component: processor.c
+ *  Retrieval of CPU-related info
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -71,7 +71,7 @@ static struct processor processor;
  * Return (unsigned int):
  *  Number of cores in SMP system
  */
-__attribute__((visibility ("hidden"))) unsigned int getNumberOfCores(void)
+HIDDEN unsigned int getNumberOfCores(void)
 {
     /* Is processor info module not initialized? */
     if (processor.initialized == 0) {
@@ -105,7 +105,7 @@ __attribute__((visibility ("hidden"))) unsigned int getNumberOfCores(void)
  * Return (unsigned int):
  *  1 if x86 SSE2 instruction set is available, 0 otherwise
  */
-__attribute__((visibility ("hidden"))) unsigned int x86Sse2Supported(void)
+HIDDEN unsigned int x86Sse2Supported(void)
 {
     /* Is processor info module not initialized? */
     if (processor.initialized == 0) {
@@ -139,7 +139,7 @@ __attribute__((visibility ("hidden"))) unsigned int x86Sse2Supported(void)
  * Return (unsigned int):
  *  1 if x86 AVX instruction set is available, 0 otherwise
  */
-__attribute__((visibility ("hidden"))) unsigned int x86AvxSupported(void)
+HIDDEN unsigned int x86AvxSupported(void)
 {
     /* Is processor info module not initialized? */
     if (processor.initialized == 0) {
@@ -173,7 +173,7 @@ __attribute__((visibility ("hidden"))) unsigned int x86AvxSupported(void)
  * Return (unsigned int):
  *  1 if x86 FMA instruction set is available, 0 otherwise
  */
-__attribute__((visibility ("hidden"))) unsigned int x86FmaSupported(void)
+HIDDEN unsigned int x86FmaSupported(void)
 {
     /* Is processor info module not initialized? */
     if (processor.initialized == 0) {
@@ -207,7 +207,7 @@ __attribute__((visibility ("hidden"))) unsigned int x86FmaSupported(void)
  * Return (unsigned int):
  *  1 if x86 AVX512F instruction set is available, 0 otherwise
  */
-__attribute__((visibility ("hidden"))) unsigned int x86Avx512fSupported(void)
+HIDDEN unsigned int x86Avx512fSupported(void)
 {
     /* Is processor info module not initialized? */
     if (processor.initialized == 0) {

@@ -58,7 +58,7 @@ static int rbdParallelInternal(double *reliabilities, double *output, unsigned c
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-int rbdParallelGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
+EXTERN int rbdParallelGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
 {
     return rbdParallelInternal(reliabilities, output, numComponents, numTimes, &rbdParallelGenericWorker);
 }
@@ -91,7 +91,7 @@ int rbdParallelGeneric(double *reliabilities, double *output, unsigned char numC
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-int rbdParallelIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
+EXTERN int rbdParallelIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
 {
     return rbdParallelInternal(reliabilities, output, numComponents, numTimes, &rbdParallelIdenticalWorker);
 }

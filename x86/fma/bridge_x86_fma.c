@@ -27,11 +27,6 @@
 #include "../bridge_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX/FMA instruction sets */
-#pragma GCC push_options
-#pragma GCC target ("avx", "fma")
-
-
 /**
  * rbdBridgeGenericStepV4dFma
  *
@@ -53,7 +48,7 @@
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV4dFma(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV4dFma(struct rbdBridgeData *data, unsigned int time)
 {
     __m256d v4dR1, v4dR2, v4dR3, v4dR4, v4dR5;
     __m256d v4dTmp1, v4dTmp2;
@@ -115,7 +110,7 @@ __attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV4dFma(struct rb
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV4dFma(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV4dFma(struct rbdBridgeData *data, unsigned int time)
 {
     __m256d v4dR, v4dU;
     __m256d v4dTmp;
@@ -162,7 +157,7 @@ __attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV4dFma(struct 
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV2dFma(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma(struct rbdBridgeData *data, unsigned int time)
 {
     __m128d v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
     __m128d v2dTmp1, v2dTmp2;
@@ -225,7 +220,7 @@ __attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV2dFma(struct rb
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV2dFma(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV2dFma(struct rbdBridgeData *data, unsigned int time)
 {
     __m128d v2dR, v2dU;
     __m128d v2dTmp;
@@ -250,10 +245,6 @@ __attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV2dFma(struct 
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_FMA */

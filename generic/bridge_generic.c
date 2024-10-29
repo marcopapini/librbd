@@ -49,7 +49,7 @@
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdBridgeGenericWorker(void *arg)
+HIDDEN void *rbdBridgeGenericWorker(void *arg)
 {
     struct rbdBridgeData *data;
     unsigned int time;
@@ -99,7 +99,7 @@ __attribute__((visibility ("hidden"))) void *rbdBridgeGenericWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdBridgeIdenticalWorker(void *arg)
+HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
 {
     struct rbdBridgeData *data;
     unsigned int time;
@@ -148,7 +148,7 @@ __attribute__((visibility ("hidden"))) void *rbdBridgeIdenticalWorker(void *arg)
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeGenericStepS1d(struct rbdBridgeData *data, unsigned int time)
+HIDDEN void rbdBridgeGenericStepS1d(struct rbdBridgeData *data, unsigned int time)
 {
     double s1dR1, s1dR2, s1dR3, s1dR4, s1dR5;
     double s1dTmp1, s1dTmp2;
@@ -210,7 +210,7 @@ __attribute__((visibility ("hidden"))) void rbdBridgeGenericStepS1d(struct rbdBr
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepS1d(struct rbdBridgeData *data, unsigned int time)
+HIDDEN void rbdBridgeIdenticalStepS1d(struct rbdBridgeData *data, unsigned int time)
 {
     double s1dR, s1dU;
     double s1dRes;

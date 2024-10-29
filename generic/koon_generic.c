@@ -52,7 +52,7 @@ static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned 
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdKooNFillWorker(void *arg)
+HIDDEN void *rbdKooNFillWorker(void *arg)
 {
     struct rbdKooNFillData *data;
     unsigned int time;
@@ -101,7 +101,7 @@ __attribute__((visibility ("hidden"))) void *rbdKooNFillWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdKooNGenericWorker(void *arg)
+HIDDEN void *rbdKooNGenericWorker(void *arg)
 {
     struct rbdKooNGenericData *data;
     unsigned int time;
@@ -175,7 +175,7 @@ __attribute__((visibility ("hidden"))) void *rbdKooNGenericWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdKooNIdenticalWorker(void *arg)
+HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 {
     struct rbdKooNIdenticalData *data;
     unsigned int time;
@@ -239,7 +239,7 @@ __attribute__((visibility ("hidden"))) void *rbdKooNIdenticalWorker(void *arg)
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepS1d(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN void rbdKooNGenericSuccessStepS1d(struct rbdKooNGenericData *data, unsigned int time)
 {
     double s1dStep;
     double s1dRes;
@@ -312,7 +312,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepS1d(struct 
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepS1d(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN void rbdKooNGenericFailStepS1d(struct rbdKooNGenericData *data, unsigned int time)
 {
     double s1dStep;
     double s1dRes;
@@ -365,7 +365,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepS1d(struct rbd
  * rbdKooNRecursionS1d
  *
  * Compute KooN RBD though Recursive method
- *__attribute__((visibility ("hidden")))
+ *
  * Input:
  *      struct rbdKooNGenericData *data
  *      unsigned int time
@@ -383,7 +383,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepS1d(struct rbd
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNRecursionS1d(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN void rbdKooNRecursionS1d(struct rbdKooNGenericData *data, unsigned int time)
 {
     double s1dRes;
 
@@ -417,7 +417,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNRecursionS1d(struct rbdKooNGe
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     double s1dR;
     double s1dTmp1, s1dTmp2;
@@ -481,7 +481,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepS1d(struc
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     double s1dU;
     double s1dTmp1, s1dTmp2;

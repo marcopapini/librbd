@@ -27,11 +27,6 @@
 #include "../series_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX instruction set */
-#pragma GCC push_options
-#pragma GCC target ("avx")
-
-
 /**
  * rbdSeriesGenericStepV4dAvx
  *
@@ -53,7 +48,7 @@
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m256d v4dTmp;
@@ -91,7 +86,7 @@ __attribute__((visibility ("hidden"))) void rbdSeriesGenericStepV4dAvx(struct rb
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m256d v4dTmp;
@@ -109,10 +104,6 @@ __attribute__((visibility ("hidden"))) void rbdSeriesIdenticalStepV4dAvx(struct 
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_AVX */

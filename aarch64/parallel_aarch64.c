@@ -52,7 +52,7 @@
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdParallelGenericWorker(void *arg)
+HIDDEN void *rbdParallelGenericWorker(void *arg)
 {
     struct rbdParallelData *data;
     unsigned int time;
@@ -110,7 +110,7 @@ __attribute__((visibility ("hidden"))) void *rbdParallelGenericWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdParallelIdenticalWorker(void *arg)
+HIDDEN void *rbdParallelIdenticalWorker(void *arg)
 {
     struct rbdParallelData *data;
     unsigned int time;

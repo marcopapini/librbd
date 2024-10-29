@@ -27,11 +27,6 @@
 #include "../parallel_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX/FMA instruction sets */
-#pragma GCC push_options
-#pragma GCC target ("avx", "fma")
-
-
 /**
  * rbdParallelGenericStepV4dFma
  *
@@ -53,7 +48,7 @@
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelGenericStepV4dFma(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV4dFma(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m256d v4dTmp;
@@ -93,7 +88,7 @@ __attribute__((visibility ("hidden"))) void rbdParallelGenericStepV4dFma(struct 
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelGenericStepV2dFma(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV2dFma(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;
@@ -111,10 +106,6 @@ __attribute__((visibility ("hidden"))) void rbdParallelGenericStepV2dFma(struct 
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_FMA */

@@ -1,6 +1,6 @@
 /*
- *  Component: rbd_internal_aarch64.h
- *  Internal APIs used by RBD library - Optimized using AArch64 platform-specific instruction sets
+ *  Component: compiler.h
+ *  Compiler management
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,27 +19,17 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RBD_INTERNAL_AARCH64_H_
-#define RBD_INTERNAL_AARCH64_H_
+#ifndef COMPILER_H_
+#define COMPILER_H_
 
 
-#if CPU_AARCH64_NEON != 0
+#if (defined __clang__)
+#include "clang.h"
+#elif (defined __GNUC__)
+#include "gcc.h"
+#else
+#error "Unkown/unspported compiler"
+#endif
 
 
-#include <arm_neon.h>
-
-
-
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dZeros;
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dOnes;
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dTwos;
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dMinusTwos;
-
-
-FUNCTION_TARGET("arch=armv8-a") float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);
-
-
-#endif /* CPU_AARCH64_NEON */
-
-
-#endif /* RBD_INTERNAL_AARCH64_H_ */
+#endif /* COMPILER_H_ */

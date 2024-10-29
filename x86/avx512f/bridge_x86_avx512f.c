@@ -27,11 +27,6 @@
 #include "../bridge_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX/FMA/AVX512F instruction sets */
-#pragma GCC push_options
-#pragma GCC target ("avx", "fma", "avx512f")
-
-
 /**
  * rbdBridgeGenericStepV8dAvx512f
  *
@@ -53,7 +48,7 @@
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time)
 {
     __m512d v8dR1, v8dR2, v8dR3, v8dR4, v8dR5;
     __m512d v8dTmp1, v8dTmp2;
@@ -116,7 +111,7 @@ __attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV8dAvx512f(struc
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeIdenticalStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time)
 {
     __m512d v8dR, v8dU;
     __m512d v8dTmp;
@@ -141,10 +136,6 @@ __attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV8dAvx512f(str
     /* Cap the computed reliability and set it into output array */
     _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_AVX512F */

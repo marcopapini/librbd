@@ -44,7 +44,7 @@
  * Return (double):
  *  Reliability within accepted bounds
  */
-__attribute__((visibility ("hidden"))) double capReliabilityS1d(double s1dR) {
+HIDDEN double capReliabilityS1d(double s1dR) {
     /* Cap computed reliability to accepted bounds [0, 1] */
     if ((isnan(s1dR) != 0) || (s1dR < 0.0)) {
         return 0.0;
@@ -78,12 +78,12 @@ __attribute__((visibility ("hidden"))) double capReliabilityS1d(double s1dR) {
  *      numTimes: number of times in reliability matrix
  *      time: current time to prefetch
  */
-__attribute__((visibility ("hidden"))) void prefetchRead(double *reliability, unsigned char numComponents, unsigned int numTimes, unsigned int time)
+HIDDEN void prefetchRead(double *reliability, unsigned char numComponents, unsigned int numTimes, unsigned int time)
 {
     int component = (int)numComponents;
 
     while (--component >= 0) {
-        __builtin_prefetch(&reliability[(component * numTimes) + time], 0, 3);
+        PREFETCH_READ(&reliability[(component * numTimes) + time]);
     }
 }
 
@@ -110,12 +110,12 @@ __attribute__((visibility ("hidden"))) void prefetchRead(double *reliability, un
  *      numTimes: number of times in reliability matrix
  *      time: current time to prefetch
  */
-__attribute__((visibility ("hidden"))) void prefetchWrite(double *reliability, unsigned char numComponents, unsigned int numTimes, unsigned int time)
+HIDDEN void prefetchWrite(double *reliability, unsigned char numComponents, unsigned int numTimes, unsigned int time)
 {
     int component = (int)numComponents;
 
     while (--component >= 0) {
-        __builtin_prefetch(&reliability[(component * numTimes) + time], 1, 3);
+        PREFETCH_WRITE(&reliability[(component * numTimes) + time]);
     }
 }
 
@@ -140,7 +140,7 @@ __attribute__((visibility ("hidden"))) void prefetchWrite(double *reliability, u
  * Return (int):
  *  Batch size
  */
-__attribute__((visibility ("hidden"))) int computeNumCores(int numTimes) {
+HIDDEN int computeNumCores(int numTimes) {
     int numCores, batchSize;
 
     /* Retrieve number of cores available in SMP system */

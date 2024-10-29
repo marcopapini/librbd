@@ -27,11 +27,6 @@
 #include "../parallel_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 SSE2 instruction set */
-#pragma GCC push_options
-#pragma GCC target ("sse2")
-
-
 /**
  * rbdParallelGenericStepV2dSse2
  *
@@ -53,7 +48,7 @@
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelGenericStepV2dSse2(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("sse2") void rbdParallelGenericStepV2dSse2(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;
@@ -94,7 +89,7 @@ __attribute__((visibility ("hidden"))) void rbdParallelGenericStepV2dSse2(struct
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("sse2") void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dU;
@@ -114,10 +109,6 @@ __attribute__((visibility ("hidden"))) void rbdParallelIdenticalStepV2dSse2(stru
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_SSE2 */

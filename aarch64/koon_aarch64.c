@@ -52,7 +52,7 @@
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdKooNFillWorker(void *arg)
+HIDDEN void *rbdKooNFillWorker(void *arg)
 {
     struct rbdKooNFillData *data;
     unsigned int time;
@@ -112,7 +112,7 @@ __attribute__((visibility ("hidden"))) void *rbdKooNFillWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdKooNGenericWorker(void *arg)
+HIDDEN void *rbdKooNGenericWorker(void *arg)
 {
     struct rbdKooNGenericData *data;
     unsigned int time;
@@ -210,7 +210,7 @@ __attribute__((visibility ("hidden"))) void *rbdKooNGenericWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdKooNIdenticalWorker(void *arg)
+HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 {
     struct rbdKooNIdenticalData *data;
     unsigned int time;

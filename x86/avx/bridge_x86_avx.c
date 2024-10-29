@@ -27,11 +27,6 @@
 #include "../bridge_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX instruction set */
-#pragma GCC push_options
-#pragma GCC target ("avx")
-
-
 /**
  * rbdBridgeGenericStepV4dAvx
  *
@@ -53,7 +48,7 @@
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV4dAvx(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdBridgeGenericStepV4dAvx(struct rbdBridgeData *data, unsigned int time)
 {
     __m256d v4dR1, v4dR2, v4dR3, v4dR4, v4dR5;
     __m256d v4dTmp1, v4dTmp2, v4dTmp3;
@@ -120,7 +115,7 @@ __attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV4dAvx(struct rb
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV4dAvx(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdBridgeIdenticalStepV4dAvx(struct rbdBridgeData *data, unsigned int time)
 {
     __m256d v4dR, v4dU;
     __m256d v4dTmp;
@@ -147,10 +142,6 @@ __attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV4dAvx(struct 
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_AVX */

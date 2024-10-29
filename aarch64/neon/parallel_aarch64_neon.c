@@ -27,11 +27,6 @@
 #include "../parallel_aarch64.h"
 
 
-/* Save GCC target and optimization options and add ARM v8-A architecture */
-#pragma GCC push_options
-#pragma GCC target ("arch=armv8-a")
-
-
 /**
  * rbdParallelGenericStepV2dNeon
  *
@@ -53,7 +48,7 @@
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelGenericStepV2dNeon(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdParallelGenericStepV2dNeon(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dTmp;
@@ -93,7 +88,7 @@ __attribute__((visibility ("hidden"))) void rbdParallelGenericStepV2dNeon(struct
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dU;
@@ -113,10 +108,6 @@ __attribute__((visibility ("hidden"))) void rbdParallelIdenticalStepV2dNeon(stru
     /* Cap the computed reliability and set it into output array */
     vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_AARCH64_NEON */

@@ -28,20 +28,6 @@
 #include "../koon.h"
 
 
-/* Save GCC target and optimization options */
-#pragma GCC push_options
-/* Add x86 SSE2 instruction set */
-#pragma GCC target ("sse2")
-#if CPU_X86_AVX != 0
-/* Add x86 AVX instruction set */
-#pragma GCC target ("avx")
-#endif /* CPU_X86_AVX */
-#if CPU_X86_AVX512F != 0
-/* Add x86 AVX512F instruction set */
-#pragma GCC target ("avx512f")
-#endif /* CPU_X86_AVX512F */
-
-
 /**
  * rbdKooNFillWorker
  *
@@ -65,7 +51,15 @@
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdKooNFillWorker(void *arg)
+HIDDEN
+FUNCTION_TARGET("sse2")
+#if CPU_X86_AVX != 0
+FUNCTION_TARGET("avx")
+#endif  /* CPU_X86_AVX */
+#if CPU_X86_AVX512F != 0
+FUNCTION_TARGET("avx512f")
+#endif  /* CPU_X86_AVX512F */
+void *rbdKooNFillWorker(void *arg)
 {
     struct rbdKooNFillData *data;
     unsigned int time;
@@ -217,7 +211,7 @@ __attribute__((visibility ("hidden"))) void *rbdKooNFillWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdKooNGenericWorker(void *arg)
+HIDDEN void *rbdKooNGenericWorker(void *arg)
 {
     struct rbdKooNGenericData *data;
     unsigned int time;
@@ -621,7 +615,7 @@ __attribute__((visibility ("hidden"))) void *rbdKooNGenericWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdKooNIdenticalWorker(void *arg)
+HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 {
     struct rbdKooNIdenticalData *data;
     unsigned int time;
@@ -885,10 +879,6 @@ __attribute__((visibility ("hidden"))) void *rbdKooNIdenticalWorker(void *arg)
 
     return NULL;
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_AVX */

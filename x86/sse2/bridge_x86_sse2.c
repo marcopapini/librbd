@@ -27,11 +27,6 @@
 #include "../bridge_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 SSE2 instruction set */
-#pragma GCC push_options
-#pragma GCC target ("sse2")
-
-
 /**
  * rbdBridgeGenericStepV2dSse2
  *
@@ -53,7 +48,7 @@
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV2dSse2(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("sse2") void rbdBridgeGenericStepV2dSse2(struct rbdBridgeData *data, unsigned int time)
 {
     __m128d v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
     __m128d v2dTmp1, v2dTmp2, v2dTmp3;
@@ -120,7 +115,7 @@ __attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV2dSse2(struct r
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV2dSse2(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("sse2") void rbdBridgeIdenticalStepV2dSse2(struct rbdBridgeData *data, unsigned int time)
 {
     __m128d v2dR, v2dU;
     __m128d v2dTmp;
@@ -148,9 +143,6 @@ __attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV2dSse2(struct
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_SSE2 */

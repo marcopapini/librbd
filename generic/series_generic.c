@@ -48,7 +48,7 @@
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdSeriesGenericWorker(void *arg)
+HIDDEN void *rbdSeriesGenericWorker(void *arg)
 {
     struct rbdSeriesData *data;
     unsigned int time;
@@ -97,7 +97,7 @@ __attribute__((visibility ("hidden"))) void *rbdSeriesGenericWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdSeriesIdenticalWorker(void *arg)
+HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 {
     struct rbdSeriesData *data;
     unsigned int time;
@@ -146,7 +146,7 @@ __attribute__((visibility ("hidden"))) void *rbdSeriesIdenticalWorker(void *arg)
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdSeriesGenericStepS1d(struct rbdSeriesData *data, unsigned int time)
+HIDDEN void rbdSeriesGenericStepS1d(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     double s1dRes;
@@ -182,7 +182,7 @@ __attribute__((visibility ("hidden"))) void rbdSeriesGenericStepS1d(struct rbdSe
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdSeriesIdenticalStepS1d(struct rbdSeriesData *data, unsigned int time)
+HIDDEN void rbdSeriesIdenticalStepS1d(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     double s1dTmp;

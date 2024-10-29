@@ -27,11 +27,6 @@
 #include "../series_aarch64.h"
 
 
-/* Save GCC target and optimization options and add ARM v8-A architecture */
-#pragma GCC push_options
-#pragma GCC target ("arch=armv8-a")
-
-
 /**
  * rbdSeriesGenericStepV2dNeon
  *
@@ -53,7 +48,7 @@
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdSeriesGenericStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdSeriesGenericStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dTmp;
@@ -91,7 +86,7 @@ __attribute__((visibility ("hidden"))) void rbdSeriesGenericStepV2dNeon(struct r
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdSeriesIdenticalStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdSeriesIdenticalStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dTmp;
@@ -109,10 +104,6 @@ __attribute__((visibility ("hidden"))) void rbdSeriesIdenticalStepV2dNeon(struct
     /* Cap the computed reliability and set it into output array */
     vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_AARCH64_NEON */

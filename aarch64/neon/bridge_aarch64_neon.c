@@ -27,11 +27,6 @@
 #include "../bridge_aarch64.h"
 
 
-/* Save GCC target and optimization options and add ARM v8-A architecture */
-#pragma GCC push_options
-#pragma GCC target ("arch=armv8-a")
-
-
 /**
  * rbdBridgeGenericStepV2dNeon
  *
@@ -53,7 +48,7 @@
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdBridgeGenericStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
 {
     float64x2_t v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
     float64x2_t v2dTmp1, v2dTmp2;
@@ -116,7 +111,7 @@ __attribute__((visibility ("hidden"))) void rbdBridgeGenericStepV2dNeon(struct r
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdBridgeIdenticalStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
 {
     float64x2_t v2dR, v2dU;
     float64x2_t v2dTmp;
@@ -139,10 +134,6 @@ __attribute__((visibility ("hidden"))) void rbdBridgeIdenticalStepV2dNeon(struct
     /* Cap the computed reliability and set it into output array */
     vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_AARCH64_NEON */

@@ -1,6 +1,6 @@
 /*
- *  Component: rbd_internal_aarch64.h
- *  Internal APIs used by RBD library - Optimized using AArch64 platform-specific instruction sets
+ *  Component: gcc.h
+ *  Compiler management - GCC compiler
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,27 +19,23 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RBD_INTERNAL_AARCH64_H_
-#define RBD_INTERNAL_AARCH64_H_
+#ifndef GCC_H_
+#define GCC_H_
 
 
-#if CPU_AARCH64_NEON != 0
+/*Update architecture target for functions and variables*/
+#define FUNCTION_TARGET(X)      __attribute__((__target__(X)))
+#define VARIABLE_TARGET(X)
+
+#define ALWAYS_INLINE           __attribute__((always_inline))
+
+/*Declare hidden and extern symbols*/
+#define HIDDEN                  __attribute__((visibility ("hidden")))
+#define EXTERN
+
+/*Prefetch data for read/write into cache*/
+#define PREFETCH_READ(X)        __builtin_prefetch(X, 0, 3)
+#define PREFETCH_WRITE(X)       __builtin_prefetch(X, 1, 3)
 
 
-#include <arm_neon.h>
-
-
-
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dZeros;
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dOnes;
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dTwos;
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dMinusTwos;
-
-
-FUNCTION_TARGET("arch=armv8-a") float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);
-
-
-#endif /* CPU_AARCH64_NEON */
-
-
-#endif /* RBD_INTERNAL_AARCH64_H_ */
+#endif /* GCC_H_ */

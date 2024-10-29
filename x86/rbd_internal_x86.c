@@ -26,35 +26,17 @@
 #include "rbd_internal_x86.h"
 
 
-/* Save GCC target and optimization options */
-#pragma GCC push_options
-/* Add x86 SSE2 instruction set */
-#pragma GCC target ("sse2")
+VARIABLE_TARGET("sse2") const __m128d v2dZeros = {0.0, 0.0};
+VARIABLE_TARGET("sse2") const __m128d v2dOnes = {1.0, 1.0};
+VARIABLE_TARGET("sse2") const __m128d v2dTwos = {2.0, 2.0};
 #if CPU_X86_AVX != 0
-/* Add x86 AVX instruction set */
-#pragma GCC target ("avx")
-#endif /* CPU_X86_AVX */
-#if CPU_X86_FMA != 0
-/* Add x86 FMA instruction set */
-#pragma GCC target ("fma")
-#endif /* CPU_X86_FMA */
+VARIABLE_TARGET("avx") const __m256d v4dZeros = {0.0, 0.0, 0.0, 0.0};
+VARIABLE_TARGET("avx") const __m256d v4dOnes = {1.0, 1.0, 1.0, 1.0};
+VARIABLE_TARGET("avx") const __m256d v4dTwos = {2.0, 2.0, 2.0, 2.0};
 #if CPU_X86_AVX512F != 0
-/* Add x86 AVX512F instruction set */
-#pragma GCC target ("avx512f")
-#endif /* CPU_X86_AVX512F */
-
-
-const __m128d v2dZeros = {0.0, 0.0};
-const __m128d v2dOnes = {1.0, 1.0};
-const __m128d v2dTwos = {2.0, 2.0};
-#if CPU_X86_AVX != 0
-const __m256d v4dZeros = {0.0, 0.0, 0.0, 0.0};
-const __m256d v4dOnes = {1.0, 1.0, 1.0, 1.0};
-const __m256d v4dTwos = {2.0, 2.0, 2.0, 2.0};
-#if CPU_X86_AVX512F != 0
-const __m512d v8dZeros = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-const __m512d v8dOnes = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-const __m512d v8dTwos = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
+VARIABLE_TARGET("avx512f") const __m512d v8dZeros = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+VARIABLE_TARGET("avx512f") const __m512d v8dOnes = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+VARIABLE_TARGET("avx512f") const __m512d v8dTwos = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
 #endif /* CPU_X86_AVX512F */
 #endif /* CPU_X86_AVX */
 
@@ -80,7 +62,7 @@ const __m512d v8dTwos = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
  * Return (__m128d):
  *  Reliability within accepted bounds
  */
-__attribute__((visibility ("hidden"))) __m128d capReliabilityV2dSse2(__m128d v2dR) {
+HIDDEN FUNCTION_TARGET("sse2") __m128d capReliabilityV2dSse2(__m128d v2dR) {
     /* Cap computed reliability to accepted bounds [0, 1] */
     return _mm_max_pd(_mm_min_pd(v2dOnes, v2dR), v2dZeros);
 }
@@ -107,7 +89,7 @@ __attribute__((visibility ("hidden"))) __m128d capReliabilityV2dSse2(__m128d v2d
  * Return (__m256d):
  *  Reliability within accepted bounds
  */
-__attribute__((visibility ("hidden"))) __m256d capReliabilityV4dAvx(__m256d v4dR) {
+HIDDEN FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR) {
     /* Cap computed reliability to accepted bounds [0, 1] */
     return _mm256_max_pd(_mm256_min_pd(v4dOnes, v4dR), v4dZeros);
 }
@@ -134,16 +116,12 @@ __attribute__((visibility ("hidden"))) __m256d capReliabilityV4dAvx(__m256d v4dR
  * Return (__m512d):
  *  Reliability within accepted bounds
  */
-__attribute__((visibility ("hidden"))) __m512d capReliabilityV8dAvx512f(__m512d v8dR) {
+HIDDEN FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR) {
     /* Cap computed reliability to accepted bounds [0, 1] */
     return _mm512_max_pd(_mm512_min_pd(v8dOnes, v8dR), v8dZeros);
 }
 #endif /* CPU_X86_AVX512F */
 #endif /* CPU_X86_AVX */
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_SSE2 */

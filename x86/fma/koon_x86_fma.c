@@ -27,13 +27,8 @@
 #include "../koon_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX/FMA instruction sets */
-#pragma GCC push_options
-#pragma GCC target ("avx", "fma")
-
-
-static __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
-static __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
+static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
+static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
@@ -60,7 +55,7 @@ static __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNGenericData *data, unsig
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV4dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV4dFma(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m256d v4dStep;
     __m256d v4dTmp;
@@ -136,7 +131,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV4dFma(stru
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV4dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV4dFma(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m256d v4dStep;
     __m256d v4dTmp;
@@ -211,7 +206,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV4dFma(struct 
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNRecursionV4dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV4dFma(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m256d v4dRes;
 
@@ -245,7 +240,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNRecursionV4dFma(struct rbdKoo
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV4dFma(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m256d v4dR;
     __m256d v4dTmp1, v4dTmp2;
@@ -309,7 +304,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV4dFma(st
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV2dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV2dFma(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m128d v2dStep;
     __m128d v2dTmp;
@@ -385,7 +380,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV2dFma(stru
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV2dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV2dFma(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m128d v2dStep;
     __m128d v2dTmp;
@@ -460,7 +455,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV2dFma(struct 
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNRecursionV2dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV2dFma(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m128d v2dRes;
 
@@ -494,7 +489,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNRecursionV2dFma(struct rbdKoo
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV2dFma(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m128d v2dR;
     __m128d v2dTmp1, v2dTmp2;
@@ -561,7 +556,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV2dFma(st
  * Return (__m256d):
  *  Computed reliability
  */
-static __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
 {
     __m256d v4dTmp1, v4dTmp2;
     __m256d v4dRes;
@@ -609,7 +604,7 @@ static __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNGenericData *data, unsig
  * Return (__m128d):
  *  Computed reliability
  */
-static __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
 {
     __m128d v2dTmp1, v2dTmp2;
     __m128d v2dRes;
@@ -629,10 +624,6 @@ static __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNGenericData *data, unsig
     }
     return v2dRes;
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_FMA */

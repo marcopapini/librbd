@@ -27,12 +27,7 @@
 #include "../koon_x86.h"
 
 
-/* Save GCC target and optimization options and add x86 AVX instruction set */
-#pragma GCC push_options
-#pragma GCC target ("avx")
-
-
-static __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
+static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
@@ -59,7 +54,7 @@ static __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsig
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNGenericSuccessStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m256d v4dStep;
     __m256d v4dTmp;
@@ -136,7 +131,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV4dAvx(stru
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNGenericFailStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m256d v4dStep;
     __m256d v4dTmp;
@@ -212,7 +207,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV4dAvx(struct 
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNRecursionV4dAvx(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNRecursionV4dAvx(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m256d v4dRes;
 
@@ -246,7 +241,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNRecursionV4dAvx(struct rbdKoo
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalSuccessStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m256d v4dR;
     __m256d v4dTmp1, v4dTmp2;
@@ -311,7 +306,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV4dAvx(st
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m256d v4dU;
     __m256d v4dTmp1, v4dTmp2;
@@ -380,7 +375,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalFailStepV4dAvx(struc
  * Return (__m256d):
  *  Computed reliability
  */
-static __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
 {
     __m256d v4dTmp1, v4dTmp2;
     __m256d v4dRes;
@@ -401,10 +396,6 @@ static __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsig
     }
     return v4dRes;
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_X86_AVX */

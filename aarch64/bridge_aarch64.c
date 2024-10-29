@@ -52,7 +52,7 @@
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdBridgeGenericWorker(void *arg)
+HIDDEN void *rbdBridgeGenericWorker(void *arg)
 {
     struct rbdBridgeData *data;
     unsigned int time;
@@ -110,7 +110,7 @@ __attribute__((visibility ("hidden"))) void *rbdBridgeGenericWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdBridgeIdenticalWorker(void *arg)
+HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
 {
     struct rbdBridgeData *data;
     unsigned int time;

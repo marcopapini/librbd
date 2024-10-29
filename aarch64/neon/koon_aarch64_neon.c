@@ -27,12 +27,7 @@
 #include "../koon_aarch64.h"
 
 
-/* Save GCC target and optimization options and add ARM v8-A architecture */
-#pragma GCC push_options
-#pragma GCC target ("arch=armv8-a")
-
-
-static float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
+static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
@@ -59,7 +54,7 @@ static float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, 
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNGenericSuccessStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time)
 {
     float64x2_t v2dStep;
     float64x2_t v2dTmp;
@@ -135,7 +130,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericSuccessStepV2dNeon(str
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNGenericFailStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time)
 {
     float64x2_t v2dStep;
     float64x2_t v2dTmp;
@@ -210,7 +205,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNGenericFailStepV2dNeon(struct
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNRecursionV2dNeon(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNRecursionV2dNeon(struct rbdKooNGenericData *data, unsigned int time)
 {
     float64x2_t v2dRes;
 
@@ -244,7 +239,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNRecursionV2dNeon(struct rbdKo
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     float64x2_t v2dR;
     float64x2_t v2dTmp1, v2dTmp2;
@@ -308,7 +303,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalSuccessStepV2dNeon(s
  * Return:
  *  None
  */
-__attribute__((visibility ("hidden"))) void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     float64x2_t v2dU;
     float64x2_t v2dTmp1, v2dTmp2;
@@ -377,7 +372,7 @@ __attribute__((visibility ("hidden"))) void rbdKooNIdenticalFailStepV2dNeon(stru
  * Return (float64x2_t):
  *  Computed reliability
  */
-static float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
 {
     float64x2_t v2dTmp1, v2dTmp2;
     float64x2_t v2dRes;
@@ -397,10 +392,6 @@ static float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, 
     }
     return v2dRes;
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_AARCH64_NEON */

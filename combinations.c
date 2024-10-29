@@ -23,6 +23,7 @@
 #include "combinations.h"
 
 #include "binomial.h"
+#include "compiler/compiler.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -58,7 +59,7 @@ static unsigned long long combinationsGetSize(unsigned long long numCombinations
  *  The structure containing computed nCk combinations of k out of n elements, NULL if an error
  *  occurred.
  */
-__attribute__((visibility ("hidden"))) struct combinations *computeCombinations(unsigned char n, unsigned char k)
+HIDDEN struct combinations *computeCombinations(unsigned char n, unsigned char k)
 {
     int res;
     unsigned long long combIdx = 0;
@@ -128,7 +129,7 @@ __attribute__((visibility ("hidden"))) struct combinations *computeCombinations(
  *
  * Return: None.
  */
-__attribute__((visibility ("hidden"))) void firstCombination(unsigned char k, unsigned char *combination)
+HIDDEN void firstCombination(unsigned char k, unsigned char *combination)
 {
     int i;
 
@@ -163,7 +164,7 @@ __attribute__((visibility ("hidden"))) void firstCombination(unsigned char k, un
  * Return (int):
  *  0 in case the next combination in lexicographic order has been computed, -1 otherwise.
  */
-__attribute__((visibility ("hidden"))) int nextCombination(unsigned char n, unsigned char k, unsigned char *combination)
+HIDDEN int nextCombination(unsigned char n, unsigned char k, unsigned char *combination)
 {
     int i;
 

@@ -58,7 +58,7 @@ static int rbdBridgeInternal(double *reliabilities, double *output, unsigned cha
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-int rbdBridgeGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
+EXTERN int rbdBridgeGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
 {
     return rbdBridgeInternal(reliabilities, output, numComponents, numTimes, &rbdBridgeGenericWorker);
 }
@@ -91,7 +91,7 @@ int rbdBridgeGeneric(double *reliabilities, double *output, unsigned char numCom
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-int rbdBridgeIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
+EXTERN int rbdBridgeIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
 {
     return rbdBridgeInternal(reliabilities, output, numComponents, numTimes, &rbdBridgeIdenticalWorker);
 }

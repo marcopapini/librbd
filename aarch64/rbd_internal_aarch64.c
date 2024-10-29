@@ -28,15 +28,10 @@
 #include <arm_acle.h>
 
 
-/* Save GCC target and optimization options and add ARM v8-A architecture */
-#pragma GCC push_options
-#pragma GCC target ("arch=armv8-a")
-
-
-const float64x2_t v2dZeros = {0.0, 0.0};
-const float64x2_t v2dOnes = {1.0, 1.0};
-const float64x2_t v2dTwos = {2.0, 2.0};
-const float64x2_t v2dMinusTwos = {-2.0, -2.0};
+VARIABLE_TARGET("arch=armv8-a") const float64x2_t v2dZeros = {0.0, 0.0};
+VARIABLE_TARGET("arch=armv8-a") const float64x2_t v2dOnes = {1.0, 1.0};
+VARIABLE_TARGET("arch=armv8-a") const float64x2_t v2dTwos = {2.0, 2.0};
+VARIABLE_TARGET("arch=armv8-a") const float64x2_t v2dMinusTwos = {-2.0, -2.0};
 
 
 /**
@@ -60,14 +55,10 @@ const float64x2_t v2dMinusTwos = {-2.0, -2.0};
  * Return (float64x2_t):
  *  Reliability within accepted bounds
  */
-__attribute__((visibility ("hidden"))) float64x2_t capReliabilityV2dNeon(float64x2_t v2dR) {
+HIDDEN FUNCTION_TARGET("arch=armv8-a") float64x2_t capReliabilityV2dNeon(float64x2_t v2dR) {
     /* Cap computed reliability to accepted bounds [0, 1] */
     return vminnmq_f64(vmaxnmq_f64(v2dZeros, v2dR), v2dOnes);
 }
-
-
-/* Restore GCC target and optimization options */
-#pragma GCC pop_options
 
 
 #endif /* CPU_AARCH64_NEON */

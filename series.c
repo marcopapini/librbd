@@ -58,7 +58,7 @@ static int rbdSeriesInternal(double *reliabilities, double *output, unsigned cha
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-int rbdSeriesGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
+EXTERN int rbdSeriesGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
 {
     return rbdSeriesInternal(reliabilities, output, numComponents, numTimes, &rbdSeriesGenericWorker);
 }
@@ -91,7 +91,7 @@ int rbdSeriesGeneric(double *reliabilities, double *output, unsigned char numCom
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-int rbdSeriesIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
+EXTERN int rbdSeriesIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes)
 {
     return rbdSeriesInternal(reliabilities, output, numComponents, numTimes, &rbdSeriesIdenticalWorker);
 }

@@ -22,6 +22,8 @@
 
 #include "binomial.h"
 
+#include "compiler/compiler.h"
+
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -54,7 +56,7 @@ static void divideBy(unsigned long long *res, unsigned char *dividends, unsigned
  * Return (unsigned long long):
  *  The computed nCk if no error is encountered, 0 otherwise.
  */
-__attribute__((visibility ("hidden"))) unsigned long long binomialCoefficient(unsigned char n, unsigned char k)
+HIDDEN unsigned long long binomialCoefficient(unsigned char n, unsigned char k)
 {
     unsigned long long res = 1;
     int idx;

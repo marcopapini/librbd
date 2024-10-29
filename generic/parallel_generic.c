@@ -49,7 +49,7 @@
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdParallelGenericWorker(void *arg)
+HIDDEN void *rbdParallelGenericWorker(void *arg)
 {
     struct rbdParallelData *data;
     unsigned int time;
@@ -99,7 +99,7 @@ __attribute__((visibility ("hidden"))) void *rbdParallelGenericWorker(void *arg)
  * Return (void *):
  *  NULL
  */
-__attribute__((visibility ("hidden"))) void *rbdParallelIdenticalWorker(void *arg)
+HIDDEN void *rbdParallelIdenticalWorker(void *arg)
 {
     struct rbdParallelData *data;
     unsigned int time;
@@ -148,7 +148,7 @@ __attribute__((visibility ("hidden"))) void *rbdParallelIdenticalWorker(void *ar
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelGenericStepS1d(struct rbdParallelData *data, unsigned int time)
+HIDDEN void rbdParallelGenericStepS1d(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     double s1dRes;
@@ -185,7 +185,7 @@ __attribute__((visibility ("hidden"))) void rbdParallelGenericStepS1d(struct rbd
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-__attribute__((visibility ("hidden"))) void rbdParallelIdenticalStepS1d(struct rbdParallelData *data, unsigned int time)
+HIDDEN void rbdParallelIdenticalStepS1d(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     double s1dU;
