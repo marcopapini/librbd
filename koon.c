@@ -22,7 +22,7 @@
 
 #include "rbd_internal.h"
 
-#include "binomial.h"
+#include "generic/binomial.h"
 #include "koon.h"
 
 

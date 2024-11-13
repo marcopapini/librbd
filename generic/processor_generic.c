@@ -1,6 +1,6 @@
 /*
- *  Component: processor.c
- *  Retrieval of CPU-related info
+ *  Component: processor_generic.c
+ *  Retrieval of CPU-related info - Generic implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -20,7 +20,7 @@
  */
 
 
-#include "rbd_internal.h"
+#include "../rbd_internal.h"
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
 #ifdef _WIN32

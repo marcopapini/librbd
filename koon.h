@@ -24,7 +24,7 @@
 
 
 #include "rbd.h"
-#include "combinations.h"
+#include "generic/combinations.h"
 
 #include <limits.h>
 

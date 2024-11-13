@@ -22,7 +22,7 @@
 
 #include "binomial.h"
 
-#include "compiler/compiler.h"
+#include "../compiler/compiler.h"
 
 #include <limits.h>
 #include <stdlib.h>

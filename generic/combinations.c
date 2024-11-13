@@ -23,7 +23,7 @@
 #include "combinations.h"
 
 #include "binomial.h"
-#include "compiler/compiler.h"
+#include "../compiler/compiler.h"
 
 #include <stdlib.h>
 #include <string.h>
