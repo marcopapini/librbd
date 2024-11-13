@@ -23,6 +23,12 @@
 #define RBD_INTERNAL_H_
 
 
+#include <math.h>
+#include <stdlib.h>
+
+#include "compiler/compiler.h"
+
+
 #define V2D_SIZE                    (2)         /* Size of vector of 2 doubles (128bit) */
 #define V4D_SIZE                    (4)         /* Size of vector of 4 doubles (256bit) */
 #define V8D_SIZE                    (8)         /* Size of vector of 8 doubles (512bit) */
@@ -88,14 +94,7 @@
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
 #define MIN_BATCH_SIZE              (10000)     /* Minimum batch size in SMP RBD resolution */
-
-#include <pthread.h>
 #endif /* CPU_SMP */
-
-#include <math.h>
-#include <stdlib.h>
-
-#include "compiler/compiler.h"
 
 
 typedef void *(*fpWorker)(void *);

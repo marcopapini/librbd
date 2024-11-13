@@ -23,6 +23,12 @@
 #define GCC_H_
 
 
+#if CPU_SMP != 0                                /* Under SMP conditional compiling */
+/* Include pthread for SMP */
+#include <pthread.h>
+#endif /* CPU_SMP */
+
+
 /*Update architecture target for functions and variables*/
 #define FUNCTION_TARGET(X)      __attribute__((__target__(X)))
 #define VARIABLE_TARGET(X)
