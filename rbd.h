@@ -1,5 +1,5 @@
 /*
- *  Component: rbd_internal.h
+ *  Component: rbd.h
  *  RBD library APIs
  *
  *  librbd - Reliability Block Diagrams evaluation library

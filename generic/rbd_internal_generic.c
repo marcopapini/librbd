@@ -1,5 +1,5 @@
 /*
- *  Component: rbd_internal_genericch
+ *  Component: rbd_internal_generic.h
  *  Internal APIs used by RBD library - Generic implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
@@ -20,7 +20,7 @@
  */
 
 
-#include "../rbd_internal.h"
+#include "rbd_internal_generic.h"
 
 
 /**

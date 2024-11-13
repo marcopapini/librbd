@@ -1,6 +1,6 @@
 /*
- *  Component: rbd_internal.h
- *  Internal APIs used by RBD library
+ *  Component: rbd_internal_generic.h
+ *  Internal APIs used by RBD library - Generic implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,14 +19,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RBD_INTERNAL_H_
-#define RBD_INTERNAL_H_
+#ifndef RBD_INTERNAL_GENERIC_H_
+#define RBD_INTERNAL_GENERIC_H_
 
 
 #include <math.h>
 #include <stdlib.h>
 
-#include "compiler/compiler.h"
+#include "../compiler/compiler.h"
 
 
 #define V2D_SIZE                    (2)         /* Size of vector of 2 doubles (128bit) */
@@ -413,4 +413,4 @@ int computeNumCores(int numTimes);
 #endif /* CPU_SMP */
 
 
-#endif /* RBD_INTERNAL_H_ */
+#endif /* RBD_INTERNAL_GENERIC_H_ */

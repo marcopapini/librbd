@@ -20,7 +20,7 @@
  */
 
 
-#include "rbd_internal.h"
+#include "generic/rbd_internal_generic.h"
 
 #include "generic/binomial.h"
 #include "koon.h"

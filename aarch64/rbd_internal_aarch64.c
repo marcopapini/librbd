@@ -20,7 +20,7 @@
  */
 
 
-#include "../rbd_internal.h"
+#include "../generic/rbd_internal_generic.h"
 
 
 #if CPU_AARCH64_NEON != 0

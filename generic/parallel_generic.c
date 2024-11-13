@@ -20,7 +20,7 @@
  */
 
 
-#include "../rbd_internal.h"
+#include "rbd_internal_generic.h"
 
 #include "../parallel.h"
 

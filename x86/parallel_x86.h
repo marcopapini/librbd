@@ -23,7 +23,7 @@
 #define PARALLEL_X86_H_
 
 
-#include "../rbd_internal.h"
+#include "../generic/rbd_internal_generic.h"
 #include "../parallel.h"
 
 

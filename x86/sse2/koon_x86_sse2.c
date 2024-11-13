@@ -20,7 +20,7 @@
  */
 
 
-#include "../../rbd_internal.h"
+#include "../../generic/rbd_internal_generic.h"
 
 #if CPU_X86_SSE2 != 0
 #include "../rbd_internal_x86.h"

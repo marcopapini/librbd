@@ -20,7 +20,7 @@
  */
 
 
-#include "../rbd_internal.h"
+#include "rbd_internal_generic.h"
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
 #ifdef _WIN32

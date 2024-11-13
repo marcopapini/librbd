@@ -23,7 +23,7 @@
 #define SERIES_AARCH64_H_
 
 
-#include "../rbd_internal.h"
+#include "../generic/rbd_internal_generic.h"
 #include "../series.h"
 
 
