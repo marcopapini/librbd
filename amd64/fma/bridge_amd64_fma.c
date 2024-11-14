@@ -1,6 +1,6 @@
 /*
- *  Component: bridge_x86_fma.c
- *  Bridge RBD management - Optimized using x86 FMA instruction set
+ *  Component: bridge_amd64_fma.c
+ *  Bridge RBD management - Optimized using amd64 FMA instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,14 +23,14 @@
 #include "../../generic/rbd_internal_generic.h"
 
 #if CPU_X86_FMA != 0
-#include "../rbd_internal_x86.h"
-#include "../bridge_x86.h"
+#include "../rbd_internal_amd64.h"
+#include "../bridge_amd64.h"
 
 
 /**
  * rbdBridgeGenericStepV4dFma
  *
- * Generic Bridge RBD step function with x86 FMA3 256bit
+ * Generic Bridge RBD step function with amd64 FMA3 256bit
  *
  * Input:
  *      struct rbdBridgeData *data
@@ -40,7 +40,7 @@
  *      None
  *
  * Description:
- *  This function implements the generic Bridge RBD step exploiting x86 FMA3 256bit.
+ *  This function implements the generic Bridge RBD step exploiting amd64 FMA3 256bit.
  *  It is responsible to compute the reliability of a Bridge block with generic components
  *  given their reliabilities
  *
@@ -92,7 +92,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV4dFma(struct rbdBridgeDa
 /**
  * rbdBridgeIdenticalStepV4dFma
  *
- * Identical Bridge RBD step function with x86 FMA3 256bit
+ * Identical Bridge RBD step function with amd64 FMA3 256bit
  *
  * Input:
  *      struct rbdBridgeData *data
@@ -102,7 +102,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV4dFma(struct rbdBridgeDa
  *      None
  *
  * Description:
- *  This function implements the identical Bridge RBD step exploiting x86 FMA3 256bit.
+ *  This function implements the identical Bridge RBD step exploiting amd64 FMA3 256bit.
  *  It is responsible to compute the reliability of a Bridge block with identical components
  *  given their reliability
  *
@@ -139,7 +139,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV4dFma(struct rbdBridge
 /**
  * rbdBridgeGenericStepV2dFma
  *
- * Generic Bridge RBD step function with x86 FMA3 128bit
+ * Generic Bridge RBD step function with amd64 FMA3 128bit
  *
  * Input:
  *      struct rbdBridgeData *data
@@ -149,7 +149,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV4dFma(struct rbdBridge
  *      None
  *
  * Description:
- *  This function implements the generic Bridge RBD step exploiting x86 FMA3 128bit.
+ *  This function implements the generic Bridge RBD step exploiting amd64 FMA3 128bit.
  *  It is responsible to compute the reliability of a Bridge block with generic components
  *  given their reliabilities
  *
@@ -202,7 +202,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma(struct rbdBridgeDa
 /**
  * rbdBridgeIdenticalStepV2dFma
  *
- * Identical Bridge RBD step function with x86 FMA3 128bit
+ * Identical Bridge RBD step function with amd64 FMA3 128bit
  *
  * Input:
  *      struct rbdBridgeData *data
@@ -212,7 +212,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma(struct rbdBridgeDa
  *      None
  *
  * Description:
- *  This function implements the identical Bridge RBD step exploiting x86 FMA3 128bit.
+ *  This function implements the identical Bridge RBD step exploiting amd64 FMA3 128bit.
  *  It is responsible to compute the reliability of a Bridge block with identical components
  *  given their reliability
  *

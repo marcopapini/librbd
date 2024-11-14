@@ -23,8 +23,8 @@
 #include "../../generic/rbd_internal_generic.h"
 
 #if CPU_X86_SSE2 != 0
-#include "../rbd_internal_x86.h"
-#include "../parallel_x86.h"
+#include "../rbd_internal_amd64.h"
+#include "../parallel_amd64.h"
 
 
 /**

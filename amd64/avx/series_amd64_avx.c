@@ -1,6 +1,6 @@
 /*
- *  Component: parallel_x86_avx.c
- *  Parallel RBD management - Optimized using x86 AVX instruction set
+ *  Component: series_amd64_avx.c
+ *  Series RBD management - Optimized using amd64 AVX instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,88 +23,83 @@
 #include "../../generic/rbd_internal_generic.h"
 
 #if CPU_X86_AVX != 0
-#include "../rbd_internal_x86.h"
-#include "../parallel_x86.h"
+#include "../rbd_internal_amd64.h"
+#include "../series_amd64.h"
 
 
 /**
- * rbdParallelGenericStepV4dAvx
+ * rbdSeriesGenericStepV4dAvx
  *
- * Generic Parallel RBD step function with x86 AVX 256bit
+ * Generic Series RBD step function with amd64 AVX 256bit
  *
  * Input:
- *      struct rbdParallelData *data
+ *      struct rbdSeriesData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the generic Parallel RBD step exploiting x86 AVX 256bit.
- *  It is responsible to compute the reliability of a Parallel block with generic components
+ *  This function implements the generic Series RBD step exploiting amd64 AVX 256bit.
+ *  It is responsible to compute the reliability of a Series block with generic components
  *  given their reliabilities
  *
  * Parameters:
- *      data: Parallel RBD data structure
- *      time: current time instant over which Parallel RBD shall be computed
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdParallelGenericStepV4dAvx(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m256d v4dTmp;
     __m256d v4dRes;
 
-    /* Compute reliability of Parallel RBD at current time instant */
+    /* Compute reliability of Series RBD at current time instant */
     v4dRes = _mm256_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
-    v4dRes = _mm256_sub_pd(v4dOnes, v4dRes);
     for (component = 1; component < data->numComponents; ++component) {
         v4dTmp = _mm256_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
-        v4dTmp = _mm256_sub_pd(v4dOnes, v4dTmp);
         v4dRes = _mm256_mul_pd(v4dRes, v4dTmp);
     }
-    v4dRes = _mm256_sub_pd(v4dOnes, v4dRes);
 
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
 
 /**
- * rbdParallelIdenticalStepV4dAvx
+ * rbdSeriesIdenticalStepV4dAvx
  *
- * Identical Parallel RBD step function with x86 AVX 256bit
+ * Identical Series RBD step function with amd64 AVX 256bit
  *
  * Input:
- *      struct rbdParallelData *data
+ *      struct rbdSeriesData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the identical Parallel RBD step exploiting x86 AVX 256bit.
- *  It is responsible to compute the reliability of a Parallel block with identical components
+ *  This function implements the identical Series RBD step exploiting amd64 AVX 256bit.
+ *  It is responsible to compute the reliability of a Series block with identical components
  *  given their reliability
  *
  * Parameters:
- *      data: Parallel RBD data structure
- *      time: current time instant over which Parallel RBD shall be computed
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdParallelIdenticalStepV4dAvx(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
-    __m256d v4dU;
+    __m256d v4dTmp;
     __m256d v4dRes;
 
-    /* Load unreliability */
-    v4dU = _mm256_loadu_pd(&data->reliabilities[time]);
-    v4dU = _mm256_sub_pd(v4dOnes, v4dU);
+    /* Load reliability */
+    v4dTmp = _mm256_loadu_pd(&data->reliabilities[time]);
 
-    /* Compute reliability of Parallel RBD at current time instant */
-    v4dRes = v4dU;
+    /* Compute reliability of Series RBD at current time instant */
+    v4dRes = v4dTmp;
     for (component = (data->numComponents - 1); component > 0; --component) {
-        v4dRes = _mm256_mul_pd(v4dRes, v4dU);
+        v4dRes = _mm256_mul_pd(v4dRes, v4dTmp);
     }
-    v4dRes = _mm256_sub_pd(v4dOnes, v4dRes);
 
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));

@@ -1,6 +1,6 @@
 /*
- *  Component: parallel_x86.c
- *  Parallel RBD management - x86 platform-specific implementation
+ *  Component: series_amd64.c
+ *  Series RBD management - amd64 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,15 +23,15 @@
 #include "../generic/rbd_internal_generic.h"
 
 #if CPU_X86_SSE2 != 0
-#include "rbd_internal_x86.h"
-#include "parallel_x86.h"
-#include "../parallel.h"
+#include "rbd_internal_amd64.h"
+#include "series_amd64.h"
+#include "../series.h"
 
 
 /**
- * rbdParallelGenericWorker
+ * rbdSeriesGenericWorker
  *
- * Parallel RBD Worker function with x86 platform-specific instruction sets
+ * Generic Series RBD Worker function with amd64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -40,26 +40,26 @@
  *      None
  *
  * Description:
- *  This function implements the Parallel RBD Worker exploiting x86 platform-specific instruction sets.
- *  It is responsible to compute the reliabilities over a given batch of a Parallel RBD system
+ *  This function implements the generic Series RBD Worker exploiting amd64 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a generic Series RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a
+ *      arg: this parameter shall be the pointer to a Series RBD data. It is provided as a
  *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Parallel RBD
+ *                      SMP computation of Series RBD
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdParallelGenericWorker(void *arg)
+HIDDEN void *rbdSeriesGenericWorker(void *arg)
 {
-    struct rbdParallelData *data;
+    struct rbdSeriesData *data;
     unsigned int time;
     unsigned int timeLimit;
     unsigned int numCores;
 
-    /* Retrieve Parallel RBD data */
-    data = (struct rbdParallelData *)arg;
+    /* Retrieve Series RBD data */
+    data = (struct rbdSeriesData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
     /* Retrieve last time instant to be processed by worker */
@@ -75,64 +75,34 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V8D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V8D_SIZE));
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepV8dAvx512f(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepV8dAvx512f(data, time);
             /* Increment current time instant */
             time += (numCores * V8D_SIZE);
         }
         /* Are (at least) 4 time instants remaining? */
         if ((time + V4D_SIZE) <= timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepV4dFma(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepV4dAvx(data, time);
             /* Increment current time instant */
             time += V4D_SIZE;
         }
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepV2dFma(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepS1d(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepS1d(data, time);
         }
 
         return NULL;
     }
 #endif /* CPU_X86_AVX512F */
-
-#if CPU_X86_FMA != 0
-    if (x86FmaSupported()) {
-        time *= V4D_SIZE;
-        /* For each time instant to be processed (blocks of 4 time instants)... */
-        while ((time + V4D_SIZE) <= timeLimit) {
-            /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V4D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepV4dFma(data, time);
-            /* Increment current time instant */
-            time += (numCores * V4D_SIZE);
-        }
-        /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepV2dFma(data, time);
-            /* Increment current time instant */
-            time += V2D_SIZE;
-        }
-        /* Is 1 time instant remaining? */
-        if (time < timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepS1d(data, time);
-        }
-
-        return NULL;
-    }
-#endif /* CPU_X86_FMA */
 
 #if CPU_X86_AVX != 0
     if (x86AvxSupported()) {
@@ -142,22 +112,22 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V4D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepV4dAvx(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepV4dAvx(data, time);
             /* Increment current time instant */
             time += (numCores * V4D_SIZE);
         }
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepV2dSse2(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepS1d(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepS1d(data, time);
         }
 
         return NULL;
@@ -171,15 +141,15 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepV2dSse2(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepV2dSse2(data, time);
             /* Increment current time instant */
             time += (numCores * V2D_SIZE);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepS1d(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepS1d(data, time);
         }
 
         return NULL;
@@ -187,8 +157,8 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
 
     /* For each time instant to be processed... */
     while (time < timeLimit) {
-        /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepS1d(data, time);
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepS1d(data, time);
         /* Increment current time instant */
         time += numCores;
     }
@@ -197,9 +167,9 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
 }
 
 /**
- * rbdParallelIdenticalWorker
+ * rbdSeriesIdenticalWorker
  *
- * Identical Parallel RBD Worker function with x86 platform-specific instruction sets
+ * Identical Series RBD Worker function with amd64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -208,26 +178,26 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical Parallel RBD Worker exploiting x86 platform-specific instruction sets.
- *  It is responsible to compute the reliabilities over a given batch of an identical Parallel RBD system
+ *  This function implements the identical Series RBD Worker exploiting amd64 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Series RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a
+ *      arg: this parameter shall be the pointer to a Series RBD data. It is provided as a
  *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Parallel RBD
+ *                      SMP computation of Series RBD
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdParallelIdenticalWorker(void *arg)
+HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 {
-    struct rbdParallelData *data;
+    struct rbdSeriesData *data;
     unsigned int time;
     unsigned int timeLimit;
     unsigned int numCores;
 
-    /* Retrieve Parallel RBD data */
-    data = (struct rbdParallelData *)arg;
+    /* Retrieve Series RBD data */
+    data = (struct rbdSeriesData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
     /* Retrieve last time instant to be processed by worker */
@@ -243,29 +213,29 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V8D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V8D_SIZE));
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepV8dAvx512f(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepV8dAvx512f(data, time);
             /* Increment current time instant */
             time += (numCores * V8D_SIZE);
         }
-        /* Are (at least) 4 time instants remaining? */
+        /* Are (at least) 2 time instants remaining? */
         if ((time + V4D_SIZE) <= timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepV4dAvx(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepV4dAvx(data, time);
             /* Increment current time instant */
             time += V4D_SIZE;
         }
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepV2dSse2(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepS1d(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepS1d(data, time);
         }
 
         return NULL;
@@ -280,22 +250,22 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V4D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepV4dAvx(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepV4dAvx(data, time);
             /* Increment current time instant */
             time += (numCores * V4D_SIZE);
         }
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepV2dSse2(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepS1d(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepS1d(data, time);
         }
 
         return NULL;
@@ -309,15 +279,15 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepV2dSse2(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
             time += (numCores * V2D_SIZE);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepS1d(data, time);
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepS1d(data, time);
         }
 
         return NULL;
@@ -325,13 +295,12 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
 
     /* For each time instant to be processed... */
     while (time < timeLimit) {
-        /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelIdenticalStepS1d(data, time);
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesIdenticalStepS1d(data, time);
         /* Increment current time instant */
         time += numCores;
     }
 
     return NULL;
 }
-
-#endif /* CPU_X86_SSE2 */
+#endif /* CPU_X86_AVX */

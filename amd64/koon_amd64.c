@@ -1,6 +1,6 @@
 /*
- *  Component: koon_x86.c
- *  KooN (K-out-of-N) RBD management - x86 platform-specific implementation
+ *  Component: koon_amd64.c
+ *  KooN (K-out-of-N) RBD management - amd64 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,15 +23,15 @@
 #include "../generic/rbd_internal_generic.h"
 
 #if CPU_X86_SSE2 != 0
-#include "rbd_internal_x86.h"
-#include "koon_x86.h"
+#include "rbd_internal_amd64.h"
+#include "koon_amd64.h"
 #include "../koon.h"
 
 
 /**
  * rbdKooNFillWorker
  *
- * Fill output Reliability with fixed value Worker function with x86 platform-specific instruction sets
+ * Fill output Reliability with fixed value Worker function with amd64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -40,7 +40,7 @@
  *      None
  *
  * Description:
- *  This function fills Reliability with fixed value for KooN Worker x86 platform-specific instruction sets.
+ *  This function fills Reliability with fixed value for KooN Worker amd64 platform-specific instruction sets.
  *  It is responsible to fill a given batch of output Reliabilities with a given fixed value
  *
  * Parameters:
@@ -191,7 +191,7 @@ void *rbdKooNFillWorker(void *arg)
 /**
  * rbdKooNGenericWorker
  *
- * Generic KooN RBD Worker function with x86 platform-specific instruction sets
+ * Generic KooN RBD Worker function with amd64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -200,7 +200,7 @@ void *rbdKooNFillWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker exploiting x86 platform-specific instruction sets.
+ *  This function implements the generic KooN RBD Worker exploiting amd64 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
@@ -594,7 +594,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
 /**
  * rbdKooNIdenticalWorker
  *
- * Identical KooN RBD Worker function with x86 platform-specific instruction sets
+ * Identical KooN RBD Worker function with amd64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -603,7 +603,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD Worker exploiting x86 platform-specific instruction sets.
+ *  This function implements the identical KooN RBD Worker exploiting amd64 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system by using
  *  previously computed nCk values
  *

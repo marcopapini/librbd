@@ -1,6 +1,6 @@
 /*
- *  Component: series_x86_avx.c
- *  Series RBD management - Optimized using x86 AVX instruction set
+ *  Component: series_amd64_avx512f.c
+ *  Series RBD management - Optimized using amd64 AVX512F instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -22,15 +22,15 @@
 
 #include "../../generic/rbd_internal_generic.h"
 
-#if CPU_X86_AVX != 0
-#include "../rbd_internal_x86.h"
-#include "../series_x86.h"
+#if CPU_X86_AVX512F != 0
+#include "../rbd_internal_amd64.h"
+#include "../series_amd64.h"
 
 
 /**
- * rbdSeriesGenericStepV4dAvx
+ * rbdSeriesGenericStepV8dAvx512f
  *
- * Generic Series RBD step function with x86 AVX 256bit
+ * Generic Series RBD step function with amd64 AVX512F 512bit
  *
  * Input:
  *      struct rbdSeriesData *data
@@ -40,7 +40,7 @@
  *      None
  *
  * Description:
- *  This function implements the generic Series RBD step exploiting x86 AVX 256bit.
+ *  This function implements the generic Series RBD step exploiting amd64 AVX512F 512bit.
  *  It is responsible to compute the reliability of a Series block with generic components
  *  given their reliabilities
  *
@@ -48,27 +48,27 @@
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesGenericStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
-    __m256d v4dTmp;
-    __m256d v4dRes;
+    __m512d v8dTmp;
+    __m512d v8dRes;
 
     /* Compute reliability of Series RBD at current time instant */
-    v4dRes = _mm256_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
+    v8dRes = _mm512_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
     for (component = 1; component < data->numComponents; ++component) {
-        v4dTmp = _mm256_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
-        v4dRes = _mm256_mul_pd(v4dRes, v4dTmp);
+        v8dTmp = _mm512_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
+        v8dRes = _mm512_mul_pd(v8dRes, v8dTmp);
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+    _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
 }
 
 /**
- * rbdSeriesIdenticalStepV4dAvx
+ * rbdSeriesIdenticalStepV8dAvx512f
  *
- * Identical Series RBD step function with x86 AVX 256bit
+ * Identical Series RBD step function with amd64 AVX512F 512bit
  *
  * Input:
  *      struct rbdSeriesData *data
@@ -78,7 +78,7 @@ HIDDEN FUNCTION_TARGET("avx") void rbdSeriesGenericStepV4dAvx(struct rbdSeriesDa
  *      None
  *
  * Description:
- *  This function implements the identical Series RBD step exploiting x86 AVX 256bit.
+ *  This function implements the identical Series RBD step exploiting amd64 AVX512F 512bit.
  *  It is responsible to compute the reliability of a Series block with identical components
  *  given their reliability
  *
@@ -86,24 +86,24 @@ HIDDEN FUNCTION_TARGET("avx") void rbdSeriesGenericStepV4dAvx(struct rbdSeriesDa
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesIdenticalStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
-    __m256d v4dTmp;
-    __m256d v4dRes;
+    __m512d v8dTmp;
+    __m512d v8dRes;
 
     /* Load reliability */
-    v4dTmp = _mm256_loadu_pd(&data->reliabilities[time]);
+    v8dTmp = _mm512_loadu_pd(&data->reliabilities[time]);
 
     /* Compute reliability of Series RBD at current time instant */
-    v4dRes = v4dTmp;
+    v8dRes = v8dTmp;
     for (component = (data->numComponents - 1); component > 0; --component) {
-        v4dRes = _mm256_mul_pd(v4dRes, v4dTmp);
+        v8dRes = _mm512_mul_pd(v8dRes, v8dTmp);
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+    _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
 }
 
 
-#endif /* CPU_X86_AVX */
+#endif /* CPU_X86_AVX512F */

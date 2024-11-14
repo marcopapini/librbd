@@ -1,6 +1,6 @@
 /*
- *  Component: series_x86_avx512f.c
- *  Series RBD management - Optimized using x86 AVX512F instruction set
+ *  Component: parallel_amd64_avx512f.c
+ *  Parallel RBD management - Optimized using amd64 AVX512F instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,83 +23,87 @@
 #include "../../generic/rbd_internal_generic.h"
 
 #if CPU_X86_AVX512F != 0
-#include "../rbd_internal_x86.h"
-#include "../series_x86.h"
+#include "../rbd_internal_amd64.h"
+#include "../parallel_amd64.h"
 
 
 /**
- * rbdSeriesGenericStepV8dAvx512f
+ * rbdParallelGenericStepV8dAvx512f
  *
- * Generic Series RBD step function with x86 AVX512F 512bit
+ * Generic Parallel RBD step function with amd64 AVX512F 512bit
  *
  * Input:
- *      struct rbdSeriesData *data
+ *      struct rbdParallelData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the generic Series RBD step exploiting x86 AVX512F 512bit.
- *  It is responsible to compute the reliability of a Series block with generic components
+ *  This function implements the generic Parallel RBD step exploiting amd64 AVX512F 512bit.
+ *  It is responsible to compute the reliability of a Parallel block with generic components
  *  given their reliabilities
  *
  * Parameters:
- *      data: Series RBD data structure
- *      time: current time instant over which Series RBD shall be computed
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesGenericStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdParallelGenericStepV8dAvx512f(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m512d v8dTmp;
     __m512d v8dRes;
 
-    /* Compute reliability of Series RBD at current time instant */
+    /* Compute reliability of Parallel RBD at current time instant */
     v8dRes = _mm512_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
+    v8dRes = _mm512_sub_pd(v8dOnes, v8dRes);
     for (component = 1; component < data->numComponents; ++component) {
         v8dTmp = _mm512_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
-        v8dRes = _mm512_mul_pd(v8dRes, v8dTmp);
+        v8dRes = _mm512_fnmadd_pd(v8dRes, v8dTmp, v8dRes);
     }
+    v8dRes = _mm512_sub_pd(v8dOnes, v8dRes);
 
     /* Cap the computed reliability and set it into output array */
     _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
 }
 
 /**
- * rbdSeriesIdenticalStepV8dAvx512f
+ * rbdParallelIdenticalStepV8dAvx512f
  *
- * Identical Series RBD step function with x86 AVX512F 512bit
+ * Identical Parallel RBD step function with amd64 AVX512F 512bit
  *
  * Input:
- *      struct rbdSeriesData *data
+ *      struct rbdParallelData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the identical Series RBD step exploiting x86 AVX512F 512bit.
- *  It is responsible to compute the reliability of a Series block with identical components
+ *  This function implements the identical Parallel RBD step exploiting amd64 AVX512F 512bit.
+ *  It is responsible to compute the reliability of a Parallel block with identical components
  *  given their reliability
  *
  * Parameters:
- *      data: Series RBD data structure
- *      time: current time instant over which Series RBD shall be computed
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesIdenticalStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdParallelIdenticalStepV8dAvx512f(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
-    __m512d v8dTmp;
+    __m512d v8dU;
     __m512d v8dRes;
 
-    /* Load reliability */
-    v8dTmp = _mm512_loadu_pd(&data->reliabilities[time]);
+    /* Load unreliability */
+    v8dU = _mm512_loadu_pd(&data->reliabilities[time]);
+    v8dU = _mm512_sub_pd(v8dOnes, v8dU);
 
-    /* Compute reliability of Series RBD at current time instant */
-    v8dRes = v8dTmp;
+    /* Compute reliability of Parallel RBD at current time instant */
+    v8dRes = v8dU;
     for (component = (data->numComponents - 1); component > 0; --component) {
-        v8dRes = _mm512_mul_pd(v8dRes, v8dTmp);
+        v8dRes = _mm512_mul_pd(v8dRes, v8dU);
     }
+    v8dRes = _mm512_sub_pd(v8dOnes, v8dRes);
 
     /* Cap the computed reliability and set it into output array */
     _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));

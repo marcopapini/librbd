@@ -1,6 +1,6 @@
 /*
- *  Component: koon_x86_fma.c
- *  KooN (K-out-of-N) RBD management - Optimized using x86 FMA instruction set
+ *  Component: koon_amd64_fma.c
+ *  KooN (K-out-of-N) RBD management - Optimized using amd64 FMA instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,8 +23,8 @@
 #include "../../generic/rbd_internal_generic.h"
 
 #if CPU_X86_FMA != 0
-#include "../rbd_internal_x86.h"
-#include "../koon_x86.h"
+#include "../rbd_internal_amd64.h"
+#include "../koon_amd64.h"
 
 
 static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
@@ -34,7 +34,7 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNG
 /**
  * rbdKooNGenericSuccessStepV4dFma
  *
- * Generic KooN RBD Step function from working components with x86 FMA3 256bit
+ * Generic KooN RBD Step function from working components with amd64 FMA3 256bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -44,7 +44,7 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNG
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD function exploiting x86 FMA3 256bit.
+ *  This function implements the generic KooN RBD function exploiting amd64 FMA3 256bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the working components
  *
@@ -110,7 +110,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV4dFma(struct rbdKoo
 /**
  * rbdKooNGenericFailStepV4dFma
  *
- * Generic KooN RBD Step function from failed components with x86 FMA3 256bit
+ * Generic KooN RBD Step function from failed components with amd64 FMA3 256bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -120,7 +120,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV4dFma(struct rbdKoo
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD function exploiting x86 FMA3 256bit.
+ *  This function implements the generic KooN RBD function exploiting amd64 FMA3 256bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the failed components
  *
@@ -186,7 +186,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV4dFma(struct rbdKooNGe
 /**
  * rbdKooNRecursionV4dFma
  *
- * Compute KooN RBD though Recursive method with x86 FMA3 256bit
+ * Compute KooN RBD though Recursive method with amd64 FMA3 256bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -197,7 +197,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV4dFma(struct rbdKooNGe
  *
  * Description:
  *  This function computes the reliability of KooN RBD system through recursion
- *  exploiting x86 FMA3 256bit
+ *  exploiting amd64 FMA3 256bit
  *
  * Parameters:
  *      data: KooN RBD data structure
@@ -219,7 +219,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV4dFma(struct rbdKooNGenericD
 /**
  * rbdKooNIdenticalSuccessStepV4dFma
  *
- * Identical KooN RBD Step function from working components with x86 AVX+FMA 256bit
+ * Identical KooN RBD Step function from working components with amd64 FMA3 256bit
  *
  * Input:
  *      struct rbdKooNIdenticalData *data
@@ -229,7 +229,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV4dFma(struct rbdKooNGenericD
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD function exploiting x86 AVX+FMA 256bit.
+ *  This function implements the identical KooN RBD function exploiting amd64 FMA3 256bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the working components
  *
@@ -283,7 +283,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma(struct rbdK
 /**
  * rbdKooNGenericSuccessStepV2dFma
  *
- * Generic KooN RBD Step function from working components with x86 FMA3 128bit
+ * Generic KooN RBD Step function from working components with amd64 FMA3 128bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -293,7 +293,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma(struct rbdK
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD function exploiting x86 FMA3 128bit.
+ *  This function implements the generic KooN RBD function exploiting amd64 FMA3 128bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the working components
  *
@@ -359,7 +359,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV2dFma(struct rbdKoo
 /**
  * rbdKooNGenericFailStepV2dFma
  *
- * Generic KooN RBD Step function from failed components with x86 FMA3 128bit
+ * Generic KooN RBD Step function from failed components with amd64 FMA3 128bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -369,7 +369,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV2dFma(struct rbdKoo
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD function exploiting x86 FMA3 128bit.
+ *  This function implements the generic KooN RBD function exploiting amd64 FMA3 128bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the failed components
  *
@@ -435,7 +435,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV2dFma(struct rbdKooNGe
 /**
  * rbdKooNRecursionV2dFma
  *
- * Compute KooN RBD though Recursive method with x86 FMA3 128bit
+ * Compute KooN RBD though Recursive method with amd64 FMA3 128bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -446,7 +446,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV2dFma(struct rbdKooNGe
  *
  * Description:
  *  This function computes the reliability of KooN RBD system through recursion
- *  exploiting x86 FMA3 128bit
+ *  exploiting amd64 FMA3 128bit
  *
  * Parameters:
  *      data: KooN RBD data structure
@@ -468,7 +468,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV2dFma(struct rbdKooNGenericD
 /**
  * rbdKooNIdenticalSuccessStepV2dFma
  *
- * Identical KooN RBD Step function from working components with x86 AVX+FMA 128bit
+ * Identical KooN RBD Step function from working components with amd64 FMA3 128bit
  *
  * Input:
  *      struct rbdKooNIdenticalData *data
@@ -478,7 +478,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV2dFma(struct rbdKooNGenericD
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD function exploiting x86 AVX+FMA 128bit.
+ *  This function implements the identical KooN RBD function exploiting amd64 FMA3 128bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the working components
  *
@@ -532,7 +532,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma(struct rbdK
 /**
  * rbdKooNRecursiveStepV4dFma
  *
- * Recursive KooN RBD Step function with x86 FMA3 256bit
+ * Recursive KooN RBD Step function with amd64 FMA3 256bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -544,7 +544,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma(struct rbdK
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting x86 FMA3 256bit.
+ *  This function implements the recursive KooN RBD function exploiting amd64 FMA3 256bit.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
@@ -580,7 +580,7 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNG
 /**
  * rbdKooNRecursiveStepV2dFma
  *
- * Recursive KooN RBD Step function with x86 FMA3 128bit
+ * Recursive KooN RBD Step function with amd64 FMA3 128bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -592,7 +592,7 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNG
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting x86 FMA3 128bit.
+ *  This function implements the recursive KooN RBD function exploiting amd64 FMA3 128bit.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:

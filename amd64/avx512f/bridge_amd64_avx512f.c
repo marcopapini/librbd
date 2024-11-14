@@ -1,6 +1,6 @@
 /*
- *  Component: bridge_x86_avx512f.c
- *  Bridge RBD management - Optimized using x86 AVX512F instruction set
+ *  Component: bridge_amd64_avx512f.c
+ *  Bridge RBD management - Optimized using amd64 AVX512F instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,14 +23,14 @@
 #include "../../generic/rbd_internal_generic.h"
 
 #if CPU_X86_AVX512F != 0
-#include "../rbd_internal_x86.h"
-#include "../bridge_x86.h"
+#include "../rbd_internal_amd64.h"
+#include "../bridge_amd64.h"
 
 
 /**
  * rbdBridgeGenericStepV8dAvx512f
  *
- * Generic Bridge RBD step function with x86 AVX512F 512bit
+ * Generic Bridge RBD step function with amd64 AVX512F 512bit
  *
  * Input:
  *      struct rbdBridgeData *data
@@ -40,7 +40,7 @@
  *      None
  *
  * Description:
- *  This function implements the generic Bridge RBD step exploiting x86 AVX512F 512bit.
+ *  This function implements the generic Bridge RBD step exploiting amd64 AVX512F 512bit.
  *  It is responsible to compute the reliability of a Bridge block with generic components
  *  given their reliabilities
  *
@@ -93,7 +93,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepV8dAvx512f(struct rbd
 /**
  * rbdBridgeIdenticalStepV8dAvx512f
  *
- * Identical Bridge RBD step function with x86 AVX512F 512bit
+ * Identical Bridge RBD step function with amd64 AVX512F 512bit
  *
  * Input:
  *      struct rbdBridgeData *data
@@ -103,7 +103,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepV8dAvx512f(struct rbd
  *      None
  *
  * Description:
- *  This function implements the identical Bridge RBD step exploiting x86 AVX512F 512bit.
+ *  This function implements the identical Bridge RBD step exploiting amd64 AVX512F 512bit.
  *  It is responsible to compute the reliability of a Bridge block with identical components
  *  given their reliability
  *

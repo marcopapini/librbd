@@ -1,6 +1,6 @@
 /*
- *  Component: rbd_internal_x86_avx.h
- *  Internal APIs used by RBD library - Optimized using x86 platform-specific instruction sets
+ *  Component: rbd_internal_amd64_avx.h
+ *  Internal APIs used by RBD library - Optimized using amd64 platform-specific instruction sets
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,8 +19,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RBD_INTERNAL_X86_H_
-#define RBD_INTERNAL_X86_H_
+#ifndef RBD_INTERNAL_AMD64_H_
+#define RBD_INTERNAL_AMD64_H_
 
 
 #if CPU_X86_SSE2 != 0
@@ -56,4 +56,4 @@ FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR);
 #endif /* CPU_X86_SSE2 */
 
 
-#endif /* RBD_INTERNAL_X86_H_ */
+#endif /* RBD_INTERNAL_AMD64_H_ */

@@ -32,7 +32,7 @@
 /**
  * rbdKooNFillWorker
  *
- * Fill output Reliability with fixed value Worker function with x86 FMA+AVX
+ * Fill output Reliability with fixed value Worker function with AArch64 NEON
  *
  * Input:
  *      void *arg
@@ -41,7 +41,7 @@
  *      None
  *
  * Description:
- *  This function fills Reliability with fixed value for KooN Worker exploiting x86 FMA+AVX instruction sets.
+ *  This function fills Reliability with fixed value for KooN Worker exploiting AArch64 NEON instruction sets.
  *  It is responsible to fill a given batch of output Reliabilities with a given fixed value
  *
  * Parameters:
@@ -92,7 +92,7 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
 /**
  * rbdKooNGenericWorker
  *
- * Generic KooN RBD Worker function with x86 FMA+AVX
+ * Generic KooN RBD Worker function with AArch64 NEON
  *
  * Input:
  *      void *arg
@@ -101,7 +101,7 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker exploiting x86 FMA+AVX instruction sets.
+ *  This function implements the generic KooN RBD Worker exploiting AArch64 NEON instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
@@ -189,7 +189,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
 /**
  * rbdKooNIdenticalWorker
  *
- * Identical KooN RBD Worker function with x86 FMA+AVX
+ * Identical KooN RBD Worker function with AArch64 NEON
  *
  * Input:
  *      void *arg
@@ -198,7 +198,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD Worke exploiting x86 FMA+AVX instruction setsr.
+ *  This function implements the identical KooN RBD Worke exploiting AArch64 NEON instruction set.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system by using
  *  previously computed nCk values
  *

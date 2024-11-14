@@ -1,6 +1,6 @@
 /*
- *  Component: rbd_internal_x86.c
- *  Internal APIs used by RBD library - Optimized using x86 platform-specific instruction sets
+ *  Component: rbd_internal_amd64.c
+ *  Internal APIs used by RBD library - Optimized using amd64 platform-specific instruction sets
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,7 +23,7 @@
 #include "../generic/rbd_internal_generic.h"
 
 #if CPU_X86_SSE2 != 0
-#include "rbd_internal_x86.h"
+#include "rbd_internal_amd64.h"
 
 
 VARIABLE_TARGET("sse2") const __m128d v2dZeros = {0.0, 0.0};
@@ -71,7 +71,7 @@ HIDDEN FUNCTION_TARGET("sse2") __m128d capReliabilityV2dSse2(__m128d v2dR) {
 /**
  * capReliabilityV4dAvx
  *
- * Cap reliability to accepted bounds [0.0, 1.0] with x86 AVX 256bit
+ * Cap reliability to accepted bounds [0.0, 1.0] with amd64 AVX 256bit
  *
  * Input:
  *      __m256d v4dR
@@ -81,7 +81,7 @@ HIDDEN FUNCTION_TARGET("sse2") __m128d capReliabilityV2dSse2(__m128d v2dR) {
  *
  * Description:
  *  This function caps the provided reliability (vector of 4 values, double-precision FP)
- *      to the accepted bounds exploiting x86 AVX 256bit
+ *      to the accepted bounds exploiting amd64 AVX 256bit
  *
  * Parameters:
  *      v4dR: Reliability
@@ -98,7 +98,7 @@ HIDDEN FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR) {
 /**
  * capReliabilityV8dAvx512f
  *
- * Cap reliability to accepted bounds [0.0, 1.0] with x86 AVX512F 512bit
+ * Cap reliability to accepted bounds [0.0, 1.0] with amd64 AVX512F 512bit
  *
  * Input:
  *      __m512d v8dR
@@ -108,7 +108,7 @@ HIDDEN FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR) {
  *
  * Description:
  *  This function caps the provided reliability (vector of 8 values, double-precision FP)
- *      to the accepted bounds exploiting AVX512F 512bit
+ *      to the accepted bounds exploiting amd64 AVX512F 512bit
  *
  * Parameters:
  *      v8dR: Reliability

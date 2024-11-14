@@ -1,6 +1,6 @@
 /*
- *  Component: koon_x86_sse2.c
- *  KooN (K-out-of-N) RBD management - Optimized using x86 SSE2 instruction set
+ *  Component: koon_amd64_avx.c
+ *  KooN (K-out-of-N) RBD management - Optimized using amd64 AVX instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -22,19 +22,18 @@
 
 #include "../../generic/rbd_internal_generic.h"
 
-#if CPU_X86_SSE2 != 0
-#include "../rbd_internal_x86.h"
-#include "../koon_x86.h"
+#if CPU_X86_AVX != 0
+#include "../rbd_internal_amd64.h"
+#include "../koon_amd64.h"
 
 
-static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
-
+static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
- * rbdKooNGenericSuccessStepV2dSse2
+ * rbdKooNGenericSuccessStepV4dAvx
  *
- * Generic KooN RBD Step function from working components with x86 SSE2 128bit
+ * Generic KooN RBD Step function from working components with amd64 AVX 256bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -44,7 +43,7 @@ static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKoo
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD function exploiting x86 SSE2 128bit.
+ *  This function implements the generic KooN RBD function exploiting amd64 AVX 256bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the working components
  *
@@ -55,17 +54,17 @@ static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKoo
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericSuccessStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNGenericSuccessStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time)
 {
-    __m128d v2dStep;
-    __m128d v2dTmp;
-    __m128d v2dRes;
+    __m256d v4dStep;
+    __m256d v4dTmp;
+    __m256d v4dRes;
     int ii, jj, idx;
     unsigned long long numCombinations;
     unsigned long long offset;
 
     /* Initialize reliability of current time instant to 0 */
-    v2dRes = v2dZeros;
+    v4dRes = v4dZeros;
 
     /* For each possible set of combinations... */
     for (ii = 0; ii < data->combs->numKooNcombinations; ++ii) {
@@ -75,16 +74,16 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericSuccessStepV2dSse2(struct rbdK
         /* For each combination... */
         while (numCombinations-- > 0) {
             /* Initialize step reliability to 1 */
-            v2dStep = v2dOnes;
+            v4dStep = v4dOnes;
             idx = 0;
             /* For each component... */
             for (jj = 0; jj < data->numComponents; ++jj) {
                 /* Load reliabilities */
-                v2dTmp = _mm_loadu_pd(&data->reliabilities[(jj * data->numTimes) + time]);
+                v4dTmp = _mm256_loadu_pd(&data->reliabilities[(jj * data->numTimes) + time]);
                 /* Does the component belong to the working components for current combination? */
                 if (data->combs->combinations[ii]->buff[offset + idx] == jj) {
                     /* Multiply step reliability for reliability of current component */
-                    v2dStep = _mm_mul_pd(v2dStep, v2dTmp);
+                    v4dStep = _mm256_mul_pd(v4dStep, v4dTmp);
                     /* Advance to next working component in combination */
                     if (++idx == data->combs->combinations[ii]->k) {
                         idx = 0;
@@ -92,26 +91,26 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericSuccessStepV2dSse2(struct rbdK
                 }
                 else {
                     /* Multiply step reliability for unreliability of current component */
-                    v2dTmp = _mm_sub_pd(v2dOnes, v2dTmp);
-                    v2dStep = _mm_mul_pd(v2dTmp, v2dStep);
+                    v4dTmp = _mm256_sub_pd(v4dOnes, v4dTmp);
+                    v4dStep = _mm256_mul_pd(v4dTmp, v4dStep);
                 }
             }
 
             /* Perform partial sum for computation of KooN reliability */
-            v2dRes = _mm_add_pd(v2dRes, v2dStep);
+            v4dRes = _mm256_add_pd(v4dRes, v4dStep);
             /* Increment offset for combination access */
             offset += data->combs->combinations[ii]->k;
         }
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
 
 /**
- * rbdKooNGenericFailStepV2dSse2
+ * rbdKooNGenericFailStepV4dAvx
  *
- * Generic KooN RBD Step function from failed components with x86 SSE2 128bit
+ * Generic KooN RBD Step function from failed components with amd64 AVX 256bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -121,7 +120,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericSuccessStepV2dSse2(struct rbdK
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD function exploiting x86 SSE2 128bit.
+ *  This function implements the generic KooN RBD function exploiting amd64 AVX 256bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the failed components
  *
@@ -132,17 +131,17 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericSuccessStepV2dSse2(struct rbdK
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericFailStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNGenericFailStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time)
 {
-    __m128d v2dStep;
-    __m128d v2dTmp;
-    __m128d v2dRes;
+    __m256d v4dStep;
+    __m256d v4dTmp;
+    __m256d v4dRes;
     int ii, jj, idx;
     unsigned long long numCombinations;
     unsigned long long offset;
 
     /* Initialize reliability of current time instant to 1 */
-    v2dRes = v2dOnes;
+    v4dRes = v4dOnes;
 
     /* For each possible set of combinations... */
     for (ii = 0; ii < data->combs->numKooNcombinations; ++ii) {
@@ -152,17 +151,17 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericFailStepV2dSse2(struct rbdKooN
         /* For each combination... */
         while (numCombinations-- > 0) {
             /* Initialize step reliability to 1 */
-            v2dStep = v2dOnes;
+            v4dStep = v4dOnes;
             idx = 0;
             /* For each component... */
             for (jj = 0; jj < data->numComponents; ++jj) {
                 /* Load reliabilities */
-                v2dTmp = _mm_loadu_pd(&data->reliabilities[(jj * data->numTimes) + time]);
+                v4dTmp = _mm256_loadu_pd(&data->reliabilities[(jj * data->numTimes) + time]);
                 /* Does the component belong to the working components for current combination? */
                 if (data->combs->combinations[ii]->buff[offset + idx] == jj) {
                     /* Multiply step unreliability for unreliability of current component */
-                    v2dTmp = _mm_sub_pd(v2dOnes, v2dTmp);
-                    v2dStep = _mm_mul_pd(v2dTmp, v2dStep);
+                    v4dTmp = _mm256_sub_pd(v4dOnes, v4dTmp);
+                    v4dStep = _mm256_mul_pd(v4dTmp, v4dStep);
                     /* Advance to next working component in combination */
                     if (++idx == data->combs->combinations[ii]->k) {
                         idx = 0;
@@ -170,25 +169,25 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericFailStepV2dSse2(struct rbdKooN
                 }
                 else {
                     /* Multiply step unreliability for reliability of current component */
-                    v2dStep = _mm_mul_pd(v2dStep, v2dTmp);
+                    v4dStep = _mm256_mul_pd(v4dStep, v4dTmp);
                 }
             }
 
             /* Perform partial subtraction for computation of KooN reliability */
-            v2dRes = _mm_sub_pd(v2dRes, v2dStep);
+            v4dRes = _mm256_sub_pd(v4dRes, v4dStep);
             /* Increment offset for combination access */
             offset += data->combs->combinations[ii]->k;
         }
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
 
 /**
- * rbdKooNRecursionV2dSse2
+ * rbdKooNRecursionV4dAvx
  *
- * Compute KooN RBD though Recursive method with x86 SSE2 128bit
+ * Compute KooN RBD though Recursive method with amd64 AVX 256bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -199,7 +198,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericFailStepV2dSse2(struct rbdKooN
  *
  * Description:
  *  This function computes the reliability of KooN RBD system through recursion
- *  exploiting x86 SSE2 128bit
+ *  exploiting amd64 AVX 256bit
  *
  * Parameters:
  *      data: KooN RBD data structure
@@ -208,20 +207,20 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericFailStepV2dSse2(struct rbdKooN
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNRecursionV2dSse2(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNRecursionV4dAvx(struct rbdKooNGenericData *data, unsigned int time)
 {
-    __m128d v2dRes;
+    __m256d v4dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v2dRes = rbdKooNRecursiveStepV2dSse2(data, time, data->numComponents, data->minComponents);
+    v4dRes = rbdKooNRecursiveStepV4dAvx(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
 
 /**
- * rbdKooNIdenticalSuccessStepV2dSse2
+ * rbdKooNIdenticalSuccessStepV4dAvx
  *
- * Identical KooN RBD Step function from working components with x86 SSE2 128bit
+ * Identical KooN RBD Step function from working components with amd64 AVX 256bit
  *
  * Input:
  *      struct rbdKooNIdenticalData *data
@@ -231,7 +230,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNRecursionV2dSse2(struct rbdKooNGeneri
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD function exploiting x86 SSE2 128bit.
+ *  This function implements the identical KooN RBD function exploiting amd64 AVX 256bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the working components
  *
@@ -242,51 +241,51 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNRecursionV2dSse2(struct rbdKooNGeneri
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalSuccessStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time)
 {
-    __m128d v2dR;
-    __m128d v2dTmp1, v2dTmp2;
-    __m128d v2dRes;
+    __m256d v4dR;
+    __m256d v4dTmp1, v4dTmp2;
+    __m256d v4dRes;
     int numWork, numFail;
     int ii, jj;
 
     /* Retrieve reliability */
-    v2dR = _mm_loadu_pd(&data->reliabilities[time]);
+    v4dR = _mm256_loadu_pd(&data->reliabilities[time]);
     /* Initialize reliability to 0 */
-    v2dRes = v2dZeros;
+    v4dRes = v4dZeros;
     /* Compute product between reliability and unreliability */
-    v2dTmp2 = _mm_sub_pd(v2dOnes, v2dR);
-    v2dTmp2 = _mm_mul_pd(v2dR, v2dTmp2);
+    v4dTmp2 = _mm256_sub_pd(v4dOnes, v4dR);
+    v4dTmp2 = _mm256_mul_pd(v4dR, v4dTmp2);
 
     /* For each iteration... */
     for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
         /* Initialize step reliability to nCi */
-        v2dTmp1 = _mm_set1_pd((double)data->nCi[ii]);
+        v4dTmp1 = _mm256_set1_pd((double)data->nCi[ii]);
         /* Compute number of working and failed components */
         numWork = data->minComponents + ii;
         numFail = data->numComponents - data->minComponents - ii;
         /* For each failed component... */
         for (jj = (numFail - 1); jj >= 0; --jj) {
             /* Multiply step reliability for product of reliability and unreliability of component */
-            v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmp2);
+            v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dTmp2);
         }
         /* For each non-considered working component... */
         for (jj = (numWork - numFail - 1); jj >= 0; --jj) {
             /* Multiply step reliability for reliability of component */
-            v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dR);
+            v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dR);
         }
         /* Add reliability of current iteration */
-        v2dRes = _mm_add_pd(v2dRes, v2dTmp1);
+        v4dRes = _mm256_add_pd(v4dRes, v4dTmp1);
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
 
 /**
- * rbdKooNIdenticalFailStepV2dSse2
+ * rbdKooNIdenticalFailStepV4dAvx
  *
- * Identical KooN RBD Step function from failed components with x86 SSE2 128bit
+ * Identical KooN RBD Step function from failed components with amd64 AVX 256bit
  *
  * Input:
  *      struct rbdKooNIdenticalData *data
@@ -296,7 +295,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV2dSse2(struct rb
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD function exploiting x86 SSE2 128bit.
+ *  This function implements the identical KooN RBD function exploiting amd64 AVX 256bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the failed components
  *
@@ -307,52 +306,52 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV2dSse2(struct rb
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time)
 {
-    __m128d v2dU;
-    __m128d v2dTmp1, v2dTmp2;
-    __m128d v2dRes;
+    __m256d v4dU;
+    __m256d v4dTmp1, v4dTmp2;
+    __m256d v4dRes;
     int numWork, numFail;
     int ii, jj;
 
     /* Retrieve reliability */
-    v2dTmp2 = _mm_loadu_pd(&data->reliabilities[time]);
+    v4dTmp2 = _mm256_loadu_pd(&data->reliabilities[time]);
     /* Compute unreliability */
-    v2dU = _mm_sub_pd(v2dOnes, v2dTmp2);
+    v4dU = _mm256_sub_pd(v4dOnes, v4dTmp2);
     /* Initialize reliability to 1 */
-    v2dRes = v2dOnes;
+    v4dRes = v4dOnes;
     /* Compute product between reliability and unreliability */
-    v2dTmp2 = _mm_mul_pd(v2dTmp2, v2dU);
+    v4dTmp2 = _mm256_mul_pd(v4dTmp2, v4dU);
 
     /* For each iteration... */
     for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
         /* Initialize step reliability to nCi */
-        v2dTmp1 = _mm_set1_pd((double)data->nCi[ii]);
+        v4dTmp1 = _mm256_set1_pd((double)data->nCi[ii]);
         /* Compute number of working and failed components */
         numWork = data->numComponents - data->minComponents - ii;
         numFail = data->minComponents + ii;
         /* For each working component... */
         for (jj = (numWork - 1); jj >= 0; --jj) {
             /* Multiply step unreliability for product of reliability and unreliability of component */
-            v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmp2);
+            v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dTmp2);
         }
         /* For each non-considered failed component... */
         for (jj = (numFail - numWork - 1); jj >= 0; --jj) {
             /* Multiply step unreliability for unreliability of component */
-            v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dU);
+            v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dU);
         }
         /* Subtract unreliability of current iteration */
-        v2dRes = _mm_sub_pd(v2dRes, v2dTmp1);
+        v4dRes = _mm256_sub_pd(v4dRes, v4dTmp1);
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
 
 /**
- * rbdKooNRecursiveStepV2dSse2
+ * rbdKooNRecursiveStepV4dAvx
  *
- * Recursive KooN RBD Step function with x86 SSE2 128bit
+ * Recursive KooN RBD Step function with amd64 AVX 256bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -364,7 +363,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKo
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting x86 SSE2 128bit.
+ *  This function implements the recursive KooN RBD function exploiting amd64 AVX 256bit.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
@@ -373,30 +372,30 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKo
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
  *
- * Return (__m128d):
+ * Return (__m256d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
 {
-    __m128d v2dTmp1, v2dTmp2;
-    __m128d v2dRes;
+    __m256d v4dTmp1, v4dTmp2;
+    __m256d v4dRes;
 
     /* Load reliabilities and compute unreliabilities */
     --n;
-    v2dRes = _mm_loadu_pd(&data->reliabilities[(n * data->numTimes) + time]);
-    v2dTmp1 = _mm_sub_pd(v2dOnes, v2dRes);
+    v4dRes = _mm256_loadu_pd(&data->reliabilities[(n * data->numTimes) + time]);
+    v4dTmp1 = _mm256_sub_pd(v4dOnes, v4dRes);
     /* Recursively compute the reliabilities */
     if ((k-1) > 0) {
-        v2dTmp2 = rbdKooNRecursiveStepV2dSse2(data, time, n, k-1);
-        v2dRes = _mm_mul_pd(v2dRes, v2dTmp2);
+        v4dTmp2 = rbdKooNRecursiveStepV4dAvx(data, time, n, k-1);
+        v4dRes = _mm256_mul_pd(v4dRes, v4dTmp2);
     }
     if (k <= n) {
-        v2dTmp2 = rbdKooNRecursiveStepV2dSse2(data, time, n, k);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmp2);
-        v2dRes = _mm_add_pd(v2dRes, v2dTmp1);
+        v4dTmp2 = rbdKooNRecursiveStepV4dAvx(data, time, n, k);
+        v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dTmp2);
+        v4dRes = _mm256_add_pd(v4dRes, v4dTmp1);
     }
-    return v2dRes;
+    return v4dRes;
 }
 
 
-#endif /* CPU_X86_SSE2 */
+#endif /* CPU_X86_AVX */

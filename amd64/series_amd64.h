@@ -1,6 +1,6 @@
 /*
- *  Component: series_x86.h
- *  Series RBD management - x86 platform-specific implementation
+ *  Component: series_amd64.h
+ *  Series RBD management - amd64 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,8 +19,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SERIES_X86_H_
-#define SERIES_X86_H_
+#ifndef SERIES_AMD64_H_
+#define SERIES_AMD64_H_
 
 
 #include "../generic/rbd_internal_generic.h"
@@ -34,16 +34,16 @@ void rbdSeriesIdenticalStepV2dSse2(struct rbdSeriesData *data, unsigned int time
 #endif /* CPU_X86_SSE2 */
 
 #if CPU_X86_AVX != 0
-/* Platform-specific functions for x86 AVX instruction set */
+/* Platform-specific functions for amd64 AVX instruction set */
 void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time);
 #endif /* CPU_X86_AVX */
 
 #if CPU_X86_AVX512F != 0
-/* Platform-specific functions for x86 AVX512F instruction set */
+/* Platform-specific functions for amd64 AVX512F instruction set */
 void rbdSeriesGenericStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time);
 #endif /* CPU_X86_AVX512F */
 
 
-#endif /* SERIES_X86_H_ */
+#endif /* SERIES_AMD64_H_ */

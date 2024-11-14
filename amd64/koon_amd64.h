@@ -1,6 +1,6 @@
 /*
- *  Component: koon_x86.c
- *  KooN (K-out-of-N) RBD management - x86 platform-specific implementation
+ *  Component: koon_amd64.c
+ *  KooN (K-out-of-N) RBD management - amd64 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,8 +19,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef KOON_X86_H_
-#define KOON_X86_H_
+#ifndef KOON_AMD64_H_
+#define KOON_AMD64_H_
 
 
 #include "../generic/rbd_internal_generic.h"
@@ -37,7 +37,7 @@ void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned
 #endif /* CPU_X86_SSE2 */
 
 #if CPU_X86_AVX != 0
-/* Platform-specific functions for x86 AVX instruction set */
+/* Platform-specific functions for amd64 AVX instruction set */
 void rbdKooNGenericSuccessStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNGenericFailStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNRecursionV4dAvx(struct rbdKooNGenericData *data, unsigned int time);
@@ -46,7 +46,7 @@ void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned 
 #endif /* CPU_X86_AVX */
 
 #if CPU_X86_FMA != 0
-/* Platform-specific functions for x86 FMA instruction set */
+/* Platform-specific functions for amd64 FMA instruction set */
 void rbdKooNGenericSuccessStepV4dFma(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNGenericFailStepV4dFma(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNRecursionV4dFma(struct rbdKooNGenericData *data, unsigned int time);
@@ -58,7 +58,7 @@ void rbdKooNIdenticalSuccessStepV2dFma(struct rbdKooNIdenticalData *data, unsign
 #endif /* CPU_X86_FMA */
 
 #if CPU_X86_AVX512F != 0
-/* Platform-specific functions for x86 AVX512F instruction set */
+/* Platform-specific functions for amd64 AVX512F instruction set */
 void rbdKooNGenericSuccessStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNGenericFailStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNRecursionV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time);
@@ -67,4 +67,4 @@ void rbdKooNIdenticalFailStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsig
 #endif /* CPU_X86_AVX512F */
 
 
-#endif /* KOON_X86_H_ */
+#endif /* KOON_AMD64_H_ */

@@ -1,6 +1,6 @@
 /*
- *  Component: bridge_x86.c
- *  Bridge RBD management - x86 platform-specific implementation
+ *  Component: parallel_amd64.c
+ *  Parallel RBD management - amd64 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,15 +23,15 @@
 #include "../generic/rbd_internal_generic.h"
 
 #if CPU_X86_SSE2 != 0
-#include "rbd_internal_x86.h"
-#include "bridge_x86.h"
-#include "../bridge.h"
+#include "rbd_internal_amd64.h"
+#include "parallel_amd64.h"
+#include "../parallel.h"
 
 
 /**
- * rbdBridgeGenericWorker
+ * rbdParallelGenericWorker
  *
- * Bridge RBD Worker function with x86 platform-specific instruction sets
+ * Parallel RBD Worker function with amd64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -40,26 +40,26 @@
  *      None
  *
  * Description:
- *  This function implements the Bridge RBD Worker exploiting x86 platform-specific instruction sets.
- *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
+ *  This function implements the Parallel RBD Worker exploiting amd64 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a Parallel RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a
+ *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a
  *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Bridge RBD
+ *                      SMP computation of Parallel RBD
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdBridgeGenericWorker(void *arg)
+HIDDEN void *rbdParallelGenericWorker(void *arg)
 {
-    struct rbdBridgeData *data;
+    struct rbdParallelData *data;
     unsigned int time;
     unsigned int timeLimit;
     unsigned int numCores;
 
-    /* Retrieve Bridge RBD data */
-    data = (struct rbdBridgeData *)arg;
+    /* Retrieve Parallel RBD data */
+    data = (struct rbdParallelData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
     /* Retrieve last time instant to be processed by worker */
@@ -75,29 +75,29 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V8D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V8D_SIZE));
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV8dAvx512f(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepV8dAvx512f(data, time);
             /* Increment current time instant */
             time += (numCores * V8D_SIZE);
         }
         /* Are (at least) 4 time instants remaining? */
         if ((time + V4D_SIZE) <= timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV4dFma(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepV4dFma(data, time);
             /* Increment current time instant */
             time += V4D_SIZE;
         }
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV2dFma(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepV2dFma(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepS1d(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepS1d(data, time);
         }
 
         return NULL;
@@ -112,22 +112,22 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V4D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV4dFma(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepV4dFma(data, time);
             /* Increment current time instant */
             time += (numCores * V4D_SIZE);
         }
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV2dFma(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepV2dFma(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepS1d(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepS1d(data, time);
         }
 
         return NULL;
@@ -142,22 +142,22 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V4D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV4dAvx(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepV4dAvx(data, time);
             /* Increment current time instant */
             time += (numCores * V4D_SIZE);
         }
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV2dSse2(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepS1d(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepS1d(data, time);
         }
 
         return NULL;
@@ -171,15 +171,15 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV2dSse2(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepV2dSse2(data, time);
             /* Increment current time instant */
             time += (numCores * V2D_SIZE);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepS1d(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelGenericStepS1d(data, time);
         }
 
         return NULL;
@@ -187,8 +187,8 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
 
     /* For each time instant to be processed... */
     while (time < timeLimit) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelGenericStepS1d(data, time);
         /* Increment current time instant */
         time += numCores;
     }
@@ -197,9 +197,9 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
 }
 
 /**
- * rbdBridgeIdenticalWorker
+ * rbdParallelIdenticalWorker
  *
- * Identical Bridge RBD Worker function with x86 platform-specific instruction sets
+ * Identical Parallel RBD Worker function with amd64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -208,26 +208,26 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical Bridge RBD Worker exploiting x86 platform-specific instruction sets.
- *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
+ *  This function implements the identical Parallel RBD Worker exploiting amd64 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Parallel RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a
+ *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a
  *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Bridge RBD
+ *                      SMP computation of Parallel RBD
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
+HIDDEN void *rbdParallelIdenticalWorker(void *arg)
 {
-    struct rbdBridgeData *data;
+    struct rbdParallelData *data;
     unsigned int time;
     unsigned int timeLimit;
     unsigned int numCores;
 
-    /* Retrieve Bridge RBD data */
-    data = (struct rbdBridgeData *)arg;
+    /* Retrieve Parallel RBD data */
+    data = (struct rbdParallelData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
     /* Retrieve last time instant to be processed by worker */
@@ -243,64 +243,34 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V8D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V8D_SIZE));
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV8dAvx512f(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepV8dAvx512f(data, time);
             /* Increment current time instant */
             time += (numCores * V8D_SIZE);
         }
         /* Are (at least) 4 time instants remaining? */
         if ((time + V4D_SIZE) <= timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV4dFma(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepV4dAvx(data, time);
             /* Increment current time instant */
             time += V4D_SIZE;
         }
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV2dFma(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepS1d(data, time);
         }
 
         return NULL;
     }
 #endif /* CPU_X86_AVX512F */
-
-#if CPU_X86_FMA != 0
-    if (x86FmaSupported()) {
-        time *= V4D_SIZE;
-        /* For each time instant to be processed (blocks of 4 time instants)... */
-        while ((time + V4D_SIZE) <= timeLimit) {
-            /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V4D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV4dFma(data, time);
-            /* Increment current time instant */
-            time += (numCores * V4D_SIZE);
-        }
-        /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV2dFma(data, time);
-            /* Increment current time instant */
-            time += V2D_SIZE;
-        }
-        /* Is 1 time instant remaining? */
-        if (time < timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
-        }
-
-        return NULL;
-    }
-#endif /* CPU_X86_FMA */
 
 #if CPU_X86_AVX != 0
     if (x86AvxSupported()) {
@@ -310,22 +280,22 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V4D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV4dAvx(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepV4dAvx(data, time);
             /* Increment current time instant */
             time += (numCores * V4D_SIZE);
         }
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D_SIZE) <= timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV2dSse2(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D_SIZE;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepS1d(data, time);
         }
 
         return NULL;
@@ -339,15 +309,15 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
             /* Prefetch for next iteration */
             prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D_SIZE));
             prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV2dSse2(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
             time += (numCores * V2D_SIZE);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepS1d(data, time);
         }
 
         return NULL;
@@ -355,8 +325,8 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
 
     /* For each time instant to be processed... */
     while (time < timeLimit) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelIdenticalStepS1d(data, time);
         /* Increment current time instant */
         time += numCores;
     }

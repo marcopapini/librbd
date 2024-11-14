@@ -1,6 +1,6 @@
 /*
- *  Component: parallel_x86.h
- *  Parallel RBD management - x86 platform-specific implementation
+ *  Component: parallel_amd64.h
+ *  Parallel RBD management - amd64 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,8 +19,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef PARALLEL_X86_H_
-#define PARALLEL_X86_H_
+#ifndef PARALLEL_AMD64_H_
+#define PARALLEL_AMD64_H_
 
 
 #include "../generic/rbd_internal_generic.h"
@@ -34,22 +34,22 @@ void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int 
 #endif /* CPU_X86_SSE2 */
 
 #if CPU_X86_AVX != 0
-/* Platform-specific functions for x86 AVX instruction set */
+/* Platform-specific functions for amd64 AVX instruction set */
 void rbdParallelGenericStepV4dAvx(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepV4dAvx(struct rbdParallelData *data, unsigned int time);
 #endif /* CPU_X86_AVX */
 
 #if CPU_X86_FMA != 0
-/* Platform-specific functions for x86 FMA instruction set */
+/* Platform-specific functions for amd64 FMA instruction set */
 void rbdParallelGenericStepV4dFma(struct rbdParallelData *data, unsigned int time);
 void rbdParallelGenericStepV2dFma(struct rbdParallelData *data, unsigned int time);
 #endif /* CPU_X86_FMA */
 
 #if CPU_X86_AVX512F != 0
-/* Platform-specific functions for x86 AVX512F instruction set */
+/* Platform-specific functions for amd64 AVX512F instruction set */
 void rbdParallelGenericStepV8dAvx512f(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepV8dAvx512f(struct rbdParallelData *data, unsigned int time);
 #endif /* CPU_X86_AVX512F */
 
 
-#endif /* PARALLEL_X86_H_ */
+#endif /* PARALLEL_AMD64_H_ */

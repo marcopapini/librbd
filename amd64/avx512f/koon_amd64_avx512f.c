@@ -1,6 +1,6 @@
 /*
- *  Component: koon_x86_avx512f.c
- *  KooN (K-out-of-N) RBD management - Optimized using x86 AVX512F instruction set
+ *  Component: koon_amd64_avx512f.c
+ *  KooN (K-out-of-N) RBD management - Optimized using amd64 AVX512F instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,8 +23,8 @@
 #include "../../generic/rbd_internal_generic.h"
 
 #if CPU_X86_AVX512F != 0
-#include "../rbd_internal_x86.h"
-#include "../koon_x86.h"
+#include "../rbd_internal_amd64.h"
+#include "../koon_amd64.h"
 
 
 static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
@@ -33,7 +33,7 @@ static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct 
 /**
  * rbdKooNGenericSuccessStepV8dAvx512f
  *
- * Generic KooN RBD Step function from working components with x86 AVX512F 512bit
+ * Generic KooN RBD Step function from working components with amd64 AVX512F 512bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -43,7 +43,7 @@ static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct 
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD function exploiting x86 AVX512F 512bit.
+ *  This function implements the generic KooN RBD function exploiting amd64 AVX512F 512bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the working components
  *
@@ -109,7 +109,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericSuccessStepV8dAvx512f(struc
 /**
  * rbdKooNGenericFailStepV8dAvx512f
  *
- * Generic KooN RBD Step function from failed components with x86 AVX512F 512bit
+ * Generic KooN RBD Step function from failed components with amd64 AVX512F 512bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -119,7 +119,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericSuccessStepV8dAvx512f(struc
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD function exploiting x86 AVX512F 512bit.
+ *  This function implements the generic KooN RBD function exploiting amd64 AVX512F 512bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the failed components
  *
@@ -185,7 +185,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericFailStepV8dAvx512f(struct r
 /**
  * rbdKooNRecursionV8dAvx512f
  *
- * Compute KooN RBD though Recursive method with x86 AVX512F 512bit
+ * Compute KooN RBD though Recursive method with amd64 AVX512F 512bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -196,7 +196,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericFailStepV8dAvx512f(struct r
  *
  * Description:
  *  This function computes the reliability of KooN RBD system through recursion
- *  exploiting x86 AVX512F 512bit
+ *  exploiting amd64 AVX512F 512bit
  *
  * Parameters:
  *      data: KooN RBD data structure
@@ -218,7 +218,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNRecursionV8dAvx512f(struct rbdKooN
 /**
  * rbdKooNIdenticalSuccessStepV8dAvx512f
  *
- * Identical KooN RBD Step function from working components with x86 AVX512F 512bit
+ * Identical KooN RBD Step function from working components with amd64 AVX512F 512bit
  *
  * Input:
  *      struct rbdKooNIdenticalData *data
@@ -228,7 +228,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNRecursionV8dAvx512f(struct rbdKooN
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD function exploiting x86 AVX512F 512bit.
+ *  This function implements the identical KooN RBD function exploiting amd64 AVX512F 512bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the working components
  *
@@ -282,7 +282,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalSuccessStepV8dAvx512f(str
 /**
  * rbdKooNIdenticalFailStepV8dAvx512f
  *
- * Identical KooN RBD Step function from failed components with x86 AVX512F 512bit
+ * Identical KooN RBD Step function from failed components with amd64 AVX512F 512bit
  *
  * Input:
  *      struct rbdKooNIdenticalData *data
@@ -292,7 +292,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalSuccessStepV8dAvx512f(str
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD function exploiting x86 AVX512F 512bit.
+ *  This function implements the identical KooN RBD function exploiting amd64 AVX512F 512bit.
  *  It is responsible to compute the reliability of a KooN RBD system
  *  taking into account the failed components
  *
@@ -348,7 +348,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct
 /**
  * rbdKooNRecursiveStepV8dAvx512f
  *
- * Recursive KooN RBD Step function with x86 AVX512F 512bit
+ * Recursive KooN RBD Step function with amd64 AVX512F 512bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -360,7 +360,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting x86 AVX512F 512bit.
+ *  This function implements the recursive KooN RBD function exploiting amd64 AVX512F 512bit.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:

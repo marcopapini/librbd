@@ -1,6 +1,6 @@
 /*
- *  Component: parallel_x86_fma.c
- *  Parallel RBD management - Optimized using x86 FMA instruction set
+ *  Component: parallel_amd64_fma.c
+ *  Parallel RBD management - Optimized using amd64 FMA instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -23,14 +23,14 @@
 #include "../../generic/rbd_internal_generic.h"
 
 #if CPU_X86_FMA != 0
-#include "../rbd_internal_x86.h"
-#include "../parallel_x86.h"
+#include "../rbd_internal_amd64.h"
+#include "../parallel_amd64.h"
 
 
 /**
  * rbdParallelGenericStepV4dFma
  *
- * Generic Parallel RBD step function with x86 FMA3 256bit
+ * Generic Parallel RBD step function with amd64 FMA3 256bit
  *
  * Input:
  *      struct rbdParallelData *data
@@ -40,7 +40,7 @@
  *      None
  *
  * Description:
- *  This function implements the generic Parallel RBD step exploiting x86 FMA3 256bit.
+ *  This function implements the generic Parallel RBD step exploiting amd64 FMA3 256bit.
  *  It is responsible to compute the reliability of a Parallel block with generic components
  *  given their reliabilities
  *
@@ -70,7 +70,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV4dFma(struct rbdParall
 /**
  * rbdParallelGenericStepV2dFma
  *
- * Generic Parallel RBD step function with x86 FMA3 128bit
+ * Generic Parallel RBD step function with amd64 FMA3 128bit
  *
  * Input:
  *      struct rbdParallelData *data
@@ -80,7 +80,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV4dFma(struct rbdParall
  *      None
  *
  * Description:
- *  This function implements the generic Parallel RBD step exploiting x86 FMA3 128bit.
+ *  This function implements the generic Parallel RBD step exploiting amd64 FMA3 128bit.
  *  It is responsible to compute the reliability of a Parallel block with generic components
  *  given their reliabilities
  *
