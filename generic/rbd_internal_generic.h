@@ -30,9 +30,10 @@
 #include "architecture.h"
 
 
-#define V2D_SIZE                    (2)         /* Size of vector of 2 doubles (128bit) */
-#define V4D_SIZE                    (4)         /* Size of vector of 4 doubles (256bit) */
-#define V8D_SIZE                    (8)         /* Size of vector of 8 doubles (512bit) */
+#define S1D                         (1)         /* Scalar of 1 double (64 bit)          */
+#define V2D                         (2)         /* Vector of 2 doubles (128bit)         */
+#define V4D                         (4)         /* Vector of 4 doubles (256bit)         */
+#define V8D                         (8)         /* Vector of 8 doubles (512bit)         */
 
 
 /*< If CPU_SMP flag has not been provided, disable SMP */

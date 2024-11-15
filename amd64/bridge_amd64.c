@@ -69,30 +69,30 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
 
 #if CPU_ENABLE_SIMD != 0
     if (x86Avx512fSupported()) {
-        time *= V8D_SIZE;
+        time *= V8D;
         /* For each time instant to be processed (blocks of 8 time instants)... */
-        while ((time + V8D_SIZE) <= timeLimit) {
+        while ((time + V8D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V8D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V8D_SIZE));
+            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V8D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V8D));
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeGenericStepV8dAvx512f(data, time);
             /* Increment current time instant */
-            time += (numCores * V8D_SIZE);
+            time += (numCores * V8D);
         }
         /* Are (at least) 4 time instants remaining? */
-        if ((time + V4D_SIZE) <= timeLimit) {
+        if ((time + V4D) <= timeLimit) {
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeGenericStepV4dFma(data, time);
             /* Increment current time instant */
-            time += V4D_SIZE;
+            time += V4D;
         }
         /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D_SIZE) <= timeLimit) {
+        if ((time + V2D) <= timeLimit) {
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeGenericStepV2dFma(data, time);
             /* Increment current time instant */
-            time += V2D_SIZE;
+            time += V2D;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
@@ -104,23 +104,23 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
     }
 
     if (x86FmaSupported()) {
-        time *= V4D_SIZE;
+        time *= V4D;
         /* For each time instant to be processed (blocks of 4 time instants)... */
-        while ((time + V4D_SIZE) <= timeLimit) {
+        while ((time + V4D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V4D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
+            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V4D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D));
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeGenericStepV4dFma(data, time);
             /* Increment current time instant */
-            time += (numCores * V4D_SIZE);
+            time += (numCores * V4D);
         }
         /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D_SIZE) <= timeLimit) {
+        if ((time + V2D) <= timeLimit) {
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeGenericStepV2dFma(data, time);
             /* Increment current time instant */
-            time += V2D_SIZE;
+            time += V2D;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
@@ -132,23 +132,23 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
     }
 
     if (x86AvxSupported()) {
-        time *= V4D_SIZE;
+        time *= V4D;
         /* For each time instant to be processed (blocks of 4 time instants)... */
-        while ((time + V4D_SIZE) <= timeLimit) {
+        while ((time + V4D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V4D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
+            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V4D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D));
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeGenericStepV4dAvx(data, time);
             /* Increment current time instant */
-            time += (numCores * V4D_SIZE);
+            time += (numCores * V4D);
         }
         /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D_SIZE) <= timeLimit) {
+        if ((time + V2D) <= timeLimit) {
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeGenericStepV2dSse2(data, time);
             /* Increment current time instant */
-            time += V2D_SIZE;
+            time += V2D;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
@@ -160,16 +160,16 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
     }
 
     if (x86Sse2Supported()) {
-        time *= V2D_SIZE;
+        time *= V2D;
         /* For each time instant to be processed (blocks of 2 time instants)... */
-        while ((time + V2D_SIZE) <= timeLimit) {
+        while ((time + V2D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeGenericStepV2dSse2(data, time);
             /* Increment current time instant */
-            time += (numCores * V2D_SIZE);
+            time += (numCores * V2D);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
@@ -233,30 +233,30 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
 
 #if CPU_ENABLE_SIMD != 0
     if (x86Avx512fSupported()) {
-        time *= V8D_SIZE;
+        time *= V8D;
         /* For each time instant to be processed (blocks of 8 time instants)... */
-        while ((time + V8D_SIZE) <= timeLimit) {
+        while ((time + V8D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V8D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V8D_SIZE));
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V8D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V8D));
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeIdenticalStepV8dAvx512f(data, time);
             /* Increment current time instant */
-            time += (numCores * V8D_SIZE);
+            time += (numCores * V8D);
         }
         /* Are (at least) 4 time instants remaining? */
-        if ((time + V4D_SIZE) <= timeLimit) {
+        if ((time + V4D) <= timeLimit) {
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeIdenticalStepV4dFma(data, time);
             /* Increment current time instant */
-            time += V4D_SIZE;
+            time += V4D;
         }
         /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D_SIZE) <= timeLimit) {
+        if ((time + V2D) <= timeLimit) {
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeIdenticalStepV2dFma(data, time);
             /* Increment current time instant */
-            time += V2D_SIZE;
+            time += V2D;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
@@ -268,23 +268,23 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
     }
 
     if (x86FmaSupported()) {
-        time *= V4D_SIZE;
+        time *= V4D;
         /* For each time instant to be processed (blocks of 4 time instants)... */
-        while ((time + V4D_SIZE) <= timeLimit) {
+        while ((time + V4D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V4D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V4D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D));
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeIdenticalStepV4dFma(data, time);
             /* Increment current time instant */
-            time += (numCores * V4D_SIZE);
+            time += (numCores * V4D);
         }
         /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D_SIZE) <= timeLimit) {
+        if ((time + V2D) <= timeLimit) {
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeIdenticalStepV2dFma(data, time);
             /* Increment current time instant */
-            time += V2D_SIZE;
+            time += V2D;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
@@ -296,23 +296,23 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
     }
 
     if (x86AvxSupported()) {
-        time *= V4D_SIZE;
+        time *= V4D;
         /* For each time instant to be processed (blocks of 4 time instants)... */
-        while ((time + V4D_SIZE) <= timeLimit) {
+        while ((time + V4D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V4D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D_SIZE));
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V4D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V4D));
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeIdenticalStepV4dAvx(data, time);
             /* Increment current time instant */
-            time += (numCores * V4D_SIZE);
+            time += (numCores * V4D);
         }
         /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D_SIZE) <= timeLimit) {
+        if ((time + V2D) <= timeLimit) {
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
-            time += V2D_SIZE;
+            time += V2D;
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
@@ -324,16 +324,16 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
     }
 
     if (x86Sse2Supported()) {
-        time *= V2D_SIZE;
+        time *= V2D;
         /* For each time instant to be processed (blocks of 2 time instants)... */
-        while ((time + V2D_SIZE) <= timeLimit) {
+        while ((time + V2D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
-            time += (numCores * V2D_SIZE);
+            time += (numCores * V2D);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {

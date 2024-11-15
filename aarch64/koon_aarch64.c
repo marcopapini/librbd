@@ -78,15 +78,15 @@ void *rbdKooNFillWorker(void *arg)
     /* Define vector (2d) with provided value */
     m128d = vdupq_n_f64(data->value);
 
-    time *= V2D_SIZE;
+    time *= V2D;
     /* For each time instant (blocks of 2 time instants)... */
-    while ((time + V2D_SIZE) <= timeLimit) {
+    while ((time + V2D) <= timeLimit) {
         /* Prefetch for next iteration */
-        prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+        prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
         /* Fill output Reliability array with fixed value */
         vst1q_f64(&data->output[time], m128d);
         /* Increment current time instant */
-        time += (numCores * V2D_SIZE);
+        time += (numCores * V2D);
     }
     /* Is 1 time instant remaining? */
     if (time < timeLimit) {
@@ -147,19 +147,19 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
     numCores = data->numCores;
 
 #if CPU_ENABLE_SIMD != 0
-    time *= V2D_SIZE;
+    time *= V2D;
     if (data->bRecursive == 0) {
         /* If compute unreliability flag is not set... */
         if (data->bComputeUnreliability == 0) {
             /* For each time instant to be processed (blocks of 2 time instants)... */
-            while ((time + V2D_SIZE) <= timeLimit) {
+            while ((time + V2D) <= timeLimit) {
                 /* Prefetch for next iteration */
-                prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D_SIZE));
-                prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+                prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D));
+                prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
                 /* Compute reliability of KooN RBD at current time instant from working components */
                 rbdKooNGenericSuccessStepV2dNeon(data, time);
                 /* Increment current time instant */
-                time += (numCores * V2D_SIZE);
+                time += (numCores * V2D);
             }
             /* Is 1 time instant remaining? */
             if (time < timeLimit) {
@@ -169,14 +169,14 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
         }
         else {
             /* For each time instant to be processed (blocks of 2 time instants)... */
-            while ((time + V2D_SIZE) <= timeLimit) {
+            while ((time + V2D) <= timeLimit) {
                 /* Prefetch for next iteration */
-                prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D_SIZE));
-                prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+                prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D));
+                prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
                 /* Compute reliability of KooN RBD at current time instant from failed components */
                 rbdKooNGenericFailStepV2dNeon(data, time);
                 /* Increment current time instant */
-                time += (numCores * V2D_SIZE);
+                time += (numCores * V2D);
             }
             /* Is 1 time instant remaining? */
             if (time < timeLimit) {
@@ -187,14 +187,14 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
     }
     else {
         /* For each time instant to be processed (blocks of 2 time instants)... */
-        while ((time + V2D_SIZE) <= timeLimit) {
+        while ((time + V2D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
             /* Recursively compute reliability of KooN RBD at current time instant */
             rbdKooNRecursionV2dNeon(data, time);
             /* Increment current time instant */
-            time += (numCores * V2D_SIZE);
+            time += (numCores * V2D);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
@@ -281,18 +281,18 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
     numCores = data->numCores;
 
 #if CPU_ENABLE_SIMD != 0
-    time *= V2D_SIZE;
+    time *= V2D;
     /* If compute unreliability flag is not set... */
     if (data->bComputeUnreliability == 0) {
         /* For each time instant to be processed (blocks of 2 time instants)... */
-        while ((time + V2D_SIZE) <= timeLimit) {
+        while ((time + V2D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
             /* Compute reliability of KooN RBD at current time instant from working components */
             rbdKooNIdenticalSuccessStepV2dNeon(data, time);
             /* Increment current time instant */
-            time += (numCores * V2D_SIZE);
+            time += (numCores * V2D);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {
@@ -302,14 +302,14 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
     }
     else {
         /* For each time instant to be processed (blocks of 2 time instants)... */
-        while ((time + V2D_SIZE) <= timeLimit) {
+        while ((time + V2D) <= timeLimit) {
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D_SIZE));
-            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
             /* Compute reliability of KooN RBD at current time instant from failed components */
             rbdKooNIdenticalFailStepV2dNeon(data, time);
             /* Increment current time instant */
-            time += (numCores * V2D_SIZE);
+            time += (numCores * V2D);
         }
         /* Is 1 time instant remaining? */
         if (time < timeLimit) {

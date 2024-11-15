@@ -69,16 +69,16 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
     numCores = data->numCores;
 
 #if CPU_ENABLE_SIMD != 0
-    time *= V2D_SIZE;
+    time *= V2D;
     /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D_SIZE) <= timeLimit) {
+    while ((time + V2D) <= timeLimit) {
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D_SIZE));
-        prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
         /* Compute reliability of Parallel RBD at current time instant */
         rbdParallelGenericStepV2dNeon(data, time);
         /* Increment current time instant */
-        time += (numCores * V2D_SIZE);
+        time += (numCores * V2D);
     }
     /* Is 1 time instant remaining? */
     if (time < timeLimit) {
@@ -140,16 +140,16 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
     numCores = data->numCores;
 
 #if CPU_ENABLE_SIMD != 0
-    time *= V2D_SIZE;
+    time *= V2D;
     /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D_SIZE) <= timeLimit) {
+    while ((time + V2D) <= timeLimit) {
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D_SIZE));
-        prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D_SIZE));
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
         /* Compute reliability of Parallel RBD at current time instant */
         rbdParallelIdenticalStepV2dNeon(data, time);
         /* Increment current time instant */
-        time += (numCores * V2D_SIZE);
+        time += (numCores * V2D);
     }
     /* Is 1 time instant remaining? */
     if (time < timeLimit) {
