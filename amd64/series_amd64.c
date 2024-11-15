@@ -22,7 +22,7 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if CPU_X86_SSE2 != 0
+#if defined(ARCH_AMD64)
 #include "rbd_internal_amd64.h"
 #include "series_amd64.h"
 #include "../series.h"
@@ -67,7 +67,7 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
     /* Retrieve number of cores in SMP system */
     numCores = data->numCores;
 
-#if CPU_X86_AVX512F != 0
+#if CPU_ENABLE_SIMD != 0
     if (x86Avx512fSupported()) {
         time *= V8D_SIZE;
         /* For each time instant to be processed (blocks of 8 time instants)... */
@@ -102,9 +102,7 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_AVX512F */
 
-#if CPU_X86_AVX != 0
     if (x86AvxSupported()) {
         time *= V4D_SIZE;
         /* For each time instant to be processed (blocks of 4 time instants)... */
@@ -132,7 +130,6 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_AVX */
 
     if (x86Sse2Supported()) {
         time *= V2D_SIZE;
@@ -154,6 +151,7 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
 
         return NULL;
     }
+#endif /* CPU_ENABLE_SIMD */
 
     /* For each time instant to be processed... */
     while (time < timeLimit) {
@@ -205,7 +203,7 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
     /* Retrieve number of cores in SMP system */
     numCores = data->numCores;
 
-#if CPU_X86_AVX512F != 0
+#if CPU_ENABLE_SIMD != 0
     if (x86Avx512fSupported()) {
         time *= V8D_SIZE;
         /* For each time instant to be processed (blocks of 8 time instants)... */
@@ -240,9 +238,7 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_AVX512F */
 
-#if CPU_X86_AVX != 0
     if (x86AvxSupported()) {
         time *= V4D_SIZE;
         /* For each time instant to be processed (blocks of 4 time instants)... */
@@ -270,7 +266,6 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_AVX */
 
     if (x86Sse2Supported()) {
         time *= V2D_SIZE;
@@ -292,6 +287,7 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 
         return NULL;
     }
+#endif /* CPU_ENABLE_SIMD */
 
     /* For each time instant to be processed... */
     while (time < timeLimit) {
@@ -303,4 +299,5 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 
     return NULL;
 }
-#endif /* CPU_X86_AVX */
+
+#endif /* defined(ARCH_AMD64) */

@@ -309,24 +309,18 @@ static void getProcessorInfo(void)
     processor.numCores = (unsigned int)count;
 #endif /* CPU_SMP */
 
-#if CPU_X86_SSE2 != 0
+#if defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0
     if (__builtin_cpu_supports("sse2") > 0) {
         processor.sse2Supported = 1;
-#if CPU_X86_AVX != 0
         if (__builtin_cpu_supports("avx") > 0) {
             processor.avxSupported = 1;
-#if CPU_X86_FMA != 0
             if (__builtin_cpu_supports("fma") > 0) {
                 processor.fmaSupported = 1;
-#if CPU_X86_AVX512F != 0
                 if (__builtin_cpu_supports("avx512f") > 0) {
                     processor.avx512fSupported = 1;
                 }
-#endif /* CPU_X86_AVX512F */
             }
-#endif /* CPU_X86_FMA */
         }
-#endif /* CPU_X86_AVX */
     }
-#endif /* CPU_X86_SSE2 */
+#endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */
 }

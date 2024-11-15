@@ -22,7 +22,7 @@
 
 #include "../../generic/rbd_internal_generic.h"
 
-#if CPU_X86_SSE2 != 0
+#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../parallel_amd64.h"
 
@@ -111,4 +111,4 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdParallelIdenticalStepV2dSse2(struct rbdPa
 }
 
 
-#endif /* CPU_X86_SSE2 */
+#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */

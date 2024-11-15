@@ -25,7 +25,7 @@
 #include "../series.h"
 
 
-#ifndef DISABLE_GENERIC_FUNCTIONS
+#if defined(ARCH_UNKNOWN)
 /**
  * rbdSeriesGenericWorker
  *
@@ -123,7 +123,7 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 
     return NULL;
 }
-#endif /* DISABLE_GENERIC_FUNCTIONS */
+#endif /* defined(ARCH_UNKNOWN) */
 
 /**
  * rbdSeriesGenericStepS1d

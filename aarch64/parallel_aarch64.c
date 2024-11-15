@@ -22,7 +22,7 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if CPU_AARCH64_NEON != 0
+#if defined(ARCH_AARCH64)
 #include "rbd_internal_aarch64.h"
 #include "parallel_aarch64.h"
 #include "../parallel.h"
@@ -62,12 +62,14 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
     /* Retrieve Parallel RBD data */
     data = (struct rbdParallelData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = (data->batchIdx * V2D_SIZE);
+    time = data->batchIdx;
     /* Retrieve last time instant to be processed by worker */
     timeLimit = data->numTimes;
     /* Retrieve number of cores in SMP system */
     numCores = data->numCores;
 
+#if CPU_ENABLE_SIMD != 0
+    time *= V2D_SIZE;
     /* For each time instant to be processed (blocks of 2 time instants)... */
     while ((time + V2D_SIZE) <= timeLimit) {
         /* Prefetch for next iteration */
@@ -82,6 +84,17 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
     if (time < timeLimit) {
         /* Compute reliability of Parallel RBD at current time instant */
         rbdParallelGenericStepS1d(data, time);
+    }
+
+    return NULL;
+#endif /* CPU_ENABLE_SIMD */
+
+    /* For each time instant to be processed... */
+    while (time < timeLimit) {
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelGenericStepS1d(data, time);
+        /* Increment current time instant */
+        time += numCores;
     }
 
     return NULL;
@@ -120,12 +133,14 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
     /* Retrieve Parallel RBD data */
     data = (struct rbdParallelData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = (data->batchIdx * V2D_SIZE);
+    time = data->batchIdx;
     /* Retrieve last time instant to be processed by worker */
     timeLimit = data->numTimes;
     /* Retrieve number of cores in SMP system */
     numCores = data->numCores;
 
+#if CPU_ENABLE_SIMD != 0
+    time *= V2D_SIZE;
     /* For each time instant to be processed (blocks of 2 time instants)... */
     while ((time + V2D_SIZE) <= timeLimit) {
         /* Prefetch for next iteration */
@@ -143,6 +158,17 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
     }
 
     return NULL;
+#endif /* CPU_ENABLE_SIMD */
+
+    /* For each time instant to be processed... */
+    while (time < timeLimit) {
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelIdenticalStepS1d(data, time);
+        /* Increment current time instant */
+        time += numCores;
+    }
+
+    return NULL;
 }
 
-#endif /* CPU_AARCH64_NEON */
+#endif /* defined(ARCH_AARCH64) */

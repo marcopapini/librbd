@@ -26,32 +26,25 @@
 #include "../generic/rbd_internal_generic.h"
 #include "../bridge.h"
 
-
-#if CPU_X86_SSE2 != 0
+#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for x86 SSE2 instruction set */
 void rbdBridgeGenericStepV2dSse2(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV2dSse2(struct rbdBridgeData *data, unsigned int time);
-#endif /* CPU_X86_SSE2 */
 
-#if CPU_X86_AVX != 0
 /* Platform-specific functions for amd64 AVX instruction set */
 void rbdBridgeGenericStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
-#endif /* CPU_X86_AVX */
 
-#if CPU_X86_FMA != 0
-/* Platform-specific functions for amd64 FMA instruction set */
+/* Platform-specific functions for amd64 FMA3 instruction set */
 void rbdBridgeGenericStepV4dFma(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV4dFma(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeGenericStepV2dFma(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV2dFma(struct rbdBridgeData *data, unsigned int time);
-#endif /* CPU_X86_FMA */
 
-#if CPU_X86_AVX512F != 0
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void rbdBridgeGenericStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time);
-#endif /* CPU_X86_AVX512F */
+#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 
 #endif /* BRIDGE_AMD64_H_ */

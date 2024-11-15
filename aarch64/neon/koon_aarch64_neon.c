@@ -22,7 +22,7 @@
 
 #include "../../generic/rbd_internal_generic.h"
 
-#if CPU_AARCH64_NEON != 0
+#if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_aarch64.h"
 #include "../koon_aarch64.h"
 
@@ -394,4 +394,4 @@ static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(s
 }
 
 
-#endif /* CPU_AARCH64_NEON */
+#endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */

@@ -1,6 +1,6 @@
 /*
- *  Component: bridge_aarch64.h
- *  Bridge RBD management - AArch64 platform-specific implementation
+ *  Component: architecture.h
+ *  Retrieval of target architecture
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,19 +19,27 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef BRIDGE_AARCH64_H_
-#define BRIDGE_AARCH64_H_
+#ifndef ARCHITECTURE_H_
+#define ARCHITECTURE_H_
 
 
-#include "../generic/rbd_internal_generic.h"
-#include "../bridge.h"
+#if   defined(i386)        || defined(__i386)   || \
+      defined(__i386__)    || defined(_X86_)    || \
+      defined(_M_IX86)
+/* Intel/AMD x86 architecture */
+#define ARCH_X86
+#elif defined(__amd64__)   || defined(__amd64)  || \
+      defined(__x86_64__)  || defined(__x86_64) || \
+      defined(_M_X64)      || defined(_M_AMD64)
+/* Intel/AMD amd64 architecture */
+#define ARCH_AMD64
+#elif defined(__aarch64__) || defined(_M_ARM64)
+/* ARM aarch64 architecture */
+#define ARCH_AARCH64
+#else
+/* Unknown architecture */
+#define ARCH_UNKNOWN
+#endif
 
 
-#if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
-/* Platform-specific functions for AArch64 NEON instruction set */
-void rbdBridgeGenericStepV2dNeon(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV2dNeon(struct rbdBridgeData *data, unsigned int time);
-#endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
-
-
-#endif /* BRIDGE_AARCH64_H_ */
+#endif /* ARCHITECTURE_H_ */

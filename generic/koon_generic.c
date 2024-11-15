@@ -28,7 +28,7 @@
 static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
-#ifndef DISABLE_GENERIC_FUNCTIONS
+#if defined(ARCH_UNKNOWN)
 /**
  * rbdKooNFillWorker
  *
@@ -213,7 +213,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 
     return NULL;
 }
-#endif /* DISABLE_GENERIC_FUNCTIONS */
+#endif /* defined(ARCH_UNKNOWN) */
 
 /**
  * rbdKooNGenericSuccessStepS1d

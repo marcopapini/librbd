@@ -22,7 +22,7 @@
 
 #include "../../generic/rbd_internal_generic.h"
 
-#if CPU_X86_FMA != 0
+#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../bridge_amd64.h"
 
@@ -247,4 +247,4 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV2dFma(struct rbdBridge
 }
 
 
-#endif /* CPU_X86_FMA */
+#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */

@@ -27,11 +27,11 @@
 #include "../series.h"
 
 
-#if CPU_AARCH64_NEON != 0
+#if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for AArch64 NEON instruction set */
 void rbdSeriesGenericStepV2dNeon(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV2dNeon(struct rbdSeriesData *data, unsigned int time);
-#endif /* CPU_AARCH64_NEON */
+#endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 
 #endif /* SERIES_AARCH64_H_ */

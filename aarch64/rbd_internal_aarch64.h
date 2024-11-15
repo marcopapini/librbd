@@ -23,11 +23,10 @@
 #define RBD_INTERNAL_AARCH64_H_
 
 
-#if CPU_AARCH64_NEON != 0
+#if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 
 
 #include <arm_neon.h>
-
 
 
 VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dZeros;
@@ -39,7 +38,7 @@ VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dMinusTwos;
 FUNCTION_TARGET("arch=armv8-a") float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);
 
 
-#endif /* CPU_AARCH64_NEON */
+#endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 
 #endif /* RBD_INTERNAL_AARCH64_H_ */

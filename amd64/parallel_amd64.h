@@ -27,29 +27,23 @@
 #include "../parallel.h"
 
 
-#if CPU_X86_SSE2 != 0
+#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for x86 SSE2 instruction set */
 void rbdParallelGenericStepV2dSse2(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int time);
-#endif /* CPU_X86_SSE2 */
 
-#if CPU_X86_AVX != 0
 /* Platform-specific functions for amd64 AVX instruction set */
 void rbdParallelGenericStepV4dAvx(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepV4dAvx(struct rbdParallelData *data, unsigned int time);
-#endif /* CPU_X86_AVX */
 
-#if CPU_X86_FMA != 0
 /* Platform-specific functions for amd64 FMA instruction set */
 void rbdParallelGenericStepV4dFma(struct rbdParallelData *data, unsigned int time);
 void rbdParallelGenericStepV2dFma(struct rbdParallelData *data, unsigned int time);
-#endif /* CPU_X86_FMA */
 
-#if CPU_X86_AVX512F != 0
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void rbdParallelGenericStepV8dAvx512f(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepV8dAvx512f(struct rbdParallelData *data, unsigned int time);
-#endif /* CPU_X86_AVX512F */
+#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 
 #endif /* PARALLEL_AMD64_H_ */

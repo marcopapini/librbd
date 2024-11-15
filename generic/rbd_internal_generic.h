@@ -27,6 +27,7 @@
 #include <stdlib.h>
 
 #include "../compiler/compiler.h"
+#include "architecture.h"
 
 
 #define V2D_SIZE                    (2)         /* Size of vector of 2 doubles (128bit) */
@@ -39,58 +40,10 @@
 #define CPU_SMP                         0
 #endif /* CPU_SMP */
 
-/*< If CPU_X86_SSE2 flag has not been provided, disable x86 SSW2 */
-#ifndef CPU_X86_SSE2
-#define CPU_X86_SSE2                    0
-#endif /* CPU_X86_SSE2 */
-
-/*< If CPU_X86_AVX flag has not been provided, disable x86 AVX */
-#ifndef CPU_X86_AVX
-#define CPU_X86_AVX                     0
-#endif /* CPU_X86_AVX */
-
-/*< If CPU_X86_FMA flag has not been provided, disable x86 FMA */
-#ifndef CPU_X86_FMA
-#define CPU_X86_FMA                     0
-#endif /* CPU_X86_FMA */
-
-/*< If CPU_X86_AVX512F flag has not been provided, disable x86 AVX512F */
-#ifndef CPU_X86_AVX512F
-#define CPU_X86_AVX512F                 0
-#endif /* CPU_X86_AVX512F */
-
-/*< If CPU_AARCH64_NEON flag has not been provided, disable AArch64 NEON */
-#ifndef CPU_AARCH64_NEON
-#define CPU_AARCH64_NEON                0
-#endif /* CPU_AARCH64_NEON */
-
-#if CPU_X86_SSE2 == 0
-#if CPU_X86_AVX != 0
-#error "AVX instruction set cannot be enabled without SSE2 instruction set!"
-#endif /* CPU_X86_AVX */
-#endif /* CPU_X86_SSE2 */
-
-#if CPU_X86_AVX == 0
-#if CPU_X86_FMA != 0
-#error "FMA instruction set cannot be enabled without AVX instruction set!"
-#endif /* CPU_X86_FMA */
-#if CPU_X86_AVX512F != 0
-#error "AVX512F instruction set cannot be enabled without AVX instruction set!"
-#endif /* CPU_X86_AVX512F */
-#endif /* CPU_X86_AVX */
-
-#if CPU_X86_FMA == 0
-#if CPU_X86_AVX512F != 0
-#error "AVX512F instruction set cannot be enabled without FMA instruction set!"
-#endif /* CPU_X86_AVX512F */
-#endif /* CPU_X86_FMA */
-
-#if CPU_X86_SSE2 != 0
-#define DISABLE_GENERIC_FUNCTIONS
-#endif /* CPU_X86_AVX */
-#if CPU_AARCH64_NEON != 0
-#define DISABLE_GENERIC_FUNCTIONS
-#endif /* CPU_AARCH64_NEON */
+/*< If CPU_ENABLE_SIMD flag has not been provided, disable SIMD */
+#ifndef CPU_ENABLE_SIMD
+#define CPU_ENABLE_SIMD                 0
+#endif /* CPU_ENABLE_SIMD */
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
 #define MIN_BATCH_SIZE              (10000)     /* Minimum batch size in SMP RBD resolution */

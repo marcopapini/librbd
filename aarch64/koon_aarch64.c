@@ -22,7 +22,7 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if CPU_AARCH64_NEON != 0
+#if defined(ARCH_AARCH64)
 #include "rbd_internal_aarch64.h"
 #include "koon_aarch64.h"
 #include "../koon.h"
@@ -52,25 +52,33 @@
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNFillWorker(void *arg)
+HIDDEN
+#if CPU_ENABLE_SIMD != 0
+FUNCTION_TARGET("arch=armv8-a")
+#endif /* CPU_ENABLE_SIMD */
+void *rbdKooNFillWorker(void *arg)
 {
     struct rbdKooNFillData *data;
     unsigned int time;
     unsigned int timeLimit;
     unsigned int numCores;
+#if CPU_ENABLE_SIMD != 0
     float64x2_t m128d;
+#endif /* CPU_ENABLE_SIMD */
 
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNFillData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = (data->batchIdx * V2D_SIZE);
+    time = data->batchIdx;
     /* Retrieve last time instant to be processed by worker */
     timeLimit = data->numTimes;
     /* Retrieve number of cores in SMP system */
     numCores = data->numCores;
+#if CPU_ENABLE_SIMD != 0
     /* Define vector (2d) with provided value */
     m128d = vdupq_n_f64(data->value);
 
+    time *= V2D_SIZE;
     /* For each time instant (blocks of 2 time instants)... */
     while ((time + V2D_SIZE) <= timeLimit) {
         /* Prefetch for next iteration */
@@ -84,6 +92,16 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
     if (time < timeLimit) {
         /* Fill output Reliability array with fixed value */
         data->output[time++] = data->value;
+    }
+
+    return NULL;
+#endif /* CPU_ENABLE_SIMD */
+
+    /* For each time instant... */
+    while (time < timeLimit) {
+        /* Fill output Reliability array with fixed value */
+        data->output[time] = data->value;
+        time += numCores;
     }
 
     return NULL;
@@ -122,12 +140,14 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNGenericData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = (data->batchIdx * V2D_SIZE);
+    time = data->batchIdx;
     /* Retrieve last time instant to be processed by worker */
     timeLimit = data->numTimes;
     /* Retrieve number of cores in SMP system */
     numCores = data->numCores;
 
+#if CPU_ENABLE_SIMD != 0
+    time *= V2D_SIZE;
     if (data->bRecursive == 0) {
         /* If compute unreliability flag is not set... */
         if (data->bComputeUnreliability == 0) {
@@ -184,6 +204,40 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
     }
 
     return NULL;
+#endif /* CPU_ENABLE_SIMD */
+
+    if (data->bRecursive == 0) {
+        /* If compute unreliability flag is not set... */
+        if (data->bComputeUnreliability == 0) {
+            /* For each time instant to be processed... */
+            while (time < timeLimit) {
+                /* Compute reliability of KooN RBD at current time instant from working components */
+                rbdKooNGenericSuccessStepS1d(data, time);
+                /* Increment current time instant */
+                time += numCores;
+            }
+        }
+        else {
+            /* For each time instant to be processed... */
+            while (time < timeLimit) {
+                /* Compute reliability of KooN RBD at current time instant from failed components */
+                rbdKooNGenericFailStepS1d(data, time);
+                /* Increment current time instant */
+                time += numCores;
+            }
+        }
+    }
+    else {
+        /* For each time instant to be processed... */
+        while (time < timeLimit) {
+            /* Recursively compute reliability of KooN RBD at current time instant */
+            rbdKooNRecursionS1d(data, time);
+            /* Increment current time instant */
+            time += numCores;
+        }
+    }
+
+    return NULL;
 }
 
 /**
@@ -220,12 +274,14 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNIdenticalData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = (data->batchIdx * V2D_SIZE);
+    time = data->batchIdx;
     /* Retrieve last time instant to be processed by worker */
     timeLimit = data->numTimes;
     /* Retrieve number of cores in SMP system */
     numCores = data->numCores;
 
+#if CPU_ENABLE_SIMD != 0
+    time *= V2D_SIZE;
     /* If compute unreliability flag is not set... */
     if (data->bComputeUnreliability == 0) {
         /* For each time instant to be processed (blocks of 2 time instants)... */
@@ -263,6 +319,29 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
     }
 
     return NULL;
+#endif /* CPU_ENABLE_SIMD */
+
+    /* If compute unreliability flag is not set... */
+    if (data->bComputeUnreliability == 0) {
+        /* For each time instant to be processed... */
+        while (time < timeLimit) {
+            /* Compute reliability of KooN RBD at current time instant from working components */
+            rbdKooNIdenticalSuccessStepS1d(data, time);
+            /* Increment current time instant */
+            time += numCores;
+        }
+    }
+    else {
+        /* For each time instant to be processed... */
+        while (time < timeLimit) {
+            /* Compute reliability of KooN RBD at current time instant from failed components */
+            rbdKooNIdenticalFailStepS1d(data, time);
+            /* Increment current time instant */
+            time += numCores;
+        }
+    }
+
+    return NULL;
 }
 
-#endif /* CPU_AARCH64_NEON */
+#endif /* defined(ARCH_AARCH64) */

@@ -27,23 +27,19 @@
 #include "../series.h"
 
 
-#if CPU_X86_SSE2 != 0
+#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for x86 SSE2 instruction set */
 void rbdSeriesGenericStepV2dSse2(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV2dSse2(struct rbdSeriesData *data, unsigned int time);
-#endif /* CPU_X86_SSE2 */
 
-#if CPU_X86_AVX != 0
 /* Platform-specific functions for amd64 AVX instruction set */
 void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time);
-#endif /* CPU_X86_AVX */
 
-#if CPU_X86_AVX512F != 0
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void rbdSeriesGenericStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time);
-#endif /* CPU_X86_AVX512F */
+#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 
 #endif /* SERIES_AMD64_H_ */

@@ -22,7 +22,7 @@
 
 #include "../../generic/rbd_internal_generic.h"
 
-#if CPU_X86_AVX != 0
+#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../parallel_amd64.h"
 
@@ -111,4 +111,4 @@ HIDDEN FUNCTION_TARGET("avx") void rbdParallelIdenticalStepV4dAvx(struct rbdPara
 }
 
 
-#endif /* CPU_X86_AVX */
+#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */

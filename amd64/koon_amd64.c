@@ -22,7 +22,7 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if CPU_X86_SSE2 != 0
+#if defined(ARCH_AMD64)
 #include "rbd_internal_amd64.h"
 #include "koon_amd64.h"
 #include "../koon.h"
@@ -52,26 +52,20 @@
  *  NULL
  */
 HIDDEN
-FUNCTION_TARGET("sse2")
-#if CPU_X86_AVX != 0
-FUNCTION_TARGET("avx")
-#endif  /* CPU_X86_AVX */
-#if CPU_X86_AVX512F != 0
+#if CPU_ENABLE_SIMD != 0
 FUNCTION_TARGET("avx512f")
-#endif  /* CPU_X86_AVX512F */
+#endif /* CPU_ENABLE_SIMD */
 void *rbdKooNFillWorker(void *arg)
 {
     struct rbdKooNFillData *data;
     unsigned int time;
     unsigned int timeLimit;
     unsigned int numCores;
-#if CPU_X86_AVX512F != 0
+#if CPU_ENABLE_SIMD != 0
     __m512d m512d;
-#endif /* CPU_X86_AVX512F */
-#if CPU_X86_AVX != 0
     __m256d m256d;
-#endif /* CPU_X86_AVX */
     __m128d m128d;
+#endif /* CPU_ENABLE_SIMD */
 
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNFillData *)arg;
@@ -82,7 +76,7 @@ void *rbdKooNFillWorker(void *arg)
     /* Retrieve number of cores in SMP system */
     numCores = data->numCores;
 
-#if CPU_X86_AVX512F != 0
+#if CPU_ENABLE_SIMD != 0
     if (x86Avx512fSupported()) {
         time *= V8D_SIZE;
         /* Define vector (8d, 4d and 2d) with provided value */
@@ -121,9 +115,7 @@ void *rbdKooNFillWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_AVX512F */
 
-#if CPU_X86_AVX != 0
     if (x86AvxSupported()) {
         time *= V4D_SIZE;
         /* Define vectors (4d and 2d) with provided value */
@@ -154,7 +146,6 @@ void *rbdKooNFillWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_AVX */
 
     if (x86Sse2Supported()) {
         time *= V2D_SIZE;
@@ -178,11 +169,13 @@ void *rbdKooNFillWorker(void *arg)
 
         return NULL;
     }
+#endif /* CPU_ENABLE_SIMD */
 
     /* For each time instant... */
     while (time < timeLimit) {
         /* Fill output Reliability array with fixed value */
-        data->output[time++] = data->value;
+        data->output[time] = data->value;
+        time += numCores;
     }
 
     return NULL;
@@ -227,7 +220,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
     /* Retrieve number of cores in SMP system */
     numCores = data->numCores;
 
-#if CPU_X86_AVX512F != 0
+#if CPU_ENABLE_SIMD != 0
     if (x86Avx512fSupported()) {
         time *= V8D_SIZE;
         if (data->bRecursive == 0) {
@@ -329,9 +322,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_AVX512F */
 
-#if CPU_X86_FMA != 0
     if (x86FmaSupported()) {
         time *= V4D_SIZE;
         if (data->bRecursive == 0) {
@@ -412,9 +403,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_FMA */
 
-#if CPU_X86_AVX != 0
     if (x86AvxSupported()) {
         time *= V4D_SIZE;
         if (data->bRecursive == 0) {
@@ -495,7 +484,6 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_AVX */
 
     if (x86Sse2Supported()) {
         time *= V2D_SIZE;
@@ -556,6 +544,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
 
         return NULL;
     }
+#endif /* CPU_ENABLE_SIMD */
 
     if (data->bRecursive == 0) {
         /* If compute unreliability flag is not set... */
@@ -631,7 +620,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
     /* Retrieve number of cores in SMP system */
     numCores = data->numCores;
 
-#if CPU_X86_AVX512F != 0
+#if CPU_ENABLE_SIMD != 0
     if (x86Avx512fSupported()) {
         time *= V8D_SIZE;
         /* If compute unreliability flag is not set... */
@@ -700,9 +689,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_AVX512F */
 
-#if CPU_X86_FMA != 0
     if (x86FmaSupported()) {
         time *= V4D_SIZE;
         /* If compute unreliability flag is not set... */
@@ -757,9 +744,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_FMA */
 
-#if CPU_X86_AVX != 0
     if (x86AvxSupported()) {
         time *= V4D_SIZE;
         /* If compute unreliability flag is not set... */
@@ -814,7 +799,6 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 
         return NULL;
     }
-#endif /* CPU_X86_AVX */
 
     if (x86Sse2Supported()) {
         time *= V2D_SIZE;
@@ -856,6 +840,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 
         return NULL;
     }
+#endif /* CPU_ENABLE_SIMD */
 
     /* If compute unreliability flag is not set... */
     if (data->bComputeUnreliability == 0) {
@@ -881,4 +866,4 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 }
 
 
-#endif /* CPU_X86_AVX */
+#endif /* defined(ARCH_AMD64) */

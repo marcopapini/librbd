@@ -25,7 +25,7 @@
 #include "../parallel.h"
 
 
-#ifndef DISABLE_GENERIC_FUNCTIONS
+#if defined(ARCH_UNKNOWN)
 /**
  * rbdParallelGenericWorker
  *
@@ -125,7 +125,7 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
 
     return NULL;
 }
-#endif /* DISABLE_GENERIC_FUNCTIONS */
+#endif /* defined(ARCH_UNKNOWN) */
 
 /**
  * rbdParallelGenericStepS1d

@@ -22,7 +22,7 @@
 
 #include "../../generic/rbd_internal_generic.h"
 
-#if CPU_X86_AVX512F != 0
+#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../parallel_amd64.h"
 
@@ -110,4 +110,4 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdParallelIdenticalStepV8dAvx512f(struct
 }
 
 
-#endif /* CPU_X86_AVX512F */
+#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
