@@ -22,7 +22,7 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if defined(ARCH_AARCH64)
+#if defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0
 #include "rbd_internal_aarch64.h"
 #include "series_aarch64.h"
 #include "../series.h"
@@ -54,45 +54,26 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
 {
     struct rbdSeriesData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
+    time = (data->batchIdx * V2D);
 
-#if CPU_ENABLE_SIMD != 0
-    time *= V2D;
     /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= timeLimit) {
+    while ((time + V2D) <= data->numTimes) {
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
         /* Compute reliability of Series RBD at current time instant */
         rbdSeriesGenericStepV2dNeon(data, time);
         /* Increment current time instant */
-        time += (numCores * V2D);
+        time += (data->numCores * V2D);
     }
     /* Is 1 time instant remaining? */
-    if (time < timeLimit) {
+    if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
         rbdSeriesGenericStepS1d(data, time);
-    }
-
-    return NULL;
-#endif /* CPU_ENABLE_SIMD */
-
-    /* For each time instant to be processed... */
-    while (time < timeLimit) {
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepS1d(data, time);
-        /* Increment current time instant */
-        time += numCores;
     }
 
     return NULL;
@@ -124,48 +105,29 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 {
     struct rbdSeriesData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
+    time = (data->batchIdx * V2D);
 
-#if CPU_ENABLE_SIMD != 0
-    time *= V2D;
     /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= timeLimit) {
+    while ((time + V2D) <= data->numTimes) {
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
         /* Compute reliability of Series RBD at current time instant */
         rbdSeriesIdenticalStepV2dNeon(data, time);
         /* Increment current time instant */
-        time += (numCores * V2D);
+        time += (data->numCores * V2D);
     }
     /* Is 1 time instant remaining? */
-    if (time < timeLimit) {
+    if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
         rbdSeriesIdenticalStepS1d(data, time);
-    }
-
-    return NULL;
-#endif /* CPU_ENABLE_SIMD */
-
-    /* For each time instant to be processed... */
-    while (time < timeLimit) {
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepS1d(data, time);
-        /* Increment current time instant */
-        time += numCores;
     }
 
     return NULL;
 }
 
-#endif /* defined(ARCH_AARCH64) */
+#endif /* defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0 */

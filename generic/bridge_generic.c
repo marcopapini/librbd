@@ -25,7 +25,7 @@
 #include "../bridge.h"
 
 
-#if defined(ARCH_UNKNOWN)
+#if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
 /**
  * rbdBridgeGenericWorker
  *
@@ -53,24 +53,18 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
 {
     struct rbdBridgeData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
 
     /* For each time instant to be processed... */
-    while (time < timeLimit) {
+    while (time < data->numTimes) {
         /* Compute reliability of Bridge RBD at current time instant */
         rbdBridgeGenericStepS1d(data, time);
         /* Increment current time instant */
-        time += numCores;
+        time += data->numCores;
     }
 
     return NULL;
@@ -103,29 +97,23 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
 {
     struct rbdBridgeData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
 
     /* For each time instant to be processed... */
-    while (time < timeLimit) {
+    while (time < data->numTimes) {
         /* Compute reliability of Bridge RBD at current time instant */
         rbdBridgeIdenticalStepS1d(data, time);
         /* Increment current time instant */
-        time += numCores;
+        time += data->numCores;
     }
 
     return NULL;
 }
-#endif /* defined(ARCH_UNKNOWN) */
+#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
 
 /**
  * rbdBridgeGenericStepS1d

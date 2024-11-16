@@ -22,7 +22,7 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if defined(ARCH_AARCH64)
+#if defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0
 #include "rbd_internal_aarch64.h"
 #include "bridge_aarch64.h"
 #include "../bridge.h"
@@ -56,45 +56,26 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
 {
     struct rbdBridgeData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
+    time = (data->batchIdx * V2D);
 
-#if CPU_ENABLE_SIMD != 0
-    time *= V2D;
     /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= timeLimit) {
+    while ((time + V2D) <= data->numTimes) {
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
         /* Compute reliability of Bridge RBD at current time instant */
         rbdBridgeGenericStepV2dNeon(data, time);
         /* Increment current time instant */
-        time += (numCores * V2D);
+        time += (data->numCores * V2D);
     }
     /* Is 1 time instant remaining? */
-    if (time < timeLimit) {
+    if (time < data->numTimes) {
         /* Compute reliability of Bridge RBD at current time instant */
         rbdBridgeGenericStepS1d(data, time);
-    }
-
-    return NULL;
-#endif /* CPU_ENABLE_SIMD */
-
-    /* For each time instant to be processed... */
-    while (time < timeLimit) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
-        /* Increment current time instant */
-        time += numCores;
     }
 
     return NULL;
@@ -127,48 +108,29 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
 {
     struct rbdBridgeData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
+    time = (data->batchIdx * V2D);
 
-#if CPU_ENABLE_SIMD != 0
-    time *= V2D;
     /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= timeLimit) {
+    while ((time + V2D) <= data->numTimes) {
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (numCores * V2D));
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
         /* Compute reliability of Bridge RBD at current time instant */
         rbdBridgeIdenticalStepV2dNeon(data, time);
         /* Increment current time instant */
-        time += (numCores * V2D);
+        time += (data->numCores * V2D);
     }
     /* Is 1 time instant remaining? */
-    if (time < timeLimit) {
+    if (time < data->numTimes) {
         /* Compute reliability of Bridge RBD at current time instant */
         rbdBridgeIdenticalStepS1d(data, time);
-    }
-
-    return NULL;
-#endif /* CPU_ENABLE_SIMD */
-
-    /* For each time instant to be processed... */
-    while (time < timeLimit) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
-        /* Increment current time instant */
-        time += numCores;
     }
 
     return NULL;
 }
 
-#endif /* defined(ARCH_AARCH64) */
+#endif /* defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0 */

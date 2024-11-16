@@ -28,7 +28,7 @@
 static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
-#if defined(ARCH_UNKNOWN)
+#if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
 /**
  * rbdKooNFillWorker
  *
@@ -56,23 +56,17 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
 {
     struct rbdKooNFillData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve fill Output data structure */
     data = (struct rbdKooNFillData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
 
     /* For each time instant... */
-    while (time < timeLimit) {
+    while (time < data->numTimes) {
         /* Fill output Reliability array with fixed value */
         data->output[time] = data->value;
-        time += numCores;
+        time += data->numCores;
     }
 
     return NULL;
@@ -105,46 +99,40 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
 {
     struct rbdKooNGenericData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNGenericData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
 
     if (data->bRecursive == 0) {
         /* If compute unreliability flag is not set... */
         if (data->bComputeUnreliability == 0) {
             /* For each time instant to be processed... */
-            while (time < timeLimit) {
+            while (time < data->numTimes) {
                 /* Compute reliability of KooN RBD at current time instant from working components */
                 rbdKooNGenericSuccessStepS1d(data, time);
                 /* Increment current time instant */
-                time += numCores;
+                time += data->numCores;
             }
         }
         else {
             /* For each time instant to be processed... */
-            while (time < timeLimit) {
+            while (time < data->numTimes) {
                 /* Compute reliability of KooN RBD at current time instant from failed components */
                 rbdKooNGenericFailStepS1d(data, time);
                 /* Increment current time instant */
-                time += numCores;
+                time += data->numCores;
             }
         }
     }
     else {
         /* For each time instant to be processed... */
-        while (time < timeLimit) {
+        while (time < data->numTimes) {
             /* Recursively compute reliability of KooN RBD at current time instant */
             rbdKooNRecursionS1d(data, time);
             /* Increment current time instant */
-            time += numCores;
+            time += data->numCores;
         }
     }
 
@@ -179,41 +167,35 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 {
     struct rbdKooNIdenticalData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve identical KooN RBD data */
     data = (struct rbdKooNIdenticalData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
 
     /* If compute unreliability flag is not set... */
     if (data->bComputeUnreliability == 0) {
         /* For each time instant to be processed... */
-        while (time < timeLimit) {
+        while (time < data->numTimes) {
             /* Compute reliability of KooN RBD at current time instant from working components */
             rbdKooNIdenticalSuccessStepS1d(data, time);
             /* Increment current time instant */
-            time += numCores;
+            time += data->numCores;
         }
     }
     else {
         /* For each time instant to be processed... */
-        while (time < timeLimit) {
+        while (time < data->numTimes) {
             /* Compute reliability of KooN RBD at current time instant from failed components */
             rbdKooNIdenticalFailStepS1d(data, time);
             /* Increment current time instant */
-            time += numCores;
+            time += data->numCores;
         }
     }
 
     return NULL;
 }
-#endif /* defined(ARCH_UNKNOWN) */
+#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
 
 /**
  * rbdKooNGenericSuccessStepS1d

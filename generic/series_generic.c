@@ -25,7 +25,7 @@
 #include "../series.h"
 
 
-#if defined(ARCH_UNKNOWN)
+#if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
 /**
  * rbdSeriesGenericWorker
  *
@@ -52,24 +52,18 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
 {
     struct rbdSeriesData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
 
     /* For each time instant to be processed... */
-    while (time < timeLimit) {
+    while (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
         rbdSeriesGenericStepS1d(data, time);
         /* Increment current time instant */
-        time += numCores;
+        time += data->numCores;
     }
 
     return NULL;
@@ -101,29 +95,23 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 {
     struct rbdSeriesData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
 
     /* For each time instant to be processed... */
-    while (time < timeLimit) {
+    while (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
         rbdSeriesIdenticalStepS1d(data, time);
         /* Increment current time instant */
-        time += numCores;
+        time += data->numCores;
     }
 
     return NULL;
 }
-#endif /* defined(ARCH_UNKNOWN) */
+#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
 
 /**
  * rbdSeriesGenericStepS1d

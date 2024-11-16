@@ -25,7 +25,7 @@
 #include "../parallel.h"
 
 
-#if defined(ARCH_UNKNOWN)
+#if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
 /**
  * rbdParallelGenericWorker
  *
@@ -53,24 +53,18 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
 {
     struct rbdParallelData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve Parallel RBD data */
     data = (struct rbdParallelData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
 
     /* For each time instant to be processed... */
-    while (time < timeLimit) {
+    while (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
         rbdParallelGenericStepS1d(data, time);
         /* Increment current time instant */
-        time += numCores;
+        time += data->numCores;
     }
 
     return NULL;
@@ -103,29 +97,23 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
 {
     struct rbdParallelData *data;
     unsigned int time;
-    unsigned int timeLimit;
-    unsigned int numCores;
 
     /* Retrieve Parallel RBD data */
     data = (struct rbdParallelData *)arg;
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
-    /* Retrieve last time instant to be processed by worker */
-    timeLimit = data->numTimes;
-    /* Retrieve number of cores in SMP system */
-    numCores = data->numCores;
 
     /* For each time instant to be processed... */
-    while (time < timeLimit) {
+    while (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
         rbdParallelIdenticalStepS1d(data, time);
         /* Increment current time instant */
-        time += numCores;
+        time += data->numCores;
     }
 
     return NULL;
 }
-#endif /* defined(ARCH_UNKNOWN) */
+#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
 
 /**
  * rbdParallelGenericStepS1d
