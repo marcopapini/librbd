@@ -25,6 +25,7 @@
 #if defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0
 #include "rbd_internal_amd64.h"
 #include "parallel_amd64.h"
+#include "../x86/parallel_x86.h"
 #include "../parallel.h"
 
 
@@ -61,7 +62,7 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
-    if (x86Avx512fSupported()) {
+    if (amd64Avx512fSupported()) {
         time *= V8D;
         /* For each time instant to be processed (blocks of 8 time instants)... */
         while ((time + V8D) <= data->numTimes) {
@@ -96,7 +97,7 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
         return NULL;
     }
 
-    if (x86FmaSupported()) {
+    if (amd64Fma3Supported()) {
         time *= V4D;
         /* For each time instant to be processed (blocks of 4 time instants)... */
         while ((time + V4D) <= data->numTimes) {
@@ -124,7 +125,7 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
         return NULL;
     }
 
-    if (x86AvxSupported()) {
+    if (amd64AvxSupported()) {
         time *= V4D;
         /* For each time instant to be processed (blocks of 4 time instants)... */
         while ((time + V4D) <= data->numTimes) {
@@ -152,7 +153,7 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
         return NULL;
     }
 
-    if (x86Sse2Supported()) {
+    if (amd64Sse2Supported()) {
         time *= V2D;
         /* For each time instant to be processed (blocks of 2 time instants)... */
         while ((time + V2D) <= data->numTimes) {
@@ -217,7 +218,7 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
-    if (x86Avx512fSupported()) {
+    if (amd64Avx512fSupported()) {
         time *= V8D;
         /* For each time instant to be processed (blocks of 8 time instants)... */
         while ((time + V8D) <= data->numTimes) {
@@ -252,7 +253,7 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
         return NULL;
     }
 
-    if (x86AvxSupported()) {
+    if (amd64AvxSupported()) {
         time *= V4D;
         /* For each time instant to be processed (blocks of 4 time instants)... */
         while ((time + V4D) <= data->numTimes) {
@@ -280,7 +281,7 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
         return NULL;
     }
 
-    if (x86Sse2Supported()) {
+    if (amd64Sse2Supported()) {
         time *= V2D;
         /* For each time instant to be processed (blocks of 2 time instants)... */
         while ((time + V2D) <= data->numTimes) {

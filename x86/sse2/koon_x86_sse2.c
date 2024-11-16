@@ -22,9 +22,9 @@
 
 #include "../../generic/rbd_internal_generic.h"
 
-#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
-#include "../rbd_internal_amd64.h"
-#include "../koon_amd64.h"
+#if (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0)
+#include "../rbd_internal_x86.h"
+#include "../koon_x86.h"
 
 
 static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
@@ -399,4 +399,4 @@ static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKoo
 }
 
 
-#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
+#endif /* (defined(ARCH_AMD64) || defined(ARCH_X86)) && (CPU_ENABLE_SIMD != 0) */

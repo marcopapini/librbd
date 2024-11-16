@@ -26,9 +26,6 @@
 #include "rbd_internal_amd64.h"
 
 
-VARIABLE_TARGET("sse2") const __m128d v2dZeros = {0.0, 0.0};
-VARIABLE_TARGET("sse2") const __m128d v2dOnes = {1.0, 1.0};
-VARIABLE_TARGET("sse2") const __m128d v2dTwos = {2.0, 2.0};
 VARIABLE_TARGET("avx") const __m256d v4dZeros = {0.0, 0.0, 0.0, 0.0};
 VARIABLE_TARGET("avx") const __m256d v4dOnes = {1.0, 1.0, 1.0, 1.0};
 VARIABLE_TARGET("avx") const __m256d v4dTwos = {2.0, 2.0, 2.0, 2.0};
@@ -36,32 +33,6 @@ VARIABLE_TARGET("avx512f") const __m512d v8dZeros = {0.0, 0.0, 0.0, 0.0, 0.0, 0.
 VARIABLE_TARGET("avx512f") const __m512d v8dOnes = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 VARIABLE_TARGET("avx512f") const __m512d v8dTwos = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
 
-
-/**
- * capReliabilityV2dSse2
- *
- * Cap reliability to accepted bounds [0.0, 1.0] with x86 SSE2 128bit
- *
- * Input:
- *      __m128d v2dR
- *
- * Output:
- *      None
- *
- * Description:
- *  This function caps the provided reliability (vector of 2 values, double-precision FP)
- *      to the accepted bounds exploiting x86 SSE2 128bit
- *
- * Parameters:
- *      v2dR: Reliability
- *
- * Return (__m128d):
- *  Reliability within accepted bounds
- */
-HIDDEN FUNCTION_TARGET("sse2") __m128d capReliabilityV2dSse2(__m128d v2dR) {
-    /* Cap computed reliability to accepted bounds [0, 1] */
-    return _mm_max_pd(_mm_min_pd(v2dOnes, v2dR), v2dZeros);
-}
 
 /**
  * capReliabilityV4dAvx

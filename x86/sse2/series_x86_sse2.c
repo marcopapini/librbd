@@ -22,9 +22,9 @@
 
 #include "../../generic/rbd_internal_generic.h"
 
-#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
-#include "../rbd_internal_amd64.h"
-#include "../series_amd64.h"
+#if (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0)
+#include "../rbd_internal_x86.h"
+#include "../series_x86.h"
 
 
 /**
@@ -106,4 +106,4 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesIdenticalStepV2dSse2(struct rbdSeri
 }
 
 
-#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
+#endif /* (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0) */

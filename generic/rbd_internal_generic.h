@@ -233,6 +233,28 @@ void prefetchRead(double *reliability, unsigned char numComponents, unsigned int
 void prefetchWrite(double *reliability, unsigned char numComponents, unsigned int numTimes, unsigned int time);
 
 /**
+ * getCpuInfo
+ *
+ * Get CPU-specific information
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function retrieves CPU-specific information from the OS
+ *
+ * Parameters:
+ *      None
+ *
+ * Return:
+ *      None
+ */
+void getCpuInfo(void);
+
+/**
  * getNumberOfCores
  *
  * Number of cores retrieval in an SMP system
@@ -253,94 +275,6 @@ void prefetchWrite(double *reliability, unsigned char numComponents, unsigned in
  *  Number of cores in SMP system
  */
 unsigned int getNumberOfCores(void);
-
-/**
- * getX86Sse2Supported
- *
- * SSE2 instruction set supported by the system
- *
- * Input:
- *      None
- *
- * Output:
- *      None
- *
- * Description:
- *  This function retrieves the availability of SSE2 instruction set
- *
- * Parameters:
- *      None
- *
- * Return (unsigned int):
- *  1 if SSE2 instruction set is available, 0 otherwise
- */
-unsigned int x86Sse2Supported(void);
-
-/**
- * getX86AvxSupported
- *
- * AVX instruction set supported by the system
- *
- * Input:
- *      None
- *
- * Output:
- *      None
- *
- * Description:
- *  This function retrieves the availability of AVX instruction set
- *
- * Parameters:
- *      None
- *
- * Return (unsigned int):
- *  1 if AVX instruction set is available, 0 otherwise
- */
-unsigned int x86AvxSupported(void);
-
-/**
- * getFmaSupported
- *
- * FMA instruction set supported by the system
- *
- * Input:
- *      None
- *
- * Output:
- *      None
- *
- * Description:
- *  This function retrieves the availability of FMA instruction set
- *
- * Parameters:
- *      None
- *
- * Return (unsigned int):
- *  1 if FMA instruction set is available, 0 otherwise
- */
-unsigned int x86FmaSupported(void);
-
-/**
- * x86Avx512fSupported
- *
- * x86 AVX512F instruction set supported by the system
- *
- * Input:
- *      None
- *
- * Output:
- *      None
- *
- * Description:
- *  This function retrieves the availability of x86 AVX512F instruction set
- *
- * Parameters:
- *      None
- *
- * Return (unsigned int):
- *  1 if x86 AVX512F instruction set is available, 0 otherwise
- */
-unsigned int x86Avx512fSupported(void);
 
 #if CPU_SMP != 0
 /**

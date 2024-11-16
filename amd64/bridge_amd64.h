@@ -27,10 +27,6 @@
 #include "../bridge.h"
 
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
-/* Platform-specific functions for x86 SSE2 instruction set */
-void rbdBridgeGenericStepV2dSse2(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV2dSse2(struct rbdBridgeData *data, unsigned int time);
-
 /* Platform-specific functions for amd64 AVX instruction set */
 void rbdBridgeGenericStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV4dAvx(struct rbdBridgeData *data, unsigned int time);

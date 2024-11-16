@@ -1,6 +1,6 @@
 /*
- *  Component: series_amd64.h
- *  Series RBD management - amd64 platform-specific implementation
+ *  Component: bridge_x86.h
+ *  Bridge RBD management - x86 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,23 +19,18 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SERIES_AMD64_H_
-#define SERIES_AMD64_H_
+#ifndef BRIDGE_X86_H_
+#define BRIDGE_X86_H_
 
 
 #include "../generic/rbd_internal_generic.h"
-#include "../series.h"
+#include "../bridge.h"
+
+#if (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0)
+/* Platform-specific functions for x86 SSE2 instruction set */
+void rbdBridgeGenericStepV2dSse2(struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeIdenticalStepV2dSse2(struct rbdBridgeData *data, unsigned int time);
+#endif /* (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0) */
 
 
-#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
-/* Platform-specific functions for amd64 AVX instruction set */
-void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time);
-void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time);
-
-/* Platform-specific functions for amd64 AVX512F instruction set */
-void rbdSeriesGenericStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time);
-void rbdSeriesIdenticalStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time);
-#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
-
-
-#endif /* SERIES_AMD64_H_ */
+#endif /* BRIDGE_X86_H_ */

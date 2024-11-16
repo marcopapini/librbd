@@ -28,15 +28,11 @@
 
 
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
-/* Platform-specific functions for x86 SSE2 instruction set */
-void rbdParallelGenericStepV2dSse2(struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int time);
-
 /* Platform-specific functions for amd64 AVX instruction set */
 void rbdParallelGenericStepV4dAvx(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepV4dAvx(struct rbdParallelData *data, unsigned int time);
 
-/* Platform-specific functions for amd64 FMA instruction set */
+/* Platform-specific functions for amd64 FMA3 instruction set */
 void rbdParallelGenericStepV4dFma(struct rbdParallelData *data, unsigned int time);
 void rbdParallelGenericStepV2dFma(struct rbdParallelData *data, unsigned int time);
 

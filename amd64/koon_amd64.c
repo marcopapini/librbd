@@ -25,6 +25,7 @@
 #if defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0
 #include "rbd_internal_amd64.h"
 #include "koon_amd64.h"
+#include "../x86/koon_x86.h"
 #include "../koon.h"
 
 
@@ -64,7 +65,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNFillWorker(void *arg)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
-    if (x86Avx512fSupported()) {
+    if (amd64Avx512fSupported()) {
         time *= V8D;
         /* Define vector (8d, 4d and 2d) with provided value */
         m512d = _mm512_set1_pd(data->value);
@@ -103,7 +104,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNFillWorker(void *arg)
         return NULL;
     }
 
-    if (x86AvxSupported()) {
+    if (amd64AvxSupported()) {
         time *= V4D;
         /* Define vectors (4d and 2d) with provided value */
         m256d = _mm256_set1_pd(data->value);
@@ -134,7 +135,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNFillWorker(void *arg)
         return NULL;
     }
 
-    if (x86Sse2Supported()) {
+    if (amd64Sse2Supported()) {
         time *= V2D;
         /* Define vector (2d) with provided value */
         m128d = _mm_set1_pd(data->value);
@@ -200,7 +201,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
-    if (x86Avx512fSupported()) {
+    if (amd64Avx512fSupported()) {
         time *= V8D;
         if (data->bRecursive == 0) {
             /* If compute unreliability flag is not set... */
@@ -302,7 +303,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
         return NULL;
     }
 
-    if (x86FmaSupported()) {
+    if (amd64Fma3Supported()) {
         time *= V4D;
         if (data->bRecursive == 0) {
             /* If compute unreliability flag is not set... */
@@ -383,7 +384,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
         return NULL;
     }
 
-    if (x86AvxSupported()) {
+    if (amd64AvxSupported()) {
         time *= V4D;
         if (data->bRecursive == 0) {
             /* If compute unreliability flag is not set... */
@@ -464,7 +465,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
         return NULL;
     }
 
-    if (x86Sse2Supported()) {
+    if (amd64Sse2Supported()) {
         time *= V2D;
         if (data->bRecursive == 0) {
             /* If compute unreliability flag is not set... */
@@ -592,7 +593,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
-    if (x86Avx512fSupported()) {
+    if (amd64Avx512fSupported()) {
         time *= V8D;
         /* If compute unreliability flag is not set... */
         if (data->bComputeUnreliability == 0) {
@@ -661,7 +662,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
         return NULL;
     }
 
-    if (x86FmaSupported()) {
+    if (amd64Fma3Supported()) {
         time *= V4D;
         /* If compute unreliability flag is not set... */
         if (data->bComputeUnreliability == 0) {
@@ -716,7 +717,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
         return NULL;
     }
 
-    if (x86AvxSupported()) {
+    if (amd64AvxSupported()) {
         time *= V4D;
         /* If compute unreliability flag is not set... */
         if (data->bComputeUnreliability == 0) {
@@ -771,7 +772,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
         return NULL;
     }
 
-    if (x86Sse2Supported()) {
+    if (amd64Sse2Supported()) {
         time *= V2D;
         /* If compute unreliability flag is not set... */
         if (data->bComputeUnreliability == 0) {

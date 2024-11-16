@@ -25,6 +25,7 @@
 #if defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0
 #include "rbd_internal_amd64.h"
 #include "series_amd64.h"
+#include "../x86/series_x86.h"
 #include "../series.h"
 
 
@@ -61,7 +62,7 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
-    if (x86Avx512fSupported()) {
+    if (amd64Avx512fSupported()) {
         time *= V8D;
         /* For each time instant to be processed (blocks of 8 time instants)... */
         while ((time + V8D) <= data->numTimes) {
@@ -96,7 +97,7 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
         return NULL;
     }
 
-    if (x86AvxSupported()) {
+    if (amd64AvxSupported()) {
         time *= V4D;
         /* For each time instant to be processed (blocks of 4 time instants)... */
         while ((time + V4D) <= data->numTimes) {
@@ -124,7 +125,7 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
         return NULL;
     }
 
-    if (x86Sse2Supported()) {
+    if (amd64Sse2Supported()) {
         time *= V2D;
         /* For each time instant to be processed (blocks of 2 time instants)... */
         while ((time + V2D) <= data->numTimes) {
@@ -189,7 +190,7 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
-    if (x86Avx512fSupported()) {
+    if (amd64Avx512fSupported()) {
         time *= V8D;
         /* For each time instant to be processed (blocks of 8 time instants)... */
         while ((time + V8D) <= data->numTimes) {
@@ -224,7 +225,7 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
         return NULL;
     }
 
-    if (x86AvxSupported()) {
+    if (amd64AvxSupported()) {
         time *= V4D;
         /* For each time instant to be processed (blocks of 4 time instants)... */
         while ((time + V4D) <= data->numTimes) {
@@ -252,7 +253,7 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
         return NULL;
     }
 
-    if (x86Sse2Supported()) {
+    if (amd64Sse2Supported()) {
         time *= V2D;
         /* For each time instant to be processed (blocks of 2 time instants)... */
         while ((time + V2D) <= data->numTimes) {

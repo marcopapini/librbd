@@ -1,6 +1,6 @@
 /*
  *  Component: koon_amd64_fma.c
- *  KooN (K-out-of-N) RBD management - Optimized using amd64 FMA instruction set
+ *  KooN (K-out-of-N) RBD management - Optimized using amd64 FMA3 instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>

@@ -1,6 +1,6 @@
 /*
- *  Component: rbd_internal_amd64.h
- *  Internal APIs used by RBD library - Optimized using amd64 platform-specific instruction sets
+ *  Component: processor_amd64.c
+ *  Retrieval of CPU-related info - amd64 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,29 +19,23 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef RBD_INTERNAL_AMD64_H_
-#define RBD_INTERNAL_AMD64_H_
+
+#include "../generic/rbd_internal_generic.h"
 
 
-#if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
+#if defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0
 
 
-#include <immintrin.h>
-
-#include "../x86/rbd_internal_x86.h"
-
-
-VARIABLE_TARGET("avx") extern const __m256d v4dZeros;
-VARIABLE_TARGET("avx") extern const __m256d v4dOnes;
-VARIABLE_TARGET("avx") extern const __m256d v4dTwos;
-VARIABLE_TARGET("avx512f") extern const __m512d v8dZeros;
-VARIABLE_TARGET("avx512f") extern const __m512d v8dOnes;
-VARIABLE_TARGET("avx512f") extern const __m512d v8dTwos;
+struct amd64Cpu
+{
+    unsigned int sse2Supported;     /* amd64 SSE2 instruction set supported */
+    unsigned int avxSupported;      /* amd64 AVX instruction set supported */
+    unsigned int fma3Supported;     /* amd64 FMA3 instruction set supported */
+    unsigned int avx512fSupported;  /* amd64 AVX512F instruction set supported */
+};
 
 
-FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR);
-FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR);
-
+static struct amd64Cpu amd64Cpu;
 
 /**
  * amd64Sse2Supported
@@ -63,7 +57,14 @@ FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR);
  * Return (unsigned int):
  *  1 if SSE2 instruction set is available, 0 otherwise
  */
-unsigned int amd64Sse2Supported(void);
+HIDDEN unsigned int amd64Sse2Supported(void)
+{
+    /* Get CPU-specific information */
+    getCpuInfo();
+
+    /* Return x86 SSE2 instruction set supported by the system */
+    return amd64Cpu.sse2Supported;
+}
 
 /**
  * amd64AvxSupported
@@ -85,7 +86,14 @@ unsigned int amd64Sse2Supported(void);
  * Return (unsigned int):
  *  1 if AVX instruction set is available, 0 otherwise
  */
-unsigned int amd64AvxSupported(void);
+HIDDEN unsigned int amd64AvxSupported(void)
+{
+    /* Get CPU-specific information */
+    getCpuInfo();
+
+    /* Return amd64 AVX instruction set supported by the system */
+    return amd64Cpu.avxSupported;
+}
 
 /**
  * amd64Fma3Supported
@@ -107,7 +115,14 @@ unsigned int amd64AvxSupported(void);
  * Return (unsigned int):
  *  1 if FMA3 instruction set is available, 0 otherwise
  */
-unsigned int amd64Fma3Supported(void);
+HIDDEN unsigned int amd64Fma3Supported(void)
+{
+    /* Get CPU-specific information */
+    getCpuInfo();
+
+    /* Return amd64 FMA3 instruction set supported by the system */
+    return amd64Cpu.fma3Supported;
+}
 
 /**
  * amd64Avx512fSupported
@@ -129,7 +144,14 @@ unsigned int amd64Fma3Supported(void);
  * Return (unsigned int):
  *  1 if AVX512F instruction set is available, 0 otherwise
  */
-unsigned int amd64Avx512fSupported(void);
+HIDDEN unsigned int amd64Avx512fSupported(void)
+{
+    /* Get CPU-specific information */
+    getCpuInfo();
+
+    /* Return amd64 AVX512F instruction set supported by the system */
+    return amd64Cpu.avx512fSupported;
+}
 
 /**
  * retrieveAmd64CpuInfo
@@ -155,10 +177,28 @@ unsigned int amd64Avx512fSupported(void);
  * Return:
  *      None
  */
-void retrieveAmd64CpuInfo(void);
+void retrieveAmd64CpuInfo(void)
+{
+    /**
+     * Default processor info:
+     * - no SSE2, no AVX, no FMA3, no AVX512F
+     */
+    amd64Cpu.sse2Supported = 0;
+    amd64Cpu.avxSupported = 0;
+    amd64Cpu.fma3Supported = 0;
+    amd64Cpu.avx512fSupported = 0;
+    if (__builtin_cpu_supports("sse2") > 0) {
+        amd64Cpu.sse2Supported = 1;
+        if (__builtin_cpu_supports("avx") > 0) {
+            amd64Cpu.avxSupported = 1;
+            if (__builtin_cpu_supports("fma") > 0) {
+                amd64Cpu.fma3Supported = 1;
+                if (__builtin_cpu_supports("avx512f") > 0) {
+                    amd64Cpu.avx512fSupported = 1;
+                }
+            }
+        }
+    }
+}
 
-
-#endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
-
-
-#endif /* RBD_INTERNAL_AMD64_H_ */
+#endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */
