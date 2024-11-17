@@ -22,10 +22,9 @@
 
 #include "rbd_internal_generic.h"
 
-
-#if defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0
+#include "../aarch64/rbd_internal_aarch64.h"
 #include "../amd64/rbd_internal_amd64.h"
-#endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */
+#include "../x86/rbd_internal_x86.h"
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
 #ifdef _WIN32
