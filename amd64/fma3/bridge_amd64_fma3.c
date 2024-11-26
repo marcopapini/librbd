@@ -1,5 +1,5 @@
 /*
- *  Component: bridge_amd64_fma.c
+ *  Component: bridge_amd64_fma3.c
  *  Bridge RBD management - Optimized using amd64 FMA3 instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
@@ -28,7 +28,7 @@
 
 
 /**
- * rbdBridgeGenericStepV4dFma
+ * rbdBridgeGenericStepV4dFma3
  *
  * Generic Bridge RBD step function with amd64 FMA3 256bit
  *
@@ -48,7 +48,7 @@
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV4dFma(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV4dFma3(struct rbdBridgeData *data, unsigned int time)
 {
     __m256d v4dR1, v4dR2, v4dR3, v4dR4, v4dR5;
     __m256d v4dTmp1, v4dTmp2;
@@ -90,7 +90,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV4dFma(struct rbdBridgeDa
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
 /**
- * rbdBridgeIdenticalStepV4dFma
+ * rbdBridgeIdenticalStepV4dFma3
  *
  * Identical Bridge RBD step function with amd64 FMA3 256bit
  *
@@ -110,7 +110,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV4dFma(struct rbdBridgeDa
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV4dFma(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV4dFma3(struct rbdBridgeData *data, unsigned int time)
 {
     __m256d v4dR, v4dU;
     __m256d v4dTmp;
@@ -137,7 +137,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV4dFma(struct rbdBridge
 }
 
 /**
- * rbdBridgeGenericStepV2dFma
+ * rbdBridgeGenericStepV2dFma3
  *
  * Generic Bridge RBD step function with amd64 FMA3 128bit
  *
@@ -157,7 +157,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV4dFma(struct rbdBridge
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma3(struct rbdBridgeData *data, unsigned int time)
 {
     __m128d v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
     __m128d v2dTmp1, v2dTmp2;
@@ -200,7 +200,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma(struct rbdBridgeDa
 }
 
 /**
- * rbdBridgeIdenticalStepV2dFma
+ * rbdBridgeIdenticalStepV2dFma3
  *
  * Identical Bridge RBD step function with amd64 FMA3 128bit
  *
@@ -220,7 +220,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma(struct rbdBridgeDa
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV2dFma(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV2dFma3(struct rbdBridgeData *data, unsigned int time)
 {
     __m128d v2dR, v2dU;
     __m128d v2dTmp;

@@ -32,10 +32,10 @@ void rbdBridgeGenericStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 FMA3 instruction set */
-void rbdBridgeGenericStepV4dFma(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV4dFma(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeGenericStepV2dFma(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV2dFma(struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeGenericStepV4dFma3(struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeIdenticalStepV4dFma3(struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeGenericStepV2dFma3(struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeIdenticalStepV2dFma3(struct rbdBridgeData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void rbdBridgeGenericStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time);

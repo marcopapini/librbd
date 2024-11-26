@@ -28,6 +28,9 @@
 
 
 #if (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0)
+void *rbdSeriesGenericWorkerSse2(struct rbdSeriesData *data);
+void *rbdSeriesIdenticalWorkerSse2(struct rbdSeriesData *data);
+
 /* Platform-specific functions for x86 SSE2 instruction set */
 void rbdSeriesGenericStepV2dSse2(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV2dSse2(struct rbdSeriesData *data, unsigned int time);

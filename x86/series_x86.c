@@ -22,11 +22,13 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if defined(ARCH_X86) && CPU_ENABLE_SIMD != 0
+#if (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0)
 #include "rbd_internal_x86.h"
 #include "series_x86.h"
 #include "../series.h"
 
+
+#if defined(ARCH_X86) && CPU_ENABLE_SIMD != 0
 
 /**
  * rbdSeriesGenericWorker
@@ -58,30 +60,13 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
 
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
 
     if (x86Sse2Supported()) {
-        time *= V2D;
-        /* For each time instant to be processed (blocks of 2 time instants)... */
-        while ((time + V2D) <= data->numTimes) {
-            /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesGenericStepV2dSse2(data, time);
-            /* Increment current time instant */
-            time += (data->numCores * V2D);
-        }
-        /* Is 1 time instant remaining? */
-        if (time < data->numTimes) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesGenericStepS1d(data, time);
-        }
-
-        return NULL;
+        return rbdSeriesGenericWorkerSse2(data);
     }
 
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx;
     /* For each time instant to be processed... */
     while (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
@@ -123,30 +108,13 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
 
     if (x86Sse2Supported()) {
-        time *= V2D;
-        /* For each time instant to be processed (blocks of 2 time instants)... */
-        while ((time + V2D) <= data->numTimes) {
-            /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesIdenticalStepV2dSse2(data, time);
-            /* Increment current time instant */
-            time += (data->numCores * V2D);
-        }
-        /* Is 1 time instant remaining? */
-        if (time < data->numTimes) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesIdenticalStepS1d(data, time);
-        }
-
-        return NULL;
+        return rbdSeriesIdenticalWorkerSse2(data);
     }
 
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx;
     /* For each time instant to be processed... */
     while (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
@@ -159,3 +127,117 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 }
 
 #endif /* defined(ARCH_X86) && CPU_ENABLE_SIMD != 0 */
+
+/**
+ * rbdSeriesGenericWorkerSse2
+ *
+ * Generic Series RBD Worker function with x86 SSE2 instruction set
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Series RBD Worker exploiting x86 SSE2 instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a generic Series RBD system
+ *
+ * Parameters:
+ *      data: the pointer to a Series RBD data
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdSeriesGenericWorkerSse2(struct rbdSeriesData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* Align, if possible, to vector size */
+    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesGenericStepS1d(data, time);
+            /* Increment current time instant */
+            time += S1D;
+        }
+    }
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepV2dSse2(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdSeriesIdenticalWorker
+ *
+ * Identical Series RBD Worker function with x86 platform-specific instruction sets
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Series RBD Worker exploiting x86 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Series RBD system
+ *
+ * Parameters:
+ *      data: the pointer to a Series RBD data
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdSeriesIdenticalWorkerSse2(struct rbdSeriesData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* Align, if possible, to vector size */
+    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepS1d(data, time);
+            /* Increment current time instant */
+            time += S1D;
+        }
+    }
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesIdenticalStepV2dSse2(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesIdenticalStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+#endif /* (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0) */

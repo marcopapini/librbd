@@ -33,8 +33,8 @@ void rbdParallelGenericStepV4dAvx(struct rbdParallelData *data, unsigned int tim
 void rbdParallelIdenticalStepV4dAvx(struct rbdParallelData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 FMA3 instruction set */
-void rbdParallelGenericStepV4dFma(struct rbdParallelData *data, unsigned int time);
-void rbdParallelGenericStepV2dFma(struct rbdParallelData *data, unsigned int time);
+void rbdParallelGenericStepV4dFma3(struct rbdParallelData *data, unsigned int time);
+void rbdParallelGenericStepV2dFma3(struct rbdParallelData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void rbdParallelGenericStepV8dAvx512f(struct rbdParallelData *data, unsigned int time);

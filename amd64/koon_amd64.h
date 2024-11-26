@@ -36,14 +36,14 @@ void rbdKooNIdenticalSuccessStepV4dAvx(struct rbdKooNIdenticalData *data, unsign
 void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 FMA3 instruction set */
-void rbdKooNGenericSuccessStepV4dFma(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNGenericFailStepV4dFma(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNRecursionV4dFma(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNIdenticalSuccessStepV4dFma(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNGenericSuccessStepV2dFma(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNGenericFailStepV2dFma(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNRecursionV2dFma(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNIdenticalSuccessStepV2dFma(struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNGenericSuccessStepV4dFma3(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericFailStepV4dFma3(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNRecursionV4dFma3(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNIdenticalSuccessStepV4dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNGenericSuccessStepV2dFma3(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericFailStepV2dFma3(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNRecursionV2dFma3(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNIdenticalSuccessStepV2dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void rbdKooNGenericSuccessStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time);

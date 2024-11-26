@@ -28,6 +28,9 @@
 
 
 #if (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0)
+void *rbdParallelGenericWorkerSse2(struct rbdParallelData *data);
+void *rbdParallelIdenticalWorkerSse2(struct rbdParallelData *data);
+
 /* Platform-specific functions for x86 SSE2 instruction set */
 void rbdParallelGenericStepV2dSse2(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int time);

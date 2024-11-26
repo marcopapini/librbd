@@ -38,7 +38,7 @@
  *      None
  *
  * Description:
- *  This function implements the Parallel RBD Worker.
+ *  This function implements the generic Parallel RBD Worker.
  *  It is responsible to compute the reliabilities over a given batch of a Parallel RBD system
  *
  * Parameters:

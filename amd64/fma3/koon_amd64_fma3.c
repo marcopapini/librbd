@@ -1,5 +1,5 @@
 /*
- *  Component: koon_amd64_fma.c
+ *  Component: koon_amd64_fma3.c
  *  KooN (K-out-of-N) RBD management - Optimized using amd64 FMA3 instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
@@ -27,12 +27,12 @@
 #include "../koon_amd64.h"
 
 
-static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
-static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
+static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
+static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma3(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
- * rbdKooNGenericSuccessStepV4dFma
+ * rbdKooNGenericSuccessStepV4dFma3
  *
  * Generic KooN RBD Step function from working components with amd64 FMA3 256bit
  *
@@ -55,7 +55,7 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNG
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV4dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV4dFma3(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m256d v4dStep;
     __m256d v4dTmp;
@@ -108,7 +108,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV4dFma(struct rbdKoo
 }
 
 /**
- * rbdKooNGenericFailStepV4dFma
+ * rbdKooNGenericFailStepV4dFma3
  *
  * Generic KooN RBD Step function from failed components with amd64 FMA3 256bit
  *
@@ -131,7 +131,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV4dFma(struct rbdKoo
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV4dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV4dFma3(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m256d v4dStep;
     __m256d v4dTmp;
@@ -184,7 +184,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV4dFma(struct rbdKooNGe
 }
 
 /**
- * rbdKooNRecursionV4dFma
+ * rbdKooNRecursionV4dFma3
  *
  * Compute KooN RBD though Recursive method with amd64 FMA3 256bit
  *
@@ -206,18 +206,18 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV4dFma(struct rbdKooNGe
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV4dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV4dFma3(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m256d v4dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v4dRes = rbdKooNRecursiveStepV4dFma(data, time, data->numComponents, data->minComponents);
+    v4dRes = rbdKooNRecursiveStepV4dFma3(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
 
 /**
- * rbdKooNIdenticalSuccessStepV4dFma
+ * rbdKooNIdenticalSuccessStepV4dFma3
  *
  * Identical KooN RBD Step function from working components with amd64 FMA3 256bit
  *
@@ -240,7 +240,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV4dFma(struct rbdKooNGenericD
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m256d v4dR;
     __m256d v4dTmp1, v4dTmp2;
@@ -281,7 +281,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma(struct rbdK
 }
 
 /**
- * rbdKooNGenericSuccessStepV2dFma
+ * rbdKooNGenericSuccessStepV2dFma3
  *
  * Generic KooN RBD Step function from working components with amd64 FMA3 128bit
  *
@@ -304,7 +304,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma(struct rbdK
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV2dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV2dFma3(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m128d v2dStep;
     __m128d v2dTmp;
@@ -357,7 +357,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV2dFma(struct rbdKoo
 }
 
 /**
- * rbdKooNGenericFailStepV2dFma
+ * rbdKooNGenericFailStepV2dFma3
  *
  * Generic KooN RBD Step function from failed components with amd64 FMA3 128bit
  *
@@ -380,7 +380,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericSuccessStepV2dFma(struct rbdKoo
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV2dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV2dFma3(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m128d v2dStep;
     __m128d v2dTmp;
@@ -433,7 +433,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV2dFma(struct rbdKooNGe
 }
 
 /**
- * rbdKooNRecursionV2dFma
+ * rbdKooNRecursionV2dFma3
  *
  * Compute KooN RBD though Recursive method with amd64 FMA3 128bit
  *
@@ -455,18 +455,18 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericFailStepV2dFma(struct rbdKooNGe
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV2dFma(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV2dFma3(struct rbdKooNGenericData *data, unsigned int time)
 {
     __m128d v2dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v2dRes = rbdKooNRecursiveStepV2dFma(data, time, data->numComponents, data->minComponents);
+    v2dRes = rbdKooNRecursiveStepV2dFma3(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 /**
- * rbdKooNIdenticalSuccessStepV2dFma
+ * rbdKooNIdenticalSuccessStepV2dFma3
  *
  * Identical KooN RBD Step function from working components with amd64 FMA3 128bit
  *
@@ -489,7 +489,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV2dFma(struct rbdKooNGenericD
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m128d v2dR;
     __m128d v2dTmp1, v2dTmp2;
@@ -530,7 +530,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma(struct rbdK
 }
 
 /**
- * rbdKooNRecursiveStepV4dFma
+ * rbdKooNRecursiveStepV4dFma3
  *
  * Recursive KooN RBD Step function with amd64 FMA3 256bit
  *
@@ -556,7 +556,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma(struct rbdK
  * Return (__m256d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
 {
     __m256d v4dTmp1, v4dTmp2;
     __m256d v4dRes;
@@ -567,18 +567,18 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNG
     v4dTmp1 = _mm256_sub_pd(v4dOnes, v4dRes);
     /* Recursively compute the reliabilities */
     if ((k-1) > 0) {
-        v4dTmp2 = rbdKooNRecursiveStepV4dFma(data, time, n, k-1);
+        v4dTmp2 = rbdKooNRecursiveStepV4dFma3(data, time, n, k-1);
         v4dRes = _mm256_mul_pd(v4dRes, v4dTmp2);
     }
     if (k <= n) {
-        v4dTmp2 = rbdKooNRecursiveStepV4dFma(data, time, n, k);
+        v4dTmp2 = rbdKooNRecursiveStepV4dFma3(data, time, n, k);
         v4dRes = _mm256_fmadd_pd(v4dTmp1, v4dTmp2, v4dRes);
     }
     return v4dRes;
 }
 
 /**
- * rbdKooNRecursiveStepV2dFma
+ * rbdKooNRecursiveStepV2dFma3
  *
  * Recursive KooN RBD Step function with amd64 FMA3 128bit
  *
@@ -604,7 +604,7 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma(struct rbdKooNG
  * Return (__m128d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma3(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
 {
     __m128d v2dTmp1, v2dTmp2;
     __m128d v2dRes;
@@ -615,11 +615,11 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma(struct rbdKooNG
     v2dTmp1 = _mm_sub_pd(v2dOnes, v2dRes);
     /* Recursively compute the reliabilities */
     if ((k-1) > 0) {
-        v2dTmp2 = rbdKooNRecursiveStepV2dFma(data, time, n, k-1);
+        v2dTmp2 = rbdKooNRecursiveStepV2dFma3(data, time, n, k-1);
         v2dRes = _mm_mul_pd(v2dRes, v2dTmp2);
     }
     if (k <= n) {
-        v2dTmp2 = rbdKooNRecursiveStepV2dFma(data, time, n, k);
+        v2dTmp2 = rbdKooNRecursiveStepV2dFma3(data, time, n, k);
         v2dRes = _mm_fmadd_pd(v2dTmp1, v2dTmp2, v2dRes);
     }
     return v2dRes;

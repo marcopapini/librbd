@@ -1,5 +1,5 @@
 /*
- *  Component: parallel_amd64_fma.c
+ *  Component: parallel_amd64_fma3.c
  *  Parallel RBD management - Optimized using amd64 FMA3 instruction set
  *
  *  librbd - Reliability Block Diagrams evaluation library
@@ -28,7 +28,7 @@
 
 
 /**
- * rbdParallelGenericStepV4dFma
+ * rbdParallelGenericStepV4dFma3
  *
  * Generic Parallel RBD step function with amd64 FMA3 256bit
  *
@@ -48,7 +48,7 @@
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV4dFma(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV4dFma3(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m256d v4dTmp;
@@ -68,7 +68,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV4dFma(struct rbdParall
 }
 
 /**
- * rbdParallelGenericStepV2dFma
+ * rbdParallelGenericStepV2dFma3
  *
  * Generic Parallel RBD step function with amd64 FMA3 128bit
  *
@@ -88,7 +88,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV4dFma(struct rbdParall
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV2dFma(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV2dFma3(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;

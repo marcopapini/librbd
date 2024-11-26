@@ -38,7 +38,7 @@
  *      None
  *
  * Description:
- *  This function implements the Bridge RBD Worker.
+ *  This function implements the generic Bridge RBD Worker.
  *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
  *
  * Parameters:

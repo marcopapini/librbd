@@ -61,7 +61,7 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void *rbdKooNFillWorker(void *arg)
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNFillData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = (data->batchIdx * V2D);
+    time = data->batchIdx * V2D;
     /* Define vector (2d) with provided value */
     m128d = vdupq_n_f64(data->value);
 
@@ -114,11 +114,20 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNGenericData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = (data->batchIdx * V2D);
+    time = data->batchIdx * V2D;
 
     if (data->bRecursive == 0) {
         /* If compute unreliability flag is not set... */
         if (data->bComputeUnreliability == 0) {
+            /* Align, if possible, to vector size */
+            if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+                if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                    /* Compute reliability of KooN RBD at current time instant from working components */
+                    rbdKooNGenericSuccessStepS1d(data, time);
+                    /* Increment current time instant */
+                    time += S1D;
+                }
+            }
             /* For each time instant to be processed (blocks of 2 time instants)... */
             while ((time + V2D) <= data->numTimes) {
                 /* Prefetch for next iteration */
@@ -136,6 +145,15 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
             }
         }
         else {
+            /* Align, if possible, to vector size */
+            if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+                if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                    /* Compute reliability of KooN RBD at current time instant from failed components */
+                    rbdKooNGenericFailStepS1d(data, time);
+                    /* Increment current time instant */
+                    time += S1D;
+                }
+            }
             /* For each time instant to be processed (blocks of 2 time instants)... */
             while ((time + V2D) <= data->numTimes) {
                 /* Prefetch for next iteration */
@@ -154,6 +172,15 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
         }
     }
     else {
+        /* Align, if possible, to vector size */
+        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Recursively compute reliability of KooN RBD at current time instant */
+                rbdKooNRecursionS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+        }
         /* For each time instant to be processed (blocks of 2 time instants)... */
         while ((time + V2D) <= data->numTimes) {
             /* Prefetch for next iteration */
@@ -206,10 +233,19 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNIdenticalData *)arg;
     /* Retrieve first time instant to be processed by worker */
-    time = (data->batchIdx * V2D);
+    time = data->batchIdx * V2D;
 
     /* If compute unreliability flag is not set... */
     if (data->bComputeUnreliability == 0) {
+        /* Align, if possible, to vector size */
+        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of KooN RBD at current time instant from working components */
+                rbdKooNIdenticalSuccessStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+        }
         /* For each time instant to be processed (blocks of 2 time instants)... */
         while ((time + V2D) <= data->numTimes) {
             /* Prefetch for next iteration */
@@ -227,6 +263,15 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
         }
     }
     else {
+        /* Align, if possible, to vector size */
+        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of KooN RBD at current time instant from failed components */
+                rbdKooNIdenticalFailStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+        }
         /* For each time instant to be processed (blocks of 2 time instants)... */
         while ((time + V2D) <= data->numTimes) {
             /* Prefetch for next iteration */
