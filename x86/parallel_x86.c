@@ -156,15 +156,6 @@ HIDDEN void *rbdParallelGenericWorkerSse2(struct rbdParallelData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V2D;
 
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelGenericStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-    }
     /* For each time instant to be processed (blocks of 2 time instants)... */
     while ((time + V2D) <= data->numTimes) {
         /* Prefetch for next iteration */

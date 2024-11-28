@@ -175,27 +175,6 @@ static void *rbdSeriesGenericWorkerAvx512f(struct rbdSeriesData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
 
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesGenericStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesGenericStepV2dSse2(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-        if (((long)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesGenericStepV4dAvx(data, time);
-            /* Increment current time instant */
-            time += V4D;
-        }
-    }
     /* For each time instant to be processed (blocks of 8 time instants)... */
     while ((time + V8D) <= data->numTimes) {
         /* Prefetch for next iteration */
@@ -257,21 +236,6 @@ static void *rbdSeriesGenericWorkerAvx(struct rbdSeriesData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V4D;
 
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesGenericStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesGenericStepV2dSse2(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-    }
     /* For each time instant to be processed (blocks of 4 time instants)... */
     while ((time + V4D) <= data->numTimes) {
         /* Prefetch for next iteration */

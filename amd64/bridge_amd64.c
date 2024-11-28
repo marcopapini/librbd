@@ -185,27 +185,6 @@ static void *rbdBridgeGenericWorkerAvx512f(struct rbdBridgeData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
 
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV2dFma3(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-        if (((long)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV4dFma3(data, time);
-            /* Increment current time instant */
-            time += V4D;
-        }
-    }
     /* For each time instant to be processed (blocks of 8 time instants)... */
     while ((time + V8D) <= data->numTimes) {
         /* Prefetch for next iteration */
@@ -267,21 +246,6 @@ static void *rbdBridgeGenericWorkerFma3(struct rbdBridgeData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V4D;
 
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV2dFma3(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-    }
     /* For each time instant to be processed (blocks of 4 time instants)... */
     while ((time + V4D) <= data->numTimes) {
         /* Prefetch for next iteration */
@@ -336,21 +300,6 @@ static void *rbdBridgeGenericWorkerAvx(struct rbdBridgeData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V4D;
 
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeGenericStepV2dSse2(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-    }
     /* For each time instant to be processed (blocks of 4 time instants)... */
     while ((time + V4D) <= data->numTimes) {
         /* Prefetch for next iteration */
