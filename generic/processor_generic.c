@@ -25,17 +25,7 @@
 #include "../aarch64/rbd_internal_aarch64.h"
 #include "../amd64/rbd_internal_amd64.h"
 #include "../x86/rbd_internal_x86.h"
-
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-#ifdef _WIN32
-#include <windows.h>
-#elif MACOS
-#include <sys/param.h>
-#include <sys/sysctl.h>
-#else
-#include <unistd.h>
-#endif
-#endif /* CPU_SMP */
+#include "../os/os.h"
 
 
 struct cpu
@@ -140,55 +130,23 @@ HIDDEN void getCpuInfo(void)
  */
 static void retrieveCpuInfo(void)
 {
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-#ifdef WIN32
-    /* Windows code */
-    DWORD count;
-    SYSTEM_INFO sysinfo;
-#elif MACOS
-    /* Mac OS code */
-    int nm[2];
-    size_t len = 4;
-    uint32_t count;
-#else
-    /* Linux code */
-    long int count;
-#endif
+#if CPU_SMP != 0
+    long numCores;
 #endif /* CPU_SMP */
 
     /* By default assume that only one core is used */
     cpu.numCores = 1;
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
-#ifdef WIN32
-    /* Windows code */
-    /* Retrieve number of cores using the proper API */
-    GetSystemInfo(&sysinfo);
-    count = sysinfo.dwNumberOfProcessors;
-#elif MACOS
-    /* Mac OS code */
-    /* Retrieve number of cores using the proper APIs */
-    nm[0] = CTL_HW;
-    nm[1] = HW_AVAILCPU;
-    sysctl(nm, 2, &count, &len, NULL, 0);
-
-    if (count < 1) {
-        nm[1] = HW_NCPU;
-        sysctl(nm, 2, &count, &len, NULL, 0);
-    }
-#else
-    /* Linux code */
-    /* Retrieve number of cores using the proper API */
-    count = sysconf(_SC_NPROCESSORS_ONLN);
-#endif
+    numCores = retrieveNumberOfCores();
 
     /* In case of error, set number of cores to 1 */
-    if (count < 1) {
-        count = 1;
+    if (numCores < 1) {
+        numCores = 1;
     }
 
     /* Store number of cores */
-    cpu.numCores = (unsigned int)count;
+    cpu.numCores = (unsigned int)numCores;
 #endif /* CPU_SMP */
 
 #if CPU_ENABLE_SIMD != 0
