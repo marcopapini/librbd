@@ -23,8 +23,6 @@
 #define CLANG_H_
 
 
-#define COMPILER_NOT_DETECTED
-
 #include "compiler.h"
 
 #if defined(COMPILER_CLANG)

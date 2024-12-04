@@ -33,12 +33,6 @@
 #error "Unknown/unsupported compiler"
 #endif
 
-
-#if defined(COMPILER_NOT_DETECTED)
-#undef COMPILER_NOT_DETECTED
-#endif
-
-
 #if     defined(COMPILER_CLANG)
 #include "clang.h"
 #elif   defined(COMPILER_GCC)
