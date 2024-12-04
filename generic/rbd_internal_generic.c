@@ -83,7 +83,7 @@ HIDDEN void prefetchRead(double *reliability, unsigned char numComponents, unsig
     int component = (int)numComponents;
 
     while (--component >= 0) {
-        PREFETCH_READ(&reliability[(component * numTimes) + time]);
+        compilerPrefetchRead(&reliability[(component * numTimes) + time]);
     }
 }
 
@@ -115,7 +115,7 @@ HIDDEN void prefetchWrite(double *reliability, unsigned char numComponents, unsi
     int component = (int)numComponents;
 
     while (--component >= 0) {
-        PREFETCH_WRITE(&reliability[(component * numTimes) + time]);
+        compilerPrefetchWrite(&reliability[(component * numTimes) + time]);
     }
 }
 

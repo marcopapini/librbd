@@ -23,25 +23,40 @@
 #define CLANG_H_
 
 
+#define COMPILER_NOT_DETECTED
+
+#include "compiler.h"
+
+#if defined(COMPILER_CLANG)
+
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
 /* Include pthread for SMP */
 #include <pthread.h>
 #endif /* CPU_SMP */
 
 
-/*Update architecture target for functions and variables*/
+/* Update architecture target for functions and variables */
 #define FUNCTION_TARGET(X)      __attribute__((__target__(X)))
 #define VARIABLE_TARGET(X)
 
 #define ALWAYS_INLINE           __attribute__((always_inline))
 
-/*Declare hidden and extern symbols*/
+/* Declare hidden and extern symbols */
 #define HIDDEN                  __attribute__((visibility ("hidden")))
 #define EXTERN
 
-/*Prefetch data for read/write into cache*/
-#define PREFETCH_READ(X)        __builtin_prefetch(X, 0, 3)
-#define PREFETCH_WRITE(X)       __builtin_prefetch(X, 1, 3)
+/* Prefetch data for read/write into cache */
+static inline ALWAYS_INLINE void compilerPrefetchRead(void *address)
+{
+    __builtin_prefetch(address, 0, 3);
+}
+
+static inline ALWAYS_INLINE void compilerPrefetchWrite(void *address)
+{
+    __builtin_prefetch(address, 1, 3);
+}
+
+#endif /* defined(COMPILER_CLANG) */
 
 
 #endif /* CLANG_H_ */

@@ -23,13 +23,28 @@
 #define COMPILER_H_
 
 
-#if (defined __clang__)
-#include "clang.h"
-#elif (defined __GNUC__)
-#include "gcc.h"
+#if     defined(__clang__)
+/* clang compiler */
+#define COMPILER_CLANG
+#elif   defined(__GNUC__)
+/* GCC compiler */
+#define COMPILER_GCC
 #else
-#error "Unkown/unspported compiler"
+#error "Unknown/unsupported compiler"
 #endif
+
+
+#if defined(COMPILER_NOT_DETECTED)
+#undef COMPILER_NOT_DETECTED
+#endif
+
+
+#if     defined(COMPILER_CLANG)
+#include "clang.h"
+#elif   defined(COMPILER_GCC)
+#include "gcc.h"
+#endif
+
 
 
 #endif /* COMPILER_H_ */
