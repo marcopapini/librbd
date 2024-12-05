@@ -26,6 +26,8 @@
 
 #if CPU_SMP != 0
 #include <stdlib.h>
+/* Include pthread for SMP */
+#include <pthread.h>
 
 
 /**

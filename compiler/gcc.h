@@ -27,11 +27,6 @@
 
 #if defined(COMPILER_GCC)
 
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-/* Include pthread for SMP */
-#include <pthread.h>
-#endif /* CPU_SMP */
-
 
 /* Update architecture target for functions and variables */
 #define FUNCTION_TARGET(X)      __attribute__((__target__(X)))
@@ -43,12 +38,51 @@
 #define HIDDEN                  __attribute__((visibility ("hidden")))
 #define EXTERN
 
-/* Prefetch data for read/write into cache */
+/**
+ * compilerPrefetchRead
+ *
+ * Prefetch memory for read access
+ *
+ * Input:
+ *      void *address
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function prefetches memory for read access using GCC
+ *
+ * Parameters:
+ *      address: memory address to prefetch
+ *
+ * Return:
+ *  None
+ */
 static inline ALWAYS_INLINE void compilerPrefetchRead(void *address)
 {
     __builtin_prefetch(address, 0, 3);
 }
 
+/**
+ * compilerPrefetchWrite
+ *
+ * Prefetch memory for write access
+ *
+ * Input:
+ *      void *address
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function prefetches memory for write access using GCC
+ *
+ * Parameters:
+ *      address: memory address to prefetch
+ *
+ * Return:
+ *  None
+ */
 static inline ALWAYS_INLINE void compilerPrefetchWrite(void *address)
 {
     __builtin_prefetch(address, 1, 3);
