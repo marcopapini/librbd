@@ -130,7 +130,7 @@ static int rbdParallelInternal(double *reliabilities, double *output, unsigned c
 {
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
     struct rbdParallelData *data;
-    pthread_t *thread_id;
+    void *threadHandles;
     unsigned int numCores;
     unsigned int idx;
 #else                                           /* Under single processor-single thread conditional compiling */
@@ -158,8 +158,8 @@ static int rbdParallelInternal(double *reliabilities, double *output, unsigned c
     /* Is number of used cores greater than 1 (is SMP really needed)? */
     if (numCores > 1) {
         /* Allocate Thread ID array, return -1 in case of allocation failure */
-        thread_id = (pthread_t *)malloc(sizeof(pthread_t) * (numCores - 1));
-        if (thread_id == NULL) {
+        threadHandles = allocateThreadHandles(numCores - 1);
+        if (threadHandles == NULL) {
             free(data);
             return -1;
         }
@@ -175,7 +175,7 @@ static int rbdParallelInternal(double *reliabilities, double *output, unsigned c
             data[idx].numTimes = numTimes;
 
             /* Create the Parallel RBD Worker thread */
-            if (pthread_create(&thread_id[idx], NULL, fpWorker, &data[idx]) < 0) {
+            if (createThread(threadHandles, idx, fpWorker, &data[idx]) < 0) {
                 res = -1;
             }
         }
@@ -193,10 +193,10 @@ static int rbdParallelInternal(double *reliabilities, double *output, unsigned c
 
         /* Wait for created threads completion */
         for (idx = 0; idx < (numCores - 1); ++idx) {
-            (void)pthread_join(thread_id[idx], NULL);
+            waitThread(threadHandles, idx);
         }
         /* Free Thread ID array */
-        free(thread_id);
+        free(threadHandles);
     }
     else {
 #endif /* CPU_SMP */

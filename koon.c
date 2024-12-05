@@ -71,7 +71,7 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
     struct rbdKooNGenericData *koonData;
     struct rbdKooNFillData *fillData;
-    pthread_t *thread_id;
+    void *threadHandles;
     unsigned int idx;
     unsigned int numCores;
 #else                                           /* Under single processor-single thread conditional compiling */
@@ -107,8 +107,8 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
 
         if (numCores > 1) {
             /* Allocate Thread ID array, return -1 in case of allocation failure */
-            thread_id = (pthread_t *)malloc(sizeof(pthread_t) * (numCores - 1));
-            if (thread_id == NULL) {
+            threadHandles = allocateThreadHandles(numCores - 1);
+            if (threadHandles == NULL) {
                 free(fillData);
                 return -1;
             }
@@ -123,7 +123,7 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
                 fillData[idx].value = 0.0;
 
                 /* Create the fill output data Worker thread */
-                if (pthread_create(&thread_id[idx], NULL, &rbdKooNFillWorker, &fillData[idx]) < 0) {
+                if (createThread(threadHandles, idx, &rbdKooNFillWorker, &fillData[idx]) < 0) {
                     res = -1;
                 }
             }
@@ -139,9 +139,9 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
 
             /* Wait for created threads completion */
             for (idx = 0; idx < (numCores - 1); ++idx) {
-                (void)pthread_join(thread_id[idx], NULL);
+                waitThread(threadHandles, idx);
             }
-            free(thread_id);
+            free(threadHandles);
         }
         else {
 #endif /* CPU_SMP */
@@ -173,8 +173,8 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
 
         if (numCores > 1) {
             /* Allocate Thread ID array, return -1 in case of allocation failure */
-            thread_id = (pthread_t *)malloc(sizeof(pthread_t) * (numCores - 1));
-            if (thread_id == NULL) {
+            threadHandles = allocateThreadHandles(numCores - 1);
+            if (threadHandles == NULL) {
                 free(fillData);
                 return -1;
             }
@@ -189,7 +189,7 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
                 fillData[idx].value = 1.0;
 
                 /* Create the fill output data Worker thread */
-                if (pthread_create(&thread_id[idx], NULL, &rbdKooNFillWorker, &fillData[idx]) < 0) {
+                if (createThread(threadHandles, idx, &rbdKooNFillWorker, &fillData[idx]) < 0) {
                     res = -1;
                 }
             }
@@ -205,9 +205,9 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
 
             /* Wait for created threads completion */
             for (idx = 0; idx < (numCores - 1); ++idx) {
-                (void)pthread_join(thread_id[idx], NULL);
+                waitThread(threadHandles, idx);
             }
-            free(thread_id);
+            free(threadHandles);
         }
         else {
 #endif /* CPU_SMP */
@@ -277,8 +277,8 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
     /* Is number of used cores greater than 1? */
     if (numCores > 1) {
         /* Allocate Thread ID array, return -1 in case of allocation failure */
-        thread_id = (pthread_t *)malloc(sizeof(pthread_t) * (numCores - 1));
-        if (thread_id == NULL) {
+        threadHandles = allocateThreadHandles(numCores - 1);
+        if (threadHandles == NULL) {
             free(koonData);
             return -1;
         }
@@ -298,7 +298,7 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
             koonData[idx].combs = &combs;
 
             /* Create the generic KooN RBD Worker thread */
-            if (pthread_create(&thread_id[idx], NULL, &rbdKooNGenericWorker, &koonData[idx]) < 0) {
+            if (createThread(threadHandles, idx, &rbdKooNGenericWorker, &koonData[idx]) < 0) {
                 res = -1;
             }
         }
@@ -320,10 +320,10 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
 
         /* Wait for created threads completion */
         for(idx = 0; idx < (numCores - 1); ++idx) {
-            (void)pthread_join(thread_id[idx], NULL);
+            waitThread(threadHandles, idx);
         }
         /* Free Thread ID array */
-        free(thread_id);
+        free(threadHandles);
     }
     else {
 #endif /* CPU_SMP */
@@ -401,7 +401,7 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
     struct rbdKooNIdenticalData *koonData;
     struct rbdKooNFillData *fillData;
-    pthread_t *thread_id;
+    void *threadHandles;
     unsigned int numCores;
 #else                                           /* Under single processor-single thread conditional compiling */
     struct rbdKooNIdenticalData koonData[1];
@@ -436,8 +436,8 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
 
         if (numCores > 1) {
             /* Allocate Thread ID array, return -1 in case of allocation failure */
-            thread_id = (pthread_t *)malloc(sizeof(pthread_t) * (numCores - 1));
-            if (thread_id == NULL) {
+            threadHandles = allocateThreadHandles(numCores - 1);
+            if (threadHandles == NULL) {
                 free(fillData);
                 return -1;
             }
@@ -452,7 +452,7 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
                 fillData[idx].value = 0.0;
 
                 /* Create the fill output data Worker thread */
-                if (pthread_create(&thread_id[idx], NULL, &rbdKooNFillWorker, &fillData[idx]) < 0) {
+                if (createThread(threadHandles, idx, &rbdKooNFillWorker, &fillData[idx]) < 0) {
                     res = -1;
                 }
             }
@@ -468,9 +468,9 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
 
             /* Wait for created threads completion */
             for (idx = 0; idx < (numCores - 1); ++idx) {
-                (void)pthread_join(thread_id[idx], NULL);
+                waitThread(threadHandles, idx);
             }
-            free(thread_id);
+            free(threadHandles);
         }
         else {
 #endif /* CPU_SMP */
@@ -502,8 +502,8 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
 
         if (numCores > 1) {
             /* Allocate Thread ID array, return -1 in case of allocation failure */
-            thread_id = (pthread_t *)malloc(sizeof(pthread_t) * (numCores - 1));
-            if (thread_id == NULL) {
+            threadHandles = allocateThreadHandles(numCores - 1);
+            if (threadHandles == NULL) {
                 free(fillData);
                 return -1;
             }
@@ -518,7 +518,7 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
                 fillData[idx].value = 1.0;
 
                 /* Create the fill output data Worker thread */
-                if (pthread_create(&thread_id[idx], NULL, &rbdKooNFillWorker, &fillData[idx]) < 0) {
+                if (createThread(threadHandles, idx, &rbdKooNFillWorker, &fillData[idx]) < 0) {
                     res = -1;
                 }
             }
@@ -534,9 +534,9 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
 
             /* Wait for created threads completion */
             for (idx = 0; idx < (numCores - 1); ++idx) {
-                (void)pthread_join(thread_id[idx], NULL);
+                waitThread(threadHandles, idx);
             }
-            free(thread_id);
+            free(threadHandles);
         }
         else {
 #endif /* CPU_SMP */
@@ -591,8 +591,8 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
     if (numCores > 1) {
         /* Allocate Thread ID array, return -1 in case of allocation failure */
-        thread_id = (pthread_t *)malloc(sizeof(pthread_t) * (numCores - 1));
-        if (thread_id == NULL) {
+        threadHandles = allocateThreadHandles(numCores - 1);
+        if (threadHandles == NULL) {
             free(koonData);
             return -1;
         }
@@ -611,7 +611,7 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
             koonData[idx].nCi = &nCi[0];
 
             /* Create the identical KooN RBD Worker thread */
-            if (pthread_create(&thread_id[idx], NULL, &rbdKooNIdenticalWorker, &koonData[idx]) < 0) {
+            if (createThread(threadHandles, idx, &rbdKooNIdenticalWorker, &koonData[idx]) < 0) {
                 res = -1;
             }
         }
@@ -632,10 +632,10 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
 
         /* Wait for created threads completion */
         for (idx = 0; idx < (numCores - 1); ++idx) {
-            (void)pthread_join(thread_id[idx], NULL);
+            waitThread(threadHandles, idx);
         }
         /* Free Thread ID array */
-        free(thread_id);
+        free(threadHandles);
     }
     else {
 #endif /* CPU_SMP */
