@@ -51,9 +51,6 @@
 #endif /* CPU_SMP */
 
 
-typedef void *(*fpWorker)(void *);
-
-
 /**
  * min
  *

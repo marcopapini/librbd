@@ -40,5 +40,14 @@
 #endif
 
 
+#if CPU_SMP != 0
+typedef void *(*fpWorker)(void *);
+
+void *allocateThreadHandles(unsigned int numThreads);
+int createThread(void *threadHandles, unsigned int threadIdx, fpWorker fpWorker, void *args);
+void waitThread(void *threadHandles, unsigned int threadIdx);
+#endif /* CPU_SMP != 0 */
+
+
 
 #endif /* COMPILER_H_ */
