@@ -1,0 +1,10 @@
+# Ignore all .d files
+*.d
+
+# Ignore all .o files
+*.o
+
+# Ignore build artifacts
+librbd.a
+librbd.so
+
