@@ -46,6 +46,48 @@ make cleanall
 make all
 ```
 
+## Test application
+
+### Make tool
+
+#### Configure makefile
+
+Edit `make/tools.mk` file by setting the proper tools variables `CC`, `LD` and `AR`. The default variables are:
+
+```sh
+CC := gcc
+LD := gcc
+AR := ar
+```
+
+Edit `make/options.mk` file by setting the proper options variable `C_FLAGS`.
+When linking against librbd built with CPU_SMP, then `C_FLAGS` shall provide option `-pthread`.
+
+#### Build test application
+
+Before building the test application, ensure that the librbd is built as static library (archive).
+
+To build the test application:
+
+```sh
+cd test/make
+make clean
+make all
+```
+
+#### Run test application
+
+To run the test application:
+
+```sh
+cd test/make
+./test
+```
+
+Test application executes RBD analysis on several pre-defined Reliability Block Diagrams.
+For each analyzed RBD, two text files are produced, one providing the reliability curves of the input components and the other one providing the reliability curve of the analyzed RBD.
+Furthermore, the execution of each RBD is repeated several times to produce and log the statistics on its corresponding execution time.
+
 ## License
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
