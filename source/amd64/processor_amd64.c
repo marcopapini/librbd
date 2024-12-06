@@ -177,7 +177,7 @@ HIDDEN unsigned int amd64Avx512fSupported(void)
  * Return:
  *      None
  */
-void retrieveAmd64CpuInfo(void)
+HIDDEN void retrieveAmd64CpuInfo(void)
 {
     /**
      * Default processor info:

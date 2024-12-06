@@ -84,7 +84,7 @@ HIDDEN unsigned int x86Sse2Supported(void)
  * Return:
  *      None
  */
-void retrieveX86CpuInfo(void)
+HIDDEN void retrieveX86CpuInfo(void)
 {
     /**
      * Default processor info:

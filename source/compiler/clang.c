@@ -50,7 +50,7 @@
  * Return (void *):
  *  != NULL in case of successful thread handles allocation, NULL otherwise
  */
-void *allocateThreadHandles(unsigned int numThreads)
+HIDDEN void *allocateThreadHandles(unsigned int numThreads)
 {
     pthread_t *threadHandles;
 
@@ -86,7 +86,7 @@ void *allocateThreadHandles(unsigned int numThreads)
  * Return (int):
  *  0 in case of successful thread creation, -1 otherwise
  */
-int createThread(void *threadHandles, unsigned int threadIdx, fpWorker fpWorker, void *args)
+HIDDEN int createThread(void *threadHandles, unsigned int threadIdx, fpWorker fpWorker, void *args)
 {
     pthread_t *pHandles = (pthread_t *)threadHandles;
 
@@ -119,7 +119,7 @@ int createThread(void *threadHandles, unsigned int threadIdx, fpWorker fpWorker,
  * Return:
  *  None
  */
-void waitThread(void *threadHandles, unsigned int threadIdx)
+HIDDEN void waitThread(void *threadHandles, unsigned int threadIdx)
 {
     pthread_t *pHandles = (pthread_t *)threadHandles;
 
