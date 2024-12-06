@@ -1,0 +1,12 @@
+# Ignore all .d files
+*.d
+
+# Ignore all .o files
+*.o
+
+# Ignore all output log files
+*.txt
+
+# Ignore build artifact
+test
+
