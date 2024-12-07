@@ -29,7 +29,7 @@ struct combinations
     unsigned char n;                        /* Dimension of set n */
     unsigned char k;                        /* Dimension of subsets k */
     unsigned char buff[];                   /* Array of combinations: each combination is an array of k elements */
-} __attribute__((packed));
+};
 
 
 /**
