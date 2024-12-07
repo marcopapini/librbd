@@ -52,33 +52,7 @@
 
 
 /**
- * min
- *
- * Compute minimum between two numbers
- *
- * Input:
- *      int a
- *      int b
- *
- * Output:
- *      None
- *
- * Description:
- *  Computes the minimum between two numbers
- *
- * Parameters:
- *      a: first value for minimum computation
- *      b: second value for minimum computation
- *
- * Return (int):
- *  Minimum value
- */
-static inline ALWAYS_INLINE int min(int a, int b) {
-    return (a <= b) ? a : b;
-}
-
-/**
- * max
+ * maximum
  *
  * Compute maximum between two numbers
  *
@@ -99,7 +73,7 @@ static inline ALWAYS_INLINE int min(int a, int b) {
  * Return (int):
  *  maximum value
  */
-static inline ALWAYS_INLINE int max(int a, int b) {
+static inline ALWAYS_INLINE int maximum(int a, int b) {
     return (a >= b) ? a : b;
 }
 

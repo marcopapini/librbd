@@ -146,7 +146,7 @@ HIDDEN int computeNumCores(int numTimes) {
     /* Retrieve number of cores available in SMP system */
     numCores = getNumberOfCores();
     /* Compute batch size */
-    batchSize = max(ceilDivision(numTimes, numCores), MIN_BATCH_SIZE);
+    batchSize = maximum(ceilDivision(numTimes, numCores), MIN_BATCH_SIZE);
     /* Compute number of threads required */
     numCores = ceilDivision(numTimes, batchSize);
     /* Return number of threads required */
