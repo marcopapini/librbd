@@ -34,9 +34,8 @@
 
 #define ALWAYS_INLINE           __attribute__((always_inline))
 
-/* Declare hidden and extern symbols */
+/* Declare hidden symbols */
 #define HIDDEN                  __attribute__((visibility ("hidden")))
-#define EXTERN
 
 /**
  * compilerPrefetchRead

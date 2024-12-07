@@ -31,6 +31,10 @@ extern "C" {
 #define RBD_BRIDGE_COMPONENTS       5       /* Number of components in Bridge RBD block */
 
 
+/* Declare extern symbols */
+#define EXTERN          extern
+
+
 /**
  * rbdSeriesGeneric
  *
@@ -61,7 +65,7 @@ extern "C" {
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-extern int rbdSeriesGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
+EXTERN int rbdSeriesGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
 
 /**
  * rbdSeriesIdentical
@@ -91,7 +95,7 @@ extern int rbdSeriesGeneric(double *reliabilities, double *output, unsigned char
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-extern int rbdSeriesIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
+EXTERN int rbdSeriesIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
 
 /**
  * rbdParallelGeneric
@@ -123,7 +127,7 @@ extern int rbdSeriesIdentical(double *reliabilities, double *output, unsigned ch
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-extern int rbdParallelGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
+EXTERN int rbdParallelGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
 
 /**
  * rbdParallelIdentical
@@ -153,7 +157,7 @@ extern int rbdParallelGeneric(double *reliabilities, double *output, unsigned ch
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-extern int rbdParallelIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
+EXTERN int rbdParallelIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
 
 /**
  * rbdKooNGeneric
@@ -187,7 +191,7 @@ extern int rbdParallelIdentical(double *reliabilities, double *output, unsigned 
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-extern int rbdKooNGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes);
+EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes);
 
 /**
  * rbdKooNIdentical
@@ -219,7 +223,7 @@ extern int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-extern int rbdKooNIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes);
+EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes);
 
 /**
  * rbdBridgeIdentical
@@ -249,7 +253,7 @@ extern int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-extern int rbdBridgeIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
+EXTERN int rbdBridgeIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
 
 /**
  * rbdBridgeGeneric
@@ -281,7 +285,7 @@ extern int rbdBridgeIdentical(double *reliabilities, double *output, unsigned ch
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-extern int rbdBridgeGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
+EXTERN int rbdBridgeGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes);
 
 
 #ifdef  __cplusplus
