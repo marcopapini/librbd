@@ -32,7 +32,19 @@ extern "C" {
 
 
 /* Declare extern symbols */
+#if   defined(_MSC_VER)
+#if   defined(COMPILE_DLL)
+#define EXTERN          extern __declspec(dllexport)
+#elif defined(COMPILE_LIB)
 #define EXTERN          extern
+#elif defined(LINK_TO_LIB)
+#define EXTERN          extern
+#else
+#define EXTERN          extern __declspec(dllimport)
+#endif
+#else
+#define EXTERN          extern
+#endif
 
 
 /**

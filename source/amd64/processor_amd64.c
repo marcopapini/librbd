@@ -25,6 +25,29 @@
 
 #if defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0
 
+#include "../compiler/compiler.h"
+
+#if defined(COMPILER_VS)
+#include <intrin.h>
+
+#define SSE2_ID             1       /* cpuid identifier to retrieve SSE2 support */
+#define SSE2_REG            3       /* Register identifier (EDX) to retrieve SSE2 support */
+#define SSE2_BIT            26      /* Bit to retrieve to retrieve SSE2 support */
+#define AVX_ID              1       /* cpuid identifier to retrieve AVX support */
+#define AVX_REG             2       /* Register identifier (ECX) to retrieve AVX support */
+#define AVX_BIT             28      /* Bit to retrieve to retrieve AVX support */
+#define FMA3_ID             1       /* cpuid identifier to retrieve FMA3 support */
+#define FMA3_REG            3       /* Register identifier (EDX) to retrieve FMA3 support */
+#define FMA3_BIT            12      /* Bit to retrieve to retrieve FMA3 support */
+#define AVX512F_ID          7       /* cpuid identifier to retrieve AVX512F support */
+#define AVX512F_REG         2       /* Register identifier (ECX) to retrieve AVX512F support */
+#define AVX512F_BIT         16      /* Bit to retrieve to retrieve AVX512F support */
+
+#if (SSE2_ID != AVX_ID) || (SSE2_ID != FMA3_ID)
+#error "Wrong configuration of cpuid IDs"
+#endif
+#endif
+
 
 struct amd64Cpu
 {
@@ -179,6 +202,11 @@ HIDDEN unsigned int amd64Avx512fSupported(void)
  */
 HIDDEN void retrieveAmd64CpuInfo(void)
 {
+#if defined(COMPILER_VS)
+    int cpuInfo[4];
+    int nIds;
+#endif
+
     /**
      * Default processor info:
      * - no SSE2, no AVX, no FMA3, no AVX512F
@@ -187,6 +215,33 @@ HIDDEN void retrieveAmd64CpuInfo(void)
     amd64Cpu.avxSupported = 0;
     amd64Cpu.fma3Supported = 0;
     amd64Cpu.avx512fSupported = 0;
+
+#if defined(COMPILER_VS)
+    /* Calling __cpuid with Function ID 0x0 gets the highest valid function ID. */
+    __cpuid(cpuInfo, 0);
+    nIds = cpuInfo[0];
+
+    if (nIds >= SSE2_ID) {
+        /* Calling __cpuidex with Function ID SSE2_ID gets availability of SSE2, AVX, FMA3. */
+        __cpuidex(cpuInfo, SSE2_ID, 0);
+        if (((cpuInfo[SSE2_REG] >> SSE2_BIT) & 0x1) != 0) {
+            amd64Cpu.sse2Supported = 1;
+            if (((cpuInfo[AVX_REG] >> AVX_BIT) & 0x1) != 0) {
+                amd64Cpu.avxSupported = 1;
+                if (((cpuInfo[FMA3_REG] >> FMA3_BIT) & 0x1) != 0) {
+                    amd64Cpu.fma3Supported = 1;
+                    if (nIds >= AVX512F_ID) {
+                        /* Calling __cpuidex with Function ID AVX512F_ID gets availability of AVX512F. */
+                        __cpuidex(cpuInfo, AVX512F_ID, 0);
+                        if (((cpuInfo[AVX512F_REG] >> AVX512F_BIT) & 0x1) != 0) {
+                            amd64Cpu.avx512fSupported = 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+#else
     if (__builtin_cpu_supports("sse2") > 0) {
         amd64Cpu.sse2Supported = 1;
         if (__builtin_cpu_supports("avx") > 0) {
@@ -199,6 +254,7 @@ HIDDEN void retrieveAmd64CpuInfo(void)
             }
         }
     }
+#endif
 }
 
 #endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */

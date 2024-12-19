@@ -29,6 +29,9 @@
 #elif   defined(__GNUC__)
 /* GCC compiler */
 #define COMPILER_GCC
+#elif   defined(_MSC_VER)
+/* Visual Studio compiler */
+#define COMPILER_VS
 #else
 #error "Unknown/unsupported compiler"
 #endif
@@ -37,6 +40,8 @@
 #include "clang.h"
 #elif   defined(COMPILER_GCC)
 #include "gcc.h"
+#elif   defined(COMPILER_VS)
+#include "vs.h"
 #endif
 
 typedef void* (*fpWorker)(void*);
