@@ -6,6 +6,10 @@
  */
 
 
+#if defined(_MSC_VER)
+#define _CRT_SECURE_NO_DEPRECATE
+#include <Windows.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -75,6 +79,10 @@ static const rbdDim rbdKooNDimComparison = {KOON_COMPARISON_N, 200000};
 #define NUM_EXPERIMENTS                 ((sizeof(rbdTests) / sizeof(rbdDim)))
 #define NUM_BRIDGE_EXPERIMENTS          ((sizeof(rbdBridgeTests) / sizeof(rbdDim)))
 
+#if defined(_MSC_VER)
+#define CLOCK_MONOTONIC                 0
+#endif
+
 
 static resultExperiment resultSeriesGeneric[NUM_EXPERIMENTS];
 static resultExperiment resultSeriesIdentical[NUM_EXPERIMENTS];
@@ -86,6 +94,41 @@ static resultExperiment resultKooNGenericComparison[KOON_COMPARISON_TESTS];
 static resultExperiment resultKooNIdenticalComparison[KOON_COMPARISON_TESTS];
 static resultExperiment resultBridgeGeneric[NUM_BRIDGE_EXPERIMENTS];
 static resultExperiment resultBridgeIdentical[NUM_BRIDGE_EXPERIMENTS];
+
+
+#if defined(_MSC_VER)
+static int clock_gettime(int dummy, struct timespec* tv)
+{
+    static int initialized = 0;
+    static LARGE_INTEGER freq, startCount;
+    static struct timespec tv_start;
+    LARGE_INTEGER curCount;
+    time_t sec_part;
+    long nsec_part;
+
+    if (!initialized) {
+        QueryPerformanceFrequency(&freq);
+        QueryPerformanceCounter(&startCount);
+        (void)timespec_get(&tv_start, TIME_UTC);
+        initialized = 1;
+    }
+
+    QueryPerformanceCounter(&curCount);
+
+    curCount.QuadPart -= startCount.QuadPart;
+    sec_part = curCount.QuadPart / freq.QuadPart;
+    nsec_part = (long)((curCount.QuadPart - (sec_part * freq.QuadPart))
+        * 1000000000UL / freq.QuadPart);
+
+    tv->tv_sec = tv_start.tv_sec + sec_part;
+    tv->tv_nsec = tv_start.tv_nsec + nsec_part;
+    if (tv->tv_nsec >= 1000000000UL) {
+        tv->tv_sec += 1;
+        tv->tv_nsec -= 1000000000UL;
+    }
+    return 0;
+}
+#endif
 
 
 
