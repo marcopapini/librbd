@@ -268,6 +268,10 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
     while ((ii < combs.numKooNcombinations) && (bRecursive == 0));
 
     if (bRecursive != 0) {
+        /* Restore K if KooN computation through Unreliability flag is set */
+        if (bComputeUnreliability != 0) {
+            minComponents = numComponents - minComponents + 1;
+        }
         while (ii > 0) {
             free(combs.combinations[--ii]);
         }
