@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\source\aarch64\bridge_aarch64.h" />
+    <ClInclude Include="..\..\source\aarch64\koon_aarch64.h" />
+    <ClInclude Include="..\..\source\aarch64\parallel_aarch64.h" />
+    <ClInclude Include="..\..\source\aarch64\rbd_internal_aarch64.h" />
+    <ClInclude Include="..\..\source\aarch64\series_aarch64.h" />
+    <ClInclude Include="..\..\source\amd64\bridge_amd64.h" />
+    <ClInclude Include="..\..\source\amd64\koon_amd64.h" />
+    <ClInclude Include="..\..\source\amd64\parallel_amd64.h" />
+    <ClInclude Include="..\..\source\amd64\rbd_internal_amd64.h" />
+    <ClInclude Include="..\..\source\amd64\series_amd64.h" />
+    <ClInclude Include="..\..\source\bridge.h" />
+    <ClInclude Include="..\..\source\compiler\clang.h" />
+    <ClInclude Include="..\..\source\compiler\compiler.h" />
+    <ClInclude Include="..\..\source\compiler\gcc.h" />
+    <ClInclude Include="..\..\source\compiler\vs.h" />
+    <ClInclude Include="..\..\source\generic\architecture.h" />
+    <ClInclude Include="..\..\source\generic\binomial.h" />
+    <ClInclude Include="..\..\source\generic\combinations.h" />
+    <ClInclude Include="..\..\source\generic\rbd_internal_generic.h" />
+    <ClInclude Include="..\..\source\koon.h" />
+    <ClInclude Include="..\..\source\os\os.h" />
+    <ClInclude Include="..\..\source\parallel.h" />
+    <ClInclude Include="..\..\source\rbd.h" />
+    <ClInclude Include="..\..\source\series.h" />
+    <ClInclude Include="..\..\source\x86\bridge_x86.h" />
+    <ClInclude Include="..\..\source\x86\koon_x86.h" />
+    <ClInclude Include="..\..\source\x86\parallel_x86.h" />
+    <ClInclude Include="..\..\source\x86\rbd_internal_x86.h" />
+    <ClInclude Include="..\..\source\x86\series_x86.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\aarch64\bridge_aarch64.c" />
+    <ClCompile Include="..\..\source\aarch64\koon_aarch64.c" />
+    <ClCompile Include="..\..\source\aarch64\neon\bridge_aarch64_neon.c" />
+    <ClCompile Include="..\..\source\aarch64\neon\koon_aarch64_neon.c" />
+    <ClCompile Include="..\..\source\aarch64\neon\parallel_aarch64_neon.c" />
+    <ClCompile Include="..\..\source\aarch64\neon\series_aarch64_neon.c" />
+    <ClCompile Include="..\..\source\aarch64\parallel_aarch64.c" />
+    <ClCompile Include="..\..\source\aarch64\rbd_internal_aarch64.c" />
+    <ClCompile Include="..\..\source\aarch64\series_aarch64.c" />
+    <ClCompile Include="..\..\source\amd64\avx512f\bridge_amd64_avx512f.c" />
+    <ClCompile Include="..\..\source\amd64\avx512f\koon_amd64_avx512f.c" />
+    <ClCompile Include="..\..\source\amd64\avx512f\parallel_amd64_avx512f.c" />
+    <ClCompile Include="..\..\source\amd64\avx512f\series_amd64_avx512f.c" />
+    <ClCompile Include="..\..\source\amd64\avx\bridge_amd64_avx.c" />
+    <ClCompile Include="..\..\source\amd64\avx\koon_amd64_avx.c" />
+    <ClCompile Include="..\..\source\amd64\avx\parallel_amd64_avx.c" />
+    <ClCompile Include="..\..\source\amd64\avx\series_amd64_avx.c" />
+    <ClCompile Include="..\..\source\amd64\bridge_amd64.c" />
+    <ClCompile Include="..\..\source\amd64\fma3\bridge_amd64_fma3.c" />
+    <ClCompile Include="..\..\source\amd64\fma3\koon_amd64_fma3.c" />
+    <ClCompile Include="..\..\source\amd64\fma3\parallel_amd64_fma3.c" />
+    <ClCompile Include="..\..\source\amd64\koon_amd64.c" />
+    <ClCompile Include="..\..\source\amd64\parallel_amd64.c" />
+    <ClCompile Include="..\..\source\amd64\processor_amd64.c" />
+    <ClCompile Include="..\..\source\amd64\rbd_internal_amd64.c" />
+    <ClCompile Include="..\..\source\amd64\series_amd64.c" />
+    <ClCompile Include="..\..\source\bridge.c" />
+    <ClCompile Include="..\..\source\compiler\clang.c" />
+    <ClCompile Include="..\..\source\compiler\gcc.c" />
+    <ClCompile Include="..\..\source\compiler\vs.c" />
+    <ClCompile Include="..\..\source\generic\binomial.c" />
+    <ClCompile Include="..\..\source\generic\bridge_generic.c" />
+    <ClCompile Include="..\..\source\generic\combinations.c" />
+    <ClCompile Include="..\..\source\generic\koon_generic.c" />
+    <ClCompile Include="..\..\source\generic\parallel_generic.c" />
+    <ClCompile Include="..\..\source\generic\processor_generic.c" />
+    <ClCompile Include="..\..\source\generic\rbd_internal_generic.c" />
+    <ClCompile Include="..\..\source\generic\series_generic.c" />
+    <ClCompile Include="..\..\source\koon.c" />
+    <ClCompile Include="..\..\source\os\linux.c" />
+    <ClCompile Include="..\..\source\os\macos.c" />
+    <ClCompile Include="..\..\source\os\unknown_os.c" />
+    <ClCompile Include="..\..\source\os\windows.c" />
+    <ClCompile Include="..\..\source\parallel.c" />
+    <ClCompile Include="..\..\source\series.c" />
+    <ClCompile Include="..\..\source\x86\bridge_x86.c" />
+    <ClCompile Include="..\..\source\x86\koon_x86.c" />
+    <ClCompile Include="..\..\source\x86\parallel_x86.c" />
+    <ClCompile Include="..\..\source\x86\processor_x86.c" />
+    <ClCompile Include="..\..\source\x86\rbd_internal_x86.c" />
+    <ClCompile Include="..\..\source\x86\series_x86.c" />
+    <ClCompile Include="..\..\source\x86\sse2\bridge_x86_sse2.c" />
+    <ClCompile Include="..\..\source\x86\sse2\koon_x86_sse2.c" />
+    <ClCompile Include="..\..\source\x86\sse2\parallel_x86_sse2.c" />
+    <ClCompile Include="..\..\source\x86\sse2\series_x86_sse2.c" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{5b4f9c50-a5a2-44e1-9cd7-802fcec51ebd}</ProjectGuid>
+    <RootNamespace>Static</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>librbd</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetName>librbd</TargetName>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <TargetName>librbd</TargetName>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>librbd</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions);COMPILE_LIB;CPU_SMP=1;CPU_ENABLE_SIMD=1</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions);COMPILE_LIB;CPU_SMP=1;CPU_ENABLE_SIMD=1</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions);COMPILE_LIB;CPU_SMP=1;CPU_ENABLE_SIMD=1</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions);COMPILE_LIB;CPU_SMP=1;CPU_ENABLE_SIMD=1</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,324 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\aarch64">
+      <UniqueIdentifier>{0b57fa1f-974c-4f59-bea3-718974dbacd3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\amd64">
+      <UniqueIdentifier>{674ed803-9c62-4a43-a520-7e522d5d8459}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\compiler">
+      <UniqueIdentifier>{9420d3cf-4042-42a8-b297-89a1dc745989}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\generic">
+      <UniqueIdentifier>{c7635e77-f441-4668-9d06-771f781b3a5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\os">
+      <UniqueIdentifier>{8b3cd841-2608-484d-9e54-d072b5966230}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\x86">
+      <UniqueIdentifier>{8ba2214a-9b5b-48d5-be66-498a1a99057c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\aarch64">
+      <UniqueIdentifier>{476d3b8d-da3d-4809-b4b2-3b79f1ab56c6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\amd64">
+      <UniqueIdentifier>{a9a021a0-9c67-4d6c-9125-43778afba5cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\compiler">
+      <UniqueIdentifier>{3666e5b7-bfd3-432f-af91-bc63371d5ba1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\generic">
+      <UniqueIdentifier>{26441c29-dd4a-47fd-b75e-b468e92bec8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\x86">
+      <UniqueIdentifier>{15046ccd-fec7-4622-9c67-cf6e5e3a329a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\os">
+      <UniqueIdentifier>{cd0656f8-c897-4cf0-9c3a-ad5dda95c6f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\aarch64\neon">
+      <UniqueIdentifier>{22bd9b8c-5be9-4360-b4f5-1add80a2df91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\x86\sse2">
+      <UniqueIdentifier>{ddf9f611-15c0-42e6-a036-751c23b027c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\amd64\avx">
+      <UniqueIdentifier>{f03fb056-97ec-4da0-8082-8f133437c138}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\amd64\avx512f">
+      <UniqueIdentifier>{cedeb31c-830e-4670-ab3e-3d144000fd9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\amd64\fma3">
+      <UniqueIdentifier>{7d2b81f3-f519-425f-8891-0ca4c2b02971}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\source\bridge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\koon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\parallel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\rbd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\series.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\aarch64\bridge_aarch64.h">
+      <Filter>Header Files\aarch64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\aarch64\koon_aarch64.h">
+      <Filter>Header Files\aarch64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\aarch64\parallel_aarch64.h">
+      <Filter>Header Files\aarch64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\aarch64\rbd_internal_aarch64.h">
+      <Filter>Header Files\aarch64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\aarch64\series_aarch64.h">
+      <Filter>Header Files\aarch64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\amd64\bridge_amd64.h">
+      <Filter>Header Files\amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\amd64\koon_amd64.h">
+      <Filter>Header Files\amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\amd64\parallel_amd64.h">
+      <Filter>Header Files\amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\amd64\rbd_internal_amd64.h">
+      <Filter>Header Files\amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\amd64\series_amd64.h">
+      <Filter>Header Files\amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\compiler\clang.h">
+      <Filter>Header Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\compiler\compiler.h">
+      <Filter>Header Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\compiler\gcc.h">
+      <Filter>Header Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\compiler\vs.h">
+      <Filter>Header Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\generic\architecture.h">
+      <Filter>Header Files\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\generic\binomial.h">
+      <Filter>Header Files\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\generic\combinations.h">
+      <Filter>Header Files\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\generic\rbd_internal_generic.h">
+      <Filter>Header Files\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\os\os.h">
+      <Filter>Header Files\os</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\x86\bridge_x86.h">
+      <Filter>Header Files\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\x86\koon_x86.h">
+      <Filter>Header Files\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\x86\parallel_x86.h">
+      <Filter>Header Files\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\x86\rbd_internal_x86.h">
+      <Filter>Header Files\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\x86\series_x86.h">
+      <Filter>Header Files\x86</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\source\bridge.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\koon.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\parallel.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\series.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\bridge_aarch64.c">
+      <Filter>Source Files\aarch64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\koon_aarch64.c">
+      <Filter>Source Files\aarch64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\parallel_aarch64.c">
+      <Filter>Source Files\aarch64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\rbd_internal_aarch64.c">
+      <Filter>Source Files\aarch64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\series_aarch64.c">
+      <Filter>Source Files\aarch64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\neon\bridge_aarch64_neon.c">
+      <Filter>Source Files\aarch64\neon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\neon\koon_aarch64_neon.c">
+      <Filter>Source Files\aarch64\neon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\neon\parallel_aarch64_neon.c">
+      <Filter>Source Files\aarch64\neon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\neon\series_aarch64_neon.c">
+      <Filter>Source Files\aarch64\neon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\bridge_amd64.c">
+      <Filter>Source Files\amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\koon_amd64.c">
+      <Filter>Source Files\amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\parallel_amd64.c">
+      <Filter>Source Files\amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\processor_amd64.c">
+      <Filter>Source Files\amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\rbd_internal_amd64.c">
+      <Filter>Source Files\amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\series_amd64.c">
+      <Filter>Source Files\amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx\bridge_amd64_avx.c">
+      <Filter>Source Files\amd64\avx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx\koon_amd64_avx.c">
+      <Filter>Source Files\amd64\avx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx\parallel_amd64_avx.c">
+      <Filter>Source Files\amd64\avx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx\series_amd64_avx.c">
+      <Filter>Source Files\amd64\avx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx512f\bridge_amd64_avx512f.c">
+      <Filter>Source Files\amd64\avx512f</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx512f\koon_amd64_avx512f.c">
+      <Filter>Source Files\amd64\avx512f</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx512f\parallel_amd64_avx512f.c">
+      <Filter>Source Files\amd64\avx512f</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx512f\series_amd64_avx512f.c">
+      <Filter>Source Files\amd64\avx512f</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\fma3\bridge_amd64_fma3.c">
+      <Filter>Source Files\amd64\fma3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\fma3\koon_amd64_fma3.c">
+      <Filter>Source Files\amd64\fma3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\fma3\parallel_amd64_fma3.c">
+      <Filter>Source Files\amd64\fma3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\compiler\clang.c">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\compiler\gcc.c">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\compiler\vs.c">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\generic\binomial.c">
+      <Filter>Source Files\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\generic\bridge_generic.c">
+      <Filter>Source Files\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\generic\combinations.c">
+      <Filter>Source Files\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\generic\koon_generic.c">
+      <Filter>Source Files\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\generic\parallel_generic.c">
+      <Filter>Source Files\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\generic\processor_generic.c">
+      <Filter>Source Files\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\generic\rbd_internal_generic.c">
+      <Filter>Source Files\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\generic\series_generic.c">
+      <Filter>Source Files\generic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\os\linux.c">
+      <Filter>Source Files\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\os\macos.c">
+      <Filter>Source Files\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\os\unknown_os.c">
+      <Filter>Source Files\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\os\windows.c">
+      <Filter>Source Files\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\bridge_x86.c">
+      <Filter>Source Files\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\koon_x86.c">
+      <Filter>Source Files\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\parallel_x86.c">
+      <Filter>Source Files\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\processor_x86.c">
+      <Filter>Source Files\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\rbd_internal_x86.c">
+      <Filter>Source Files\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\series_x86.c">
+      <Filter>Source Files\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\sse2\bridge_x86_sse2.c">
+      <Filter>Source Files\x86\sse2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\sse2\koon_x86_sse2.c">
+      <Filter>Source Files\x86\sse2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\sse2\parallel_x86_sse2.c">
+      <Filter>Source Files\x86\sse2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\sse2\series_x86_sse2.c">
+      <Filter>Source Files\x86\sse2</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
