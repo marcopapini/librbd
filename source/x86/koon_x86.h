@@ -33,8 +33,6 @@ void *rbdKooNGenericWorkerSse2(struct rbdKooNGenericData *data);
 void *rbdKooNIdenticalWorkerSse2(struct rbdKooNIdenticalData *data);
 
 /* Platform-specific functions for x86 SSE2 instruction set */
-void rbdKooNGenericSuccessStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNGenericFailStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNRecursionV2dSse2(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time);

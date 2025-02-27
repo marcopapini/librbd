@@ -27,12 +27,49 @@
 
 
 #include <arm_neon.h>
+#include <limits.h>
+#include <string.h>
+
+
+struct rbdKooNRecursionData
+{
+    unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
+    unsigned char buff[(UCHAR_MAX + 1) * sizeof(float64x2_t)];  /* Temporary buffer */
+    double      *s1dR;                      /* Pointer to array of reliabilities - Scalar 1 double */
+    float64x2_t *v2dR;                      /* Pointer to array of reliabilities - Vector 2 double */
+};
 
 
 VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dZeros;
 VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dOnes;
 VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dTwos;
 VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dMinusTwos;
+
+
+/**
+ * initKooNRecursionData
+ *
+ * Initialize the provided RBD KooN Recursive Data
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      struct rbdKooNRecursionData *data
+ *
+ * Description:
+ *  This function initializes the provided RBD KooN Recursive Data
+ *
+ * Parameters:
+ *      data: RBD KooN Recursive Data to be initialized
+ */
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionData *data) {
+    unsigned long long alignAddr;
+    memset(data, 0, sizeof(struct rbdKooNRecursionData));
+    alignAddr = ((unsigned long long)(&data->buff) + sizeof(float64x2_t) - 1) & ~(sizeof(float64x2_t) - 1);
+    data->s1dR = (double *)alignAddr;
+    data->v2dR = (float64x2_t *)alignAddr;
+}
 
 
 FUNCTION_TARGET("arch=armv8-a") float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);

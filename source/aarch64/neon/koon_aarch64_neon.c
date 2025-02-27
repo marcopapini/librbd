@@ -25,162 +25,11 @@
 #if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_aarch64.h"
 #include "../koon_aarch64.h"
+#include "../../generic/combinations.h"
 
 
-static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
+static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
 
-
-/**
- * rbdKooNGenericSuccessStepV2dNeon
- *
- * Generic KooN RBD Step function from working components with AArch64 NEON 128bit
- *
- * Input:
- *      struct rbdKooNGenericData *data
- *      unsigned int time
- *
- * Output:
- *      None
- *
- * Description:
- *  This function implements the generic KooN RBD function exploiting AArch64 NEON 128bit.
- *  It is responsible to compute the reliability of a KooN RBD system
- *  taking into account the working components
- *
- * Parameters:
- *      data: KooN RBD data structure
- *      time: current time instant over which KooN RBD shall be computed
- *
- * Return:
- *  None
- */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNGenericSuccessStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time)
-{
-    float64x2_t v2dStep;
-    float64x2_t v2dTmp;
-    float64x2_t v2dRes;
-    int ii, jj, idx;
-    unsigned long long numCombinations;
-    unsigned long long offset;
-
-    /* Initialize reliability of current time instant to 0 */
-    v2dRes = v2dZeros;
-
-    /* For each possible set of combinations... */
-    for (ii = 0; ii < data->combs->numKooNcombinations; ++ii) {
-        /* Retrieve number of combinations */
-        numCombinations = data->combs->combinations[ii]->numCombinations;
-        offset = 0;
-        /* For each combination... */
-        while (numCombinations-- > 0) {
-            /* Initialize step reliability to 1 */
-            v2dStep = v2dOnes;
-            idx = 0;
-            /* For each component... */
-            for (jj = 0; jj < data->numComponents; ++jj) {
-                /* Load reliabilities */
-                v2dTmp = vld1q_f64(&data->reliabilities[(jj * data->numTimes) + time]);
-                /* Does the component belong to the working components for current combination? */
-                if (data->combs->combinations[ii]->buff[offset + idx] == jj) {
-                    /* Multiply step reliability for reliability of current component */
-                    v2dStep = vmulq_f64(v2dStep, v2dTmp);
-                    /* Advance to next working component in combination */
-                    if (++idx == data->combs->combinations[ii]->k) {
-                        idx = 0;
-                    }
-                }
-                else {
-                    /* Multiply step reliability for unreliability of current component */
-                    v2dStep = vfmsq_f64(v2dStep, v2dTmp, v2dStep);
-                }
-            }
-
-            /* Perform partial sum for computation of KooN reliability */
-            v2dRes = vaddq_f64(v2dRes, v2dStep);
-            /* Increment offset for combination access */
-            offset += data->combs->combinations[ii]->k;
-        }
-    }
-
-    /* Cap the computed reliability and set it into output array */
-    vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
-}
-
-/**
- * rbdKooNGenericFailStepV2dNeon
- *
- * Generic KooN RBD Step function from failed components with AArch64 NEON 128bit
- *
- * Input:
- *      struct rbdKooNGenericData *data
- *      unsigned int time
- *
- * Output:
- *      None
- *
- * Description:
- *  This function implements the generic KooN RBD function exploiting AArch64 NEON 128bit.
- *  It is responsible to compute the reliability of a KooN RBD system
- *  taking into account the failed components
- *
- * Parameters:
- *      data: KooN RBD data structure
- *      time: current time instant over which KooN RBD shall be computed
- *
- * Return:
- *  None
- */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNGenericFailStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time)
-{
-    float64x2_t v2dStep;
-    float64x2_t v2dTmp;
-    float64x2_t v2dRes;
-    int ii, jj, idx;
-    unsigned long long numCombinations;
-    unsigned long long offset;
-
-    /* Initialize reliability of current time instant to 1 */
-    v2dRes = v2dOnes;
-
-    /* For each possible set of combinations... */
-    for (ii = 0; ii < data->combs->numKooNcombinations; ++ii) {
-        /* Retrieve number of combinations */
-        numCombinations = data->combs->combinations[ii]->numCombinations;
-        offset = 0;
-        /* For each combination... */
-        while (numCombinations-- > 0) {
-            /* Initialize step reliability to 1 */
-            v2dStep = v2dOnes;
-            idx = 0;
-            /* For each component... */
-            for (jj = 0; jj < data->numComponents; ++jj) {
-                /* Load reliabilities */
-                v2dTmp = vld1q_f64(&data->reliabilities[(jj * data->numTimes) + time]);
-                /* Does the component belong to the working components for current combination? */
-                if (data->combs->combinations[ii]->buff[offset + idx] == jj) {
-                    /* Multiply step unreliability for unreliability of current component */
-                    v2dStep = vfmsq_f64(v2dStep, v2dTmp, v2dStep);
-                    /* Advance to next working component in combination */
-                    if (++idx == data->combs->combinations[ii]->k) {
-                        idx = 0;
-                    }
-                }
-                else {
-                    /* Multiply step unreliability for reliability of current component */
-                    v2dStep = vmulq_f64(v2dStep, v2dTmp);
-                }
-            }
-
-            /* Perform partial subtraction for computation of KooN reliability */
-            v2dRes = vsubq_f64(v2dRes, v2dStep);
-            /* Increment offset for combination access */
-            offset += data->combs->combinations[ii]->k;
-        }
-    }
-
-    /* Cap the computed reliability and set it into output array */
-    vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
-}
 
 /**
  * rbdKooNRecursionV2dNeon
@@ -210,7 +59,7 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNRecursionV2dNeon(struct rbdKo
     float64x2_t v2dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v2dRes = rbdKooNRecursiveStepV2dNeon(data, time, data->numComponents, data->minComponents);
+    v2dRes = rbdKooNRecursiveStepV2dNeon(data, time, (short)data->numComponents, (short)data->minComponents);
     /* Cap the computed reliability and set it into output array */
     vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
 }
@@ -353,8 +202,8 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNIdenticalFailStepV2dNeon(stru
  * Input:
  *      struct rbdKooNGenericData *data
  *      unsigned int time
- *      unsigned char n
- *      unsigned char k
+ *      short n
+ *      short k
  *
  * Output:
  *      None
@@ -372,23 +221,131 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNIdenticalFailStepV2dNeon(stru
  * Return (float64x2_t):
  *  Computed reliability
  */
-static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
 {
-    float64x2_t v2dTmp1, v2dTmp2;
+    short best;
+    float64x2_t *v2dR;
     float64x2_t v2dRes;
+    float64x2_t v2dTmpRec;
+    float64x2_t v2dTmp1, v2dTmp2;
+    float64x2_t v2dStepTmp1, v2dStepTmp2;
+    int idx;
+    int offset;
+    int ii, jj;
+    int nextCombs;
 
-    /* Load reliabilities and compute unreliabilities */
-    --n;
-    v2dRes = vld1q_f64(&data->reliabilities[(n * data->numTimes) + time]);
-    v2dTmp1 = vsubq_f64(v2dOnes, v2dRes);
-    /* Recursively compute the reliabilities */
-    if ((k-1) > 0) {
-        v2dTmp2 = rbdKooNRecursiveStepV2dNeon(data, time, n, k-1);
-        v2dRes = vmulq_f64(v2dRes, v2dTmp2);
+    best = (short)minimum((int)(k-1), (int)(n-k));
+    if (best > 1) {
+        /* Recursively compute the Reliability - Minimize number of recursive calls */
+        offset = n - best;
+        v2dTmp1 = v2dOnes;
+        v2dTmp2 = v2dOnes;
+        v2dR = &data->recur.v2dR[offset];
+        for (idx = 0; idx < best; idx++) {
+            v2dR[idx] = vld1q_f64(&data->reliabilities[(--n * data->numTimes) + time]);
+            v2dTmp1 = vmulq_f64(v2dTmp1, v2dR[idx]);
+            v2dTmp2 = vfmsq_f64(v2dTmp2, v2dR[idx], v2dTmp2);
+        }
+        v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k-best);
+        v2dRes = vmulq_f64(v2dTmp1, v2dTmpRec);
+        v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k);
+        v2dRes = vfmaq_f64(v2dRes, v2dTmp2, v2dTmpRec);
+        for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
+            v2dTmp1 = v2dZeros;
+            v2dTmp2 = v2dZeros;
+            firstCombination((unsigned char)idx, data->recur.comb);
+            do {
+                v2dStepTmp1 = v2dOnes;
+                v2dStepTmp2 = v2dOnes;
+                ii = 0;
+                jj = 0;
+                while (ii < idx) {
+                    if (data->recur.comb[ii] == jj) {
+                        v2dStepTmp1 = vfmsq_f64(v2dStepTmp1, v2dR[jj], v2dStepTmp1);
+                        v2dStepTmp2 = vmulq_f64(v2dStepTmp2, v2dR[jj]);
+                        ++ii;
+                    }
+                    else {
+                        v2dStepTmp1 = vmulq_f64(v2dStepTmp1, v2dR[jj]);
+                        v2dStepTmp2 = vfmsq_f64(v2dStepTmp2, v2dR[jj], v2dStepTmp2);
+                    }
+                    ++jj;
+                }
+                while (jj < best) {
+                    v2dStepTmp1 = vmulq_f64(v2dStepTmp1, v2dR[jj]);
+                    v2dStepTmp2 = vfmsq_f64(v2dStepTmp2, v2dR[jj], v2dStepTmp2);
+                    ++jj;
+                }
+                v2dTmp1 = vaddq_f64(v2dTmp1, v2dStepTmp1);
+                v2dTmp2 = vaddq_f64(v2dTmp2, v2dStepTmp2);
+                nextCombs = nextCombination(best, idx, data->recur.comb);
+            } while(nextCombs == 0);
+            v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k-best+idx);
+            v2dRes = vfmaq_f64(v2dRes, v2dTmp1, v2dTmpRec);
+            v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k-idx);
+            v2dRes = vfmaq_f64(v2dRes, v2dTmp2, v2dTmpRec);
+        }
+        if ((best & 1) == 0) {
+            idx = best / 2;
+            v2dTmp1 = v2dZeros;
+            firstCombination((unsigned char)idx, data->recur.comb);
+            do {
+                v2dStepTmp1 = v2dOnes;
+                ii = 0;
+                jj = 0;
+                while (ii < idx) {
+                    if (data->recur.comb[ii] == jj) {
+                        v2dStepTmp1 = vfmsq_f64(v2dStepTmp1, v2dR[jj], v2dStepTmp1);
+                        ++ii;
+                    }
+                    else {
+                        v2dStepTmp1 = vmulq_f64(v2dStepTmp1, v2dR[jj]);
+                    }
+                    ++jj;
+                }
+                while (jj < best) {
+                    v2dStepTmp1 = vmulq_f64(v2dStepTmp1, v2dR[jj]);
+                    ++jj;
+                }
+                v2dTmp1 = vaddq_f64(v2dTmp1, v2dStepTmp1);
+                nextCombs = nextCombination(best, idx, data->recur.comb);
+            } while(nextCombs == 0);
+            v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k-best+idx);
+            v2dRes = vfmaq_f64(v2dRes, v2dTmp1, v2dTmpRec);
+        }
+
+        return v2dRes;
+    }
+
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        v2dRes = v2dOnes;
+        while (n > 0) {
+            v2dTmp1 = vld1q_f64(&data->reliabilities[(--n * data->numTimes) + time]);
+            v2dRes = vfmsq_f64(v2dRes, v2dTmp1, v2dRes);
+        }
+        return vsubq_f64(v2dOnes, v2dRes);
+    }
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        v2dRes = v2dOnes;
+        while (n > 0) {
+            v2dTmp1 = vld1q_f64(&data->reliabilities[(--n * data->numTimes) + time]);
+            v2dRes = vmulq_f64(v2dRes, v2dTmp1);
+        }
+        return v2dRes;
+    }
+    /* Recursively compute the Reliability */
+    v2dTmp1 = vld1q_f64(&data->reliabilities[(--n * data->numTimes) + time]);
+    v2dRes = v2dTmp1;
+    if (k > 1) {
+        v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k-1);
+        v2dRes = vmulq_f64(v2dRes, v2dTmpRec);
     }
     if (k <= n) {
-        v2dTmp2 = rbdKooNRecursiveStepV2dNeon(data, time, n, k);
-        v2dRes = vfmaq_f64(v2dRes, v2dTmp1, v2dTmp2);
+        v2dTmp1 = vsubq_f64(v2dOnes, v2dTmp1);
+        v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k);
+        v2dRes = vfmaq_f64(v2dRes, v2dTmp1, v2dTmpRec);
     }
     return v2dRes;
 }

@@ -60,14 +60,7 @@
  */
 EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes)
 {
-    unsigned char ii;
-    struct combinationsKooN combs;
     int res;
-    unsigned char bRecursive;
-    unsigned char minFaultyComponents;
-    unsigned char bComputeUnreliability;
-    unsigned int nSquare;
-    unsigned long long numCombinations;
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
     struct rbdKooNGenericData *koonData;
     struct rbdKooNFillData *fillData;
@@ -234,50 +227,7 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
     if (koonData == NULL) {
         return -1;
     }
-#endif /* CPU_SMP */
 
-    bComputeUnreliability = 0;
-    bRecursive = 0;
-
-    /* Compute N^2 for further optimizations (recursive formula) */
-    nSquare = numComponents * numComponents;
-
-    /* Initialize total number of combinations to 0 */
-    numCombinations = 0;
-
-    /* Compute minimum number of faulty components for having an unreliable block */
-    minFaultyComponents = numComponents - minComponents + 1;
-    /* Is minimum number of faulty components greater than minimum number of components? */
-    if (minFaultyComponents > minComponents) {
-        /* Assign minimum number of faulty components to minimum number of components */
-        minComponents = minFaultyComponents;
-        /* Set KooN computation through Unreliability flag */
-        bComputeUnreliability = 1;
-    }
-
-    /* Initialize combinations of combinations for KooN computation */
-    combs.numKooNcombinations = (numComponents - minComponents) + 1;
-    ii = 0;
-    do {
-        combs.combinations[ii] = computeCombinations(numComponents, (ii + minComponents));
-        numCombinations += combs.combinations[ii]->numCombinations;
-        bRecursive  = !!(combs.combinations[ii] == NULL);
-        bRecursive |= !!(numCombinations > nSquare);
-        ++ii;
-    }
-    while ((ii < combs.numKooNcombinations) && (bRecursive == 0));
-
-    if (bRecursive != 0) {
-        /* Restore K if KooN computation through Unreliability flag is set */
-        if (bComputeUnreliability != 0) {
-            minComponents = numComponents - minComponents + 1;
-        }
-        while (ii > 0) {
-            free(combs.combinations[--ii]);
-        }
-    }
-
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
     /* Is number of used cores greater than 1? */
     if (numCores > 1) {
         /* Allocate Thread ID array, return -1 in case of allocation failure */
@@ -296,10 +246,8 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
             koonData[idx].output = output;
             koonData[idx].numComponents = numComponents;
             koonData[idx].minComponents = minComponents;
-            koonData[idx].bComputeUnreliability = bComputeUnreliability;
-            koonData[idx].bRecursive = bRecursive;
             koonData[idx].numTimes = numTimes;
-            koonData[idx].combs = &combs;
+            initKooNRecursionData(&koonData[idx].recur);
 
             /* Create the generic KooN RBD Worker thread */
             if (createThread(threadHandles, idx, &rbdKooNGenericWorker, &koonData[idx]) < 0) {
@@ -314,10 +262,8 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
         koonData[idx].output = output;
         koonData[idx].numComponents = numComponents;
         koonData[idx].minComponents = minComponents;
-        koonData[idx].bComputeUnreliability = bComputeUnreliability;
-        koonData[idx].bRecursive = bRecursive;
         koonData[idx].numTimes = numTimes;
-        koonData[idx].combs = &combs;
+        initKooNRecursionData(&koonData[idx].recur);
 
         /* Directly invoke the KooN RBD Worker */
         (void)rbdKooNGenericWorker(&koonData[idx]);
@@ -338,10 +284,8 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
         koonData[0].output = output;
         koonData[0].numComponents = numComponents;
         koonData[0].minComponents = minComponents;
-        koonData[0].bComputeUnreliability = bComputeUnreliability;
-        koonData[0].bRecursive = bRecursive;
         koonData[0].numTimes = numTimes;
-        koonData[0].combs = &combs;
+        initKooNRecursionData(&koonData[0].recur);
 
         /* Directly invoke the KooN RBD Worker */
         (void)rbdKooNGenericWorker(&koonData[0]);
@@ -351,15 +295,6 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
     /* Free generic KooN RBD koonData array */
     free(koonData);
 #endif /* CPU_SMP */
-
-    /* Free combinations if recursive approach has not been used */
-    if (bRecursive == 0) {
-        ii = combs.numKooNcombinations;
-        while (ii > 0) {
-            --ii;
-            free(combs.combinations[ii]);
-        }
-    }
 
     return res;
 }

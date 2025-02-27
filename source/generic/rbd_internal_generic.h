@@ -25,15 +25,11 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <string.h>
 
 #include "../compiler/compiler.h"
 #include "architecture.h"
-
-
-#define S1D                         (1)         /* Scalar of 1 double (64 bit)          */
-#define V2D                         (2)         /* Vector of 2 doubles (128bit)         */
-#define V4D                         (4)         /* Vector of 4 doubles (256bit)         */
-#define V8D                         (8)         /* Vector of 8 doubles (512bit)         */
 
 
 /*< If CPU_SMP flag has not been provided, disable SMP */
@@ -46,9 +42,59 @@
 #define CPU_ENABLE_SIMD                 0
 #endif /* CPU_ENABLE_SIMD */
 
+
+/*< Include architecture-specific RBD Internal header */
+#if defined(ARCH_X86)
+#include "../x86/rbd_internal_x86.h"
+#elif defined(ARCH_AMD64)
+#include  "../amd64/rbd_internal_amd64.h"
+#elif defined(ARCH_AARCH64)
+#include "../aarch64/rbd_internal_aarch64.h"
+#endif
+
+
+#define S1D                         (1)         /* Scalar of 1 double (64 bit)          */
+#define V2D                         (2)         /* Vector of 2 doubles (128bit)         */
+#define V4D                         (4)         /* Vector of 4 doubles (256bit)         */
+#define V8D                         (8)         /* Vector of 8 doubles (512bit)         */
+
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
-#define MIN_BATCH_SIZE              (10000)     /* Minimum batch size in SMP RBD resolution */
+#define MIN_BATCH_SIZE              (20000)     /* Minimum batch size in SMP RBD resolution */
 #endif /* CPU_SMP */
+
+#if defined(ARCH_UNKNOWN) || (CPU_ENABLE_SIMD == 0)
+struct rbdKooNRecursionData
+{
+    unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
+    unsigned char buff[(UCHAR_MAX + 1) * S1D * sizeof(double)];     /* Temporary buffer */
+    double      *s1dR;                      /* Pointer to array of reliabilities - Scalar 1 double */
+};
+
+
+/**
+ * initKooNRecursionData
+ *
+ * Initialize the provided RBD KooN Recursive Data
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      struct rbdKooNRecursionData *data
+ *
+ * Description:
+ *  This function initializes the provided RBD KooN Recursive Data
+ *
+ * Parameters:
+ *      data: RBD KooN Recursive Data to be initialized
+ */
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionData *data) {
+    unsigned long long alignAddr;
+    memset(data, 0, sizeof(struct rbdKooNRecursionData));
+    alignAddr = ((unsigned long long)(&data->buff) + sizeof(double) - 1) & ~(sizeof(double) - 1);
+    data->s1dR = (double *)alignAddr;
+}
+#endif
 
 
 /**
@@ -75,6 +121,32 @@
  */
 static inline ALWAYS_INLINE int maximum(int a, int b) {
     return (a >= b) ? a : b;
+}
+
+/**
+ * minimum
+ *
+ * Compute minimum between two numbers
+ *
+ * Input:
+ *      int a
+ *      int b
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  Computes the minimum between two numbers
+ *
+ * Parameters:
+ *      a: first value for minimum computation
+ *      b: second value for minimum computation
+ *
+ * Return (int):
+ *  minimum value
+ */
+static inline ALWAYS_INLINE int minimum(int a, int b) {
+    return (a <= b) ? a : b;
 }
 
 /**

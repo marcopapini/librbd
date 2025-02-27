@@ -22,90 +22,8 @@
 
 #include "combinations.h"
 
-#include "binomial.h"
 #include "../compiler/compiler.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <stddef.h>
-
-
-static unsigned long long combinationsGetSize(unsigned long long numCombinations, unsigned char k);
-
-
-/**
- * computeCombinations
- *
- * Computation of combinations of k elements out of n
- *
- * Input:
- *      unsigned char n
- *      unsigned char k
- *
- * Output:
- *      None
- *
- * Description:
- *  This function computes the combinations of k elements out of n.
- *  In case the nCk computation encounters an error, this function returns 0.
- *  This code is based on Rosetta Code Combinations: C code for Lexicographic ordered generation.
- *  https://rosettacode.org/wiki/Combinations#Lexicographic_ordered_generation
- *
- * Parameters:
- *      n: n parameter of nCk
- *      k: k parameter of nCk. RANGE: (0 <= k <= n)
- *
- * Return (struct combinations *):
- *  The structure containing computed nCk combinations of k out of n elements, NULL if an error
- *  occurred.
- */
-HIDDEN struct combinations *computeCombinations(unsigned char n, unsigned char k)
-{
-    int res;
-    unsigned long long combIdx = 0;
-    unsigned long long combSize;
-    unsigned long long numCombinations;
-    struct combinations *combinations;
-    static unsigned char buff[1 << (sizeof(unsigned char) * 8)];
-
-    /* Compute number of combinations nCk and check for its return value */
-    numCombinations = binomialCoefficient(n, k);
-    if (numCombinations == 0) {
-        return NULL;
-    }
-
-    /* Compute size of combinations data structure and check for its return value */
-    combSize = combinationsGetSize(numCombinations, k);
-    if (combSize == 0) {
-        return NULL;
-    }
-
-    /* Allocate combinations data structure and check for its return value */
-    combinations = (struct combinations *)malloc(sizeof(struct combinations) + combSize);
-    if (combinations == NULL) {
-        return NULL;
-    }
-
-    /* Initialize combinations data structure with number of combinations and n and k parameters */
-    combinations->numCombinations = numCombinations;
-    combinations->n = n;
-    combinations->k = k;
-
-    /* Initialize temporary buffer with first combination */
-    firstCombination(k, &buff[0]);
-
-    do {
-        /* Copy current combination into array of combinations data structure */
-        memcpy(&combinations->buff[combIdx], buff, k);
-        combIdx += k;
-
-        /* Compute next combination */
-        res = nextCombination(n, k, &buff[0]);
-    }
-    while (res >= 0);
-
-    return combinations;
-}
 
 /**
  * firstCombination
@@ -193,40 +111,4 @@ HIDDEN int nextCombination(unsigned char n, unsigned char k, unsigned char *comb
     }
 
     return 0;
-}
-
-/**
- * combinationsGetSize
- *
- * Computation size of combinations data structure based on number of combinations and k parameter
- *
- * Input:
- *      unsigned long long numCombinations
- *      unsigned char k
- *
- * Output:
- *      None
- *
- * Description:
- *  This function computes the size of combinations data structure based on number of
- *  combinations and k parameter.
- *  In case the size computation encounters an overflow error, this function returns 0.
- *
- * Parameters:
- *      numCombinations: number of combinations corresponding to nCk
- *      k: k parameter of nCk.
- *
- * Return (unsigned long long):
- *  The size of combinations data structure if no error is encountered, 0 otherwise.
- */
-static unsigned long long combinationsGetSize(unsigned long long numCombinations, unsigned char k)
-{
-    /* Check for overflow in size computation */
-    if (numCombinations > ((18446744073709551615ULL - sizeof(struct combinations)) / k)) {
-        /* Overflow detected, return 0 */
-        return 0ULL;
-    }
-
-    /* Return size of combinations data structure */
-    return ((numCombinations * k) + sizeof(struct combinations));
 }

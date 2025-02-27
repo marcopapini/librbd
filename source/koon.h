@@ -24,16 +24,11 @@
 
 
 #include "rbd.h"
-#include "generic/combinations.h"
 
 #include <limits.h>
 
+#include "generic/rbd_internal_generic.h"
 
-struct combinationsKooN
-{
-    unsigned char numKooNcombinations;              /* Number of combinations of combinations used for computation of KooN */
-    struct combinations *combinations[UCHAR_MAX];   /* Combinations of combinations used for computation of KooN */
-};
 
 struct rbdKooNFillData
 {
@@ -52,10 +47,8 @@ struct rbdKooNGenericData
     double *output;                                 /* Array of computed reliabilities */
     unsigned char numComponents;                    /* Number of components of KooN RBD system N */
     unsigned char minComponents;                    /* Minimum number of components in the KooN system (K) */
-    unsigned char bRecursive;                       /* Flag for KooN resolution through usage of recursion */
-    unsigned char bComputeUnreliability;            /* Flag for KooN resolution through usage of Unreliability */
     unsigned int numTimes;                          /* Number of time instants to compute T */
-    struct combinationsKooN *combs;                 /* Possible combinations of combinations of KooN components */
+    struct rbdKooNRecursionData recur;              /* Additional data needed for recursive algorithm */
 };
 
 struct rbdKooNIdenticalData
@@ -77,8 +70,6 @@ void *rbdKooNGenericWorker(void *arg);
 void *rbdKooNIdenticalWorker(void *arg);
 
 /* Platform-generic functions */
-void rbdKooNGenericSuccessStepS1d(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNGenericFailStepS1d(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNRecursionS1d(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);

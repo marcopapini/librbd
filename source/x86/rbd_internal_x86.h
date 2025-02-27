@@ -27,6 +27,19 @@
 
 
 #include <immintrin.h>
+#include <limits.h>
+#include <string.h>
+
+
+#if defined(ARC_X86)
+struct rbdKooNRecursionData
+{
+    unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
+    unsigned char buff[(UCHAR_MAX + 1) * sizeof(__m128d)];      /* Temporary buffer */
+    double      *s1dR;                      /* Pointer to array of reliabilities - Scalar 1 double */
+    __m128d     *v2dR;                      /* Pointer to array of reliabilities - Vector 2 double */
+};
+#endif  /* defined(ARC_X86) */
 
 
 VARIABLE_TARGET("sse2") extern const __m128d v2dZeros;
@@ -40,6 +53,31 @@ FUNCTION_TARGET("sse2") __m128d capReliabilityV2dSse2(__m128d v2dR);
 
 
 #if defined(ARCH_X86) && (CPU_ENABLE_SIMD != 0)
+
+/**
+ * initKooNRecursionData
+ *
+ * Initialize the provided RBD KooN Recursive Data
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      struct rbdKooNRecursionData *data
+ *
+ * Description:
+ *  This function initializes the provided RBD KooN Recursive Data
+ *
+ * Parameters:
+ *      data: RBD KooN Recursive Data to be initialized
+ */
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionData *data) {
+    unsigned long long alignAddr;
+    memset(data, 0, sizeof(struct rbdKooNRecursionData));
+    alignAddr = ((unsigned long long)(&data->buff) + sizeof(__m128d) - 1) & ~(sizeof(__m128d) - 1);
+    data->s1dR = (double *)alignAddr;
+    data->v2dR = (__m128d *)alignAddr;
+}
 
 /**
  * x86Sse2Supported

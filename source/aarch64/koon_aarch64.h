@@ -29,8 +29,6 @@
 
 #if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for AArch64 NEON instruction set */
-void rbdKooNGenericSuccessStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNGenericFailStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNRecursionV2dNeon(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);

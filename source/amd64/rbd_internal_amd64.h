@@ -27,8 +27,21 @@
 
 
 #include <immintrin.h>
+#include <limits.h>
+#include <string.h>
 
 #include "../x86/rbd_internal_x86.h"
+
+
+struct rbdKooNRecursionData
+{
+    unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
+    unsigned char buff[(UCHAR_MAX + 1) * sizeof(__m512d)];      /* Temporary buffer */
+    double      *s1dR;                      /* Pointer to array of reliabilities - Scalar 1 double */
+    __m128d     *v2dR;                      /* Pointer to array of reliabilities - Vector 2 double */
+    __m256d     *v4dR;                      /* Pointer to array of reliabilities - Vector 4 double */
+    __m512d     *v8dR;                      /* Pointer to array of reliabilities - Vector 8 double */
+};
 
 
 VARIABLE_TARGET("avx") extern const __m256d v4dZeros;
@@ -42,6 +55,33 @@ VARIABLE_TARGET("avx512f") extern const __m512d v8dTwos;
 FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR);
 FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR);
 
+
+/**
+ * initKooNRecursionData
+ *
+ * Initialize the provided RBD KooN Recursive Data
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      struct rbdKooNRecursionData *data
+ *
+ * Description:
+ *  This function initializes the provided RBD KooN Recursive Data
+ *
+ * Parameters:
+ *      data: RBD KooN Recursive Data to be initialized
+ */
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionData *data) {
+    unsigned long long alignAddr;
+    memset(data, 0, sizeof(struct rbdKooNRecursionData));
+    alignAddr = ((unsigned long long)(&data->buff) + sizeof(__m512d) - 1) & ~(sizeof(__m512d) - 1);
+    data->s1dR = (double *)alignAddr;
+    data->v2dR = (__m128d *)alignAddr;
+    data->v4dR = (__m256d *)alignAddr;
+    data->v8dR = (__m512d *)alignAddr;
+}
 
 /**
  * amd64Sse2Supported

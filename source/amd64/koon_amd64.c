@@ -143,35 +143,13 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
 
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
-    if (data->bRecursive == 0) {
-        /* If compute unreliability flag is not set... */
-        if (data->bComputeUnreliability == 0) {
-            /* For each time instant to be processed... */
-            while (time < data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepS1d(data, time);
-                /* Increment current time instant */
-                time += data->numCores;
-            }
-        }
-        else {
-            /* For each time instant to be processed... */
-            while (time < data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepS1d(data, time);
-                /* Increment current time instant */
-                time += data->numCores;
-            }
-        }
-    }
-    else {
-        /* For each time instant to be processed... */
-        while (time < data->numTimes) {
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionS1d(data, time);
-            /* Increment current time instant */
-            time += data->numCores;
-        }
+
+    /* For each time instant to be processed... */
+    while (time < data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionS1d(data, time);
+        /* Increment current time instant */
+        time += data->numCores;
     }
 
     return NULL;
@@ -405,101 +383,34 @@ static void *rbdKooNGenericWorkerAvx512f(struct rbdKooNGenericData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
 
-    if (data->bRecursive == 0) {
-        /* If compute unreliability flag is not set... */
-        if (data->bComputeUnreliability == 0) {
-            /* For each time instant to be processed (blocks of 8 time instants)... */
-            while ((time + V8D) <= data->numTimes) {
-                /* Prefetch for next iteration */
-                prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V8D));
-                prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepV8dAvx512f(data, time);
-                /* Increment current time instant */
-                time += (data->numCores * V8D);
-            }
-            /* Are (at least) 4 time instants remaining? */
-            if ((time + V4D) <= data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepV4dFma3(data, time);
-                /* Increment current time instant */
-                time += V4D;
-            }
-            /* Are (at least) 2 time instants remaining? */
-            if ((time + V2D) <= data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepV2dFma3(data, time);
-                /* Increment current time instant */
-                time += V2D;
-            }
-            /* Is 1 time instant remaining? */
-            if (time < data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepS1d(data, time);
-            }
-        }
-        else {
-            /* For each time instant to be processed (blocks of 8 time instants)... */
-            while ((time + V8D) <= data->numTimes) {
-                /* Prefetch for next iteration */
-                prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V8D));
-                prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepV8dAvx512f(data, time);
-                /* Increment current time instant */
-                time += (data->numCores * V8D);
-            }
-            /* Are (at least) 4 time instants remaining? */
-            if ((time + V4D) <= data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepV4dFma3(data, time);
-                /* Increment current time instant */
-                time += V4D;
-            }
-            /* Are (at least) 2 time instants remaining? */
-            if ((time + V2D) <= data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepV2dFma3(data, time);
-                /* Increment current time instant */
-                time += V2D;
-            }
-            /* Is 1 time instant remaining? */
-            if (time < data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepS1d(data, time);
-            }
-        }
+    /* For each time instant to be processed (blocks of 8 time instants)... */
+    while ((time + V8D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V8D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV8dAvx512f(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V8D);
     }
-    else {
-        /* For each time instant to be processed (blocks of 8 time instants)... */
-        while ((time + V8D) <= data->numTimes) {
-            /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V8D));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionV8dAvx512f(data, time);
-            /* Increment current time instant */
-            time += (data->numCores * V8D);
-        }
-        /* Are (at least) 4 time instants remaining? */
-        if ((time + V4D) <= data->numTimes) {
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionV4dFma3(data, time);
-            /* Increment current time instant */
-            time += V4D;
-        }
-        /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D) <= data->numTimes) {
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionV2dFma3(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-        /* Is 1 time instant remaining? */
-        if (time < data->numTimes) {
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionS1d(data, time);
-        }
+    /* Are (at least) 4 time instants remaining? */
+    if ((time + V4D) <= data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV4dFma3(data, time);
+        /* Increment current time instant */
+        time += V4D;
+    }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV2dFma3(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionS1d(data, time);
     }
 
     return NULL;
@@ -533,95 +444,27 @@ static void *rbdKooNGenericWorkerFma3(struct rbdKooNGenericData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V4D;
 
-    if (data->bRecursive == 0) {
-        /* If compute unreliability flag is not set... */
-        if (data->bComputeUnreliability == 0) {
-            /* For each time instant to be processed (blocks of 4 time instants)... */
-            while ((time + V4D) <= data->numTimes) {
-                /* Prefetch for next iteration */
-                prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
-                prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepV4dFma3(data, time);
-                /* Increment current time instant */
-                time += (data->numCores * V4D);
-            }
-            /* Are (at least) 2 time instants remaining? */
-            if ((time + V2D) <= data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepV2dFma3(data, time);
-                /* Increment current time instant */
-                time += V2D;
-            }
-            /* Is 1 time instant remaining? */
-            if (time < data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepS1d(data, time);
-            }
-        }
-        else {
-            /* For each time instant to be processed (blocks of 4 time instants)... */
-            while ((time + V4D) <= data->numTimes) {
-                /* Prefetch for next iteration */
-                prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
-                prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepV4dFma3(data, time);
-                /* Increment current time instant */
-                time += (data->numCores * V4D);
-            }
-            /* Are (at least) 2 time instants remaining? */
-            if ((time + V2D) <= data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepV2dFma3(data, time);
-                /* Increment current time instant */
-                time += V2D;
-            }
-            /* Is 1 time instant remaining? */
-            if (time < data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepS1d(data, time);
-            }
-        }
+    /* For each time instant to be processed (blocks of 4 time instants)... */
+    while ((time + V4D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV4dFma3(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V4D);
     }
-    else {
-        /* Align, if possible, to vector size */
-        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-                /* Recursively compute reliability of KooN RBD at current time instant */
-                rbdKooNRecursionS1d(data, time);
-                /* Increment current time instant */
-                time += S1D;
-            }
-            if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-                /* Recursively compute reliability of KooN RBD at current time instant */
-                rbdKooNRecursionV2dFma3(data, time);
-                /* Increment current time instant */
-                time += V2D;
-            }
-        }
-        /* For each time instant to be processed (blocks of 4 time instants)... */
-        while ((time + V4D) <= data->numTimes) {
-            /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionV4dFma3(data, time);
-            /* Increment current time instant */
-            time += (data->numCores * V4D);
-        }
-        /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D) <= data->numTimes) {
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionV2dFma3(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-        /* Is 1 time instant remaining? */
-        if (time < data->numTimes) {
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionS1d(data, time);
-        }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV2dFma3(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionS1d(data, time);
     }
 
     return NULL;
@@ -655,95 +498,27 @@ static void *rbdKooNGenericWorkerAvx(struct rbdKooNGenericData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V4D;
 
-    if (data->bRecursive == 0) {
-        /* If compute unreliability flag is not set... */
-        if (data->bComputeUnreliability == 0) {
-            /* For each time instant to be processed (blocks of 4 time instants)... */
-            while ((time + V4D) <= data->numTimes) {
-                /* Prefetch for next iteration */
-                prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
-                prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepV4dAvx(data, time);
-                /* Increment current time instant */
-                time += (data->numCores * V4D);
-            }
-            /* Are (at least) 2 time instants remaining? */
-            if ((time + V2D) <= data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepV2dSse2(data, time);
-                /* Increment current time instant */
-                time += V2D;
-            }
-            /* Is 1 time instant remaining? */
-            if (time < data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepS1d(data, time);
-            }
-        }
-        else {
-            /* For each time instant to be processed (blocks of 4 time instants)... */
-            while ((time + V4D) <= data->numTimes) {
-                /* Prefetch for next iteration */
-                prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
-                prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepV4dAvx(data, time);
-                /* Increment current time instant */
-                time += (data->numCores * V4D);
-            }
-            /* Are (at least) 2 time instants remaining? */
-            if ((time + V2D) <= data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepV2dSse2(data, time);
-                /* Increment current time instant */
-                time += V2D;
-            }
-            /* Is 1 time instant remaining? */
-            if (time < data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepS1d(data, time);
-            }
-        }
+    /* For each time instant to be processed (blocks of 4 time instants)... */
+    while ((time + V4D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV4dAvx(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V4D);
     }
-    else {
-        /* Align, if possible, to vector size */
-        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-                /* Recursively compute reliability of KooN RBD at current time instant */
-                rbdKooNRecursionS1d(data, time);
-                /* Increment current time instant */
-                time += S1D;
-            }
-            if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-                /* Recursively compute reliability of KooN RBD at current time instant */
-                rbdKooNRecursionV2dSse2(data, time);
-                /* Increment current time instant */
-                time += V2D;
-            }
-        }
-        /* For each time instant to be processed (blocks of 4 time instants)... */
-        while ((time + V4D) <= data->numTimes) {
-            /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionV4dAvx(data, time);
-            /* Increment current time instant */
-            time += (data->numCores * V4D);
-        }
-        /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D) <= data->numTimes) {
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionV2dSse2(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-        /* Is 1 time instant remaining? */
-        if (time < data->numTimes) {
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionS1d(data, time);
-        }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV2dSse2(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionS1d(data, time);
     }
 
     return NULL;

@@ -23,43 +23,6 @@
 #define COMBINATIONS_H_
 
 
-struct combinations
-{
-    unsigned long long numCombinations;     /* Number of combinations of k elements out of n (nCk) */
-    unsigned char n;                        /* Dimension of set n */
-    unsigned char k;                        /* Dimension of subsets k */
-    unsigned char buff[];                   /* Array of combinations: each combination is an array of k elements */
-};
-
-
-/**
- * computeCombinations
- *
- * Computation of combinations of k elements out of n
- *
- * Input:
- *      unsigned char n
- *      unsigned char k
- *
- * Output:
- *      None
- *
- * Description:
- *  This function computes the combinations of k elements out of n.
- *  In case the nCk computation encounters an error, this function returns 0.
- *  This code is based on Rosetta Code Combinations: C code for Lexicographic ordered generation.
- *  https://rosettacode.org/wiki/Combinations#Lexicographic_ordered_generation
- *
- * Parameters:
- *      n: n parameter of nCk
- *      k: k parameter of nCk. RANGE: (0 <= k <= n)
- *
- * Return (struct combinations *):
- *  The structure containing computed nCk combinations of k out of n elements, NULL if an error
- *  occurred.
- */
-struct combinations *computeCombinations(unsigned char n, unsigned char k);
-
 /**
  * firstCombination
  *

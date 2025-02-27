@@ -23,9 +23,13 @@
 #include "rbd_internal_generic.h"
 
 #include "../koon.h"
+#include "combinations.h"
+
+#include <stdlib.h>
+#include <limits.h>
 
 
-static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k);
+static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
 
 
 #if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
@@ -105,35 +109,12 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
-    if (data->bRecursive == 0) {
-        /* If compute unreliability flag is not set... */
-        if (data->bComputeUnreliability == 0) {
-            /* For each time instant to be processed... */
-            while (time < data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNGenericSuccessStepS1d(data, time);
-                /* Increment current time instant */
-                time += data->numCores;
-            }
-        }
-        else {
-            /* For each time instant to be processed... */
-            while (time < data->numTimes) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNGenericFailStepS1d(data, time);
-                /* Increment current time instant */
-                time += data->numCores;
-            }
-        }
-    }
-    else {
-        /* For each time instant to be processed... */
-        while (time < data->numTimes) {
-            /* Recursively compute reliability of KooN RBD at current time instant */
-            rbdKooNRecursionS1d(data, time);
-            /* Increment current time instant */
-            time += data->numCores;
-        }
+    /* For each time instant to be processed... */
+    while (time < data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionS1d(data, time);
+        /* Increment current time instant */
+        time += data->numCores;
     }
 
     return NULL;
@@ -198,152 +179,6 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 #endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
 
 /**
- * rbdKooNGenericSuccessStepS1d
- *
- * Generic KooN RBD Step function from working components
- *
- * Input:
- *      struct rbdKooNGenericData *data
- *      unsigned int time
- *
- * Output:
- *      None
- *
- * Description:
- *  This function implements the generic KooN RBD function.
- *  It is responsible to compute the reliability of a KooN RBD system
- *  taking into account the working components
- *
- * Parameters:
- *      data: KooN RBD data structure
- *      time: current time instant over which KooN RBD shall be computed
- *
- * Return:
- *  None
- */
-HIDDEN void rbdKooNGenericSuccessStepS1d(struct rbdKooNGenericData *data, unsigned int time)
-{
-    double s1dStep;
-    double s1dRes;
-    int ii, jj, idx;
-    unsigned long long numCombinations;
-    unsigned long long offset;
-
-    /* Initialize reliability of current time instant to 0 */
-    s1dRes = 0.0;
-
-    /* For each possible set of combinations... */
-    for (ii = 0; ii < data->combs->numKooNcombinations; ++ii) {
-        /* Retrieve number of combinations */
-        numCombinations = data->combs->combinations[ii]->numCombinations;
-        offset = 0;
-        /* For each combination... */
-        while (numCombinations-- > 0) {
-            /* Initialize step reliability to 1 */
-            s1dStep = 1.0;
-            idx = 0;
-            /* For each component... */
-            for (jj = 0; jj < data->numComponents; ++jj) {
-                /* Does the component belong to the working components for current combination? */
-                if (data->combs->combinations[ii]->buff[offset + idx] == jj) {
-                    /* Multiply step reliability for reliability of current component */
-                    s1dStep *= data->reliabilities[(jj * data->numTimes) + time];
-                    /* Advance to next working component in combination */
-                    if (++idx == data->combs->combinations[ii]->k) {
-                        idx = 0;
-                    }
-                }
-                else {
-                    /* Multiply step reliability for unreliability of current component */
-                    s1dStep *= (1.0 - data->reliabilities[(jj * data->numTimes) + time]);
-                }
-            }
-
-            /* Perform partial sum for computation of KooN reliability */
-            s1dRes += s1dStep;
-            /* Increment offset for combination access */
-            offset += data->combs->combinations[ii]->k;
-        }
-    }
-
-    /* Cap the computed reliability and set it into output array */
-    data->output[time] = capReliabilityS1d(s1dRes);
-}
-
-/**
- * rbdKooNGenericFailStepS1d
- *
- * Generic KooN RBD Step function from failed components
- *
- * Input:
- *      struct rbdKooNGenericData *data
- *      unsigned int time
- *
- * Output:
- *      None
- *
- * Description:
- *  This function implements the generic KooN RBD function.
- *  It is responsible to compute the reliability of a KooN RBD system
- *  taking into account the failed components
- *
- * Parameters:
- *      data: KooN RBD data structure
- *      time: current time instant over which KooN RBD shall be computed
- *
- * Return:
- *  None
- */
-HIDDEN void rbdKooNGenericFailStepS1d(struct rbdKooNGenericData *data, unsigned int time)
-{
-    double s1dStep;
-    double s1dRes;
-    int ii, jj, idx;
-    unsigned long long numCombinations;
-    unsigned long long offset;
-
-    /* Initialize reliability of current time instant to 1 */
-    s1dRes = 1.0;
-
-    /* For each possible set of combinations... */
-    for (ii = 0; ii < data->combs->numKooNcombinations; ++ii) {
-        /* Retrieve number of combinations */
-        numCombinations = data->combs->combinations[ii]->numCombinations;
-        offset = 0;
-        /* For each combination... */
-        while (numCombinations-- > 0) {
-            /* Initialize step unreliability to 1 */
-            s1dStep = 1.0;
-            idx = 0;
-            /* For each component... */
-            for (jj = 0; jj < data->numComponents; ++jj) {
-                /* Does the component belong to the failed components for current combination? */
-                if (data->combs->combinations[ii]->buff[offset + idx] == jj) {
-                    /* Multiply step unreliability for unreliability of current component */
-                    s1dStep *= (1.0 - data->reliabilities[(jj * data->numTimes) + time]);
-                    /* Advance to next failed component in combination */
-                    if(++idx == data->combs->combinations[ii]->k) {
-                        idx = 0;
-                    }
-                }
-                else {
-                    /* Multiply step unreliability for reliability of current component */
-                    s1dStep *= data->reliabilities[(jj * data->numTimes) + time];
-                }
-            }
-
-            /* Perform partial difference for computation of KooN reliability */
-            s1dRes -= s1dStep;
-            /* Increment offset for combination access */
-            offset += data->combs->combinations[ii]->k;
-        }
-    }
-
-    /* Cap the computed reliability and set it into output array */
-    data->output[time] = capReliabilityS1d(s1dRes);
-}
-
-/**
  * rbdKooNRecursionS1d
  *
  * Compute KooN RBD though Recursive method
@@ -370,7 +205,7 @@ HIDDEN void rbdKooNRecursionS1d(struct rbdKooNGenericData *data, unsigned int ti
     double s1dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    s1dRes = rbdKooNRecursiveStepS1d(data, time, data->numComponents, data->minComponents);
+    s1dRes = rbdKooNRecursiveStepS1d(data, time, (short)data->numComponents, (short)data->minComponents);
     /* Cap the computed reliability and set it into output array */
     data->output[time] = capReliabilityS1d(s1dRes);
 }
@@ -514,8 +349,8 @@ HIDDEN void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsig
  * Input:
  *      struct rbdKooNGenericData *data
  *      unsigned int time
- *      unsigned char n
- *      unsigned char k
+ *      short n
+ *      short k
  *
  * Output:
  *      None
@@ -533,18 +368,120 @@ HIDDEN void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsig
  * Return (double):
  *  Computed reliability
  */
-static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned int time, unsigned char n, unsigned char k)
+static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
 {
+    short best;
+    double *s1dR;
     double s1dRes;
+    double s1dTmp1, s1dTmp2;
+    double s1dStepTmp1, s1dStepTmp2;
+    int idx;
+    int offset;
+    int ii, jj;
+    int nextCombs;
 
+    best = (short)minimum((int)(k-1), (int)(n-k));
+    if (best > 1) {
+        /* Recursively compute the Reliability - Minimize number of recursive calls */
+        offset = n - best;
+        s1dTmp1 = 1.0;
+        s1dTmp2 = 1.0;
+        s1dR = &data->recur.s1dR[offset];
+        for (idx = 0; idx < best; idx++) {
+            s1dR[idx] = data->reliabilities[(--n * data->numTimes) + time];
+            s1dTmp1 *= s1dR[idx];
+            s1dTmp2 *= (1.0 - s1dR[idx]);
+        }
+        s1dRes = s1dTmp1 * rbdKooNRecursiveStepS1d(data, time, n, k-best);
+        s1dRes += s1dTmp2 * rbdKooNRecursiveStepS1d(data, time, n, k);
+        for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
+            s1dTmp1 = 0.0;
+            s1dTmp2 = 0.0;
+            firstCombination((unsigned char)idx, data->recur.comb);
+            do {
+                s1dStepTmp1 = 1.0;
+                s1dStepTmp2 = 1.0;
+                ii = 0;
+                jj = 0;
+                while (ii < idx) {
+                    if (data->recur.comb[ii] == jj) {
+                        s1dStepTmp1 *= (1.0 - s1dR[jj]);
+                        s1dStepTmp2 *= s1dR[jj];
+                        ++ii;
+                    }
+                    else {
+                        s1dStepTmp1 *= s1dR[jj];
+                        s1dStepTmp2 *= (1.0 - s1dR[jj]);
+                    }
+                    ++jj;
+                }
+                while (jj < best) {
+                    s1dStepTmp1 *= s1dR[jj];
+                    s1dStepTmp2 *= (1.0 - s1dR[jj]);
+                    ++jj;
+                }
+                s1dTmp1 += s1dStepTmp1;
+                s1dTmp2 += s1dStepTmp2;
+                nextCombs = nextCombination(best, idx, data->recur.comb);
+            } while(nextCombs == 0);
+            s1dRes += s1dTmp1 * rbdKooNRecursiveStepS1d(data, time, n, k-best+idx);
+            s1dRes += s1dTmp2 * rbdKooNRecursiveStepS1d(data, time, n, k-idx);
+        }
+        if ((best & 1) == 0) {
+            idx = best / 2;
+            s1dTmp1 = 0.0;
+            firstCombination((unsigned char)idx, data->recur.comb);
+            do {
+                s1dStepTmp1 = 1.0;
+                ii = 0;
+                jj = 0;
+                while (ii < idx) {
+                    if (data->recur.comb[ii] == jj) {
+                        s1dStepTmp1 *= (1.0 - s1dR[jj]);
+                        ++ii;
+                    }
+                    else {
+                        s1dStepTmp1 *= s1dR[jj];
+                    }
+                    ++jj;
+                }
+                while (jj < best) {
+                    s1dStepTmp1 *= s1dR[jj];
+                    ++jj;
+                }
+                s1dTmp1 += s1dStepTmp1;
+                nextCombs = nextCombination(best, idx, data->recur.comb);
+            } while(nextCombs == 0);
+            s1dRes += s1dTmp1 * rbdKooNRecursiveStepS1d(data, time, n, k-best+idx);
+        }
+
+        return s1dRes;
+    }
+
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        s1dRes = 1.0;
+        while (n > 0) {
+            s1dRes *= (1.0 - data->reliabilities[(--n * data->numTimes) + time]);
+        }
+        return 1.0 - s1dRes;
+    }
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        s1dRes = 1.0;
+        while (n > 0) {
+            s1dRes *= data->reliabilities[(--n * data->numTimes) + time];
+        }
+        return s1dRes;
+    }
     /* Recursively compute the Reliability */
-    --n;
-    s1dRes = data->reliabilities[(n * data->numTimes) + time];
-    if ((k-1) > 0) {
+    s1dTmp1 = data->reliabilities[(--n * data->numTimes) + time];
+    s1dRes = s1dTmp1;
+    if (k > 1) {
         s1dRes *= rbdKooNRecursiveStepS1d(data, time, n, k-1);
     }
     if (k <= n) {
-        s1dRes += (1.0 - data->reliabilities[(n * data->numTimes) + time]) * rbdKooNRecursiveStepS1d(data, time, n, k);
+        s1dRes += (1.0 - s1dTmp1) * rbdKooNRecursiveStepS1d(data, time, n, k);
     }
     return s1dRes;
 }
