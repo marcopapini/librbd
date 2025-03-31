@@ -224,85 +224,6 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKo
  */
 static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
 {
-#if 0
-    __m128d v2dR1, v2dR2, v2dR3;
-    __m128d v2dU1, v2dU2, v2dU3;
-    __m128d v2dTmp1, v2dTmp2;
-    __m128d v2dRes;
-
-    v2dR1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v2dU1 = _mm_sub_pd(v2dOnes, v2dR1);
-    if ((k > 3) && ((n - 2) >= k)) {
-        /* Recursively compute the Reliability - 4 recursive calls instead of 14 */
-        v2dR2 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-        v2dU2 = _mm_sub_pd(v2dOnes, v2dR2);
-        v2dR3 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-        v2dU3 = _mm_sub_pd(v2dOnes, v2dR3);
-        v2dRes = _mm_mul_pd(v2dR1, v2dR2);
-        v2dRes = _mm_mul_pd(v2dRes, v2dR3);
-        v2dTmp1 = rbdKooNRecursiveStepV2dSse2(data, time, n, k-3);
-        v2dRes = _mm_mul_pd(v2dTmp1, v2dRes);
-        v2dTmp2 = _mm_mul_pd(v2dR1, v2dR2);
-        v2dTmp2 = _mm_mul_pd(v2dTmp2, v2dU3);
-        v2dTmp1 = _mm_mul_pd(v2dR1, v2dU2);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dR3);
-        v2dTmp2 = _mm_add_pd(v2dTmp1, v2dTmp2);
-        v2dTmp1 = _mm_mul_pd(v2dU1, v2dR2);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dR3);
-        v2dTmp2 = _mm_add_pd(v2dTmp1, v2dTmp2);
-        v2dTmp1 = rbdKooNRecursiveStepV2dSse2(data, time, n, k-2);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmp2);
-        v2dRes = _mm_add_pd(v2dTmp1, v2dRes);
-        v2dTmp2 = _mm_mul_pd(v2dR1, v2dU2);
-        v2dTmp2 = _mm_mul_pd(v2dTmp2, v2dU3);
-        v2dTmp1 = _mm_mul_pd(v2dU1, v2dR2);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dU3);
-        v2dTmp2 = _mm_add_pd(v2dTmp1, v2dTmp2);
-        v2dTmp1 = _mm_mul_pd(v2dU1, v2dU2);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dR3);
-        v2dTmp2 = _mm_add_pd(v2dTmp1, v2dTmp2);
-        v2dTmp1 = rbdKooNRecursiveStepV2dSse2(data, time, n, k-1);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmp2);
-        v2dRes = _mm_add_pd(v2dTmp1, v2dRes);
-        v2dTmp2 = _mm_mul_pd(v2dU1, v2dU2);
-        v2dTmp2 = _mm_mul_pd(v2dTmp2, v2dU3);
-        v2dTmp1 = rbdKooNRecursiveStepV2dSse2(data, time, n, k);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmp2);
-        v2dRes = _mm_add_pd(v2dTmp1, v2dRes);
-        return v2dRes;
-    }
-    if ((k > 2) && ((n - 1) >= k)) {
-        /* Recursively compute the Reliability - 3 recursive calls instead of 6 */
-        v2dR2 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-        v2dU2 = _mm_sub_pd(v2dOnes, v2dR2);
-        v2dRes = _mm_mul_pd(v2dR1, v2dR2);
-        v2dTmp1 = rbdKooNRecursiveStepV2dSse2(data, time, n, k-2);
-        v2dRes = _mm_mul_pd(v2dRes, v2dTmp1);
-        v2dTmp1 = _mm_mul_pd(v2dR1, v2dU2);
-        v2dTmp2 = _mm_mul_pd(v2dU1, v2dR2);
-        v2dTmp2 = _mm_add_pd(v2dTmp1, v2dTmp2);
-        v2dTmp1 = rbdKooNRecursiveStepV2dSse2(data, time, n, k-1);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmp2);
-        v2dRes = _mm_add_pd(v2dTmp1, v2dRes);
-        v2dTmp2 = _mm_mul_pd(v2dU1, v2dU2);
-        v2dTmp1 = rbdKooNRecursiveStepV2dSse2(data, time, n, k);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmp2);
-        v2dRes = _mm_add_pd(v2dTmp1, v2dRes);
-        return v2dRes;
-    }
-    /* Recursively compute the Reliability */
-    v2dRes = v2dR1;
-    if (k > 1) {
-        v2dTmp1 = rbdKooNRecursiveStepV2dSse2(data, time, n, k-1);
-        v2dRes = _mm_mul_pd(v2dR1, v2dTmp1);
-    }
-    if (k <= n) {
-        v2dTmp1 = rbdKooNRecursiveStepV2dSse2(data, time, n, k);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dU1);
-        v2dRes = _mm_add_pd(v2dTmp1, v2dRes);
-    }
-    return v2dRes;
-#else
     short best;
     __m128d *v2dR;
     __m128d v2dRes;
@@ -314,6 +235,26 @@ static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKoo
     int offset;
     int ii, jj;
     int nextCombs;
+
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        v2dRes = v2dOnes;
+        while (n > 0) {
+            v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
+            v2dRes = _mm_mul_pd(v2dRes, v2dTmp1);
+        }
+        return v2dRes;
+    }
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        v2dRes = v2dOnes;
+        while (n > 0) {
+            v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
+            v2dTmp1 = _mm_sub_pd(v2dOnes, v2dTmp1);
+            v2dRes = _mm_mul_pd(v2dRes, v2dTmp1);
+        }
+        return _mm_sub_pd(v2dOnes, v2dRes);
+    }
 
     best = (short)minimum((int)(k-1), (int)(n-k));
     if (best > 1) {
@@ -406,40 +347,15 @@ static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKoo
         return v2dRes;
     }
 
-    if (k == 1) {
-        /* Compute the Reliability as Parallel block */
-        v2dRes = v2dOnes;
-        while (n > 0) {
-            v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v2dTmp1 = _mm_sub_pd(v2dOnes, v2dTmp1);
-            v2dRes = _mm_mul_pd(v2dRes, v2dTmp1);
-        }
-        return _mm_sub_pd(v2dOnes, v2dRes);
-    }
-    if (k == n) {
-        /* Compute the Reliability as Series block */
-        v2dRes = v2dOnes;
-        while (n > 0) {
-            v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v2dRes = _mm_mul_pd(v2dRes, v2dTmp1);
-        }
-        return v2dRes;
-    }
     /* Recursively compute the Reliability */
     v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v2dRes = v2dTmp1;
-    if (k > 1) {
-        v2dTmpRec = rbdKooNRecursiveStepV2dSse2(data, time, n, k-1);
-        v2dRes = _mm_mul_pd(v2dRes, v2dTmpRec);
-    }
-    if (k <= n) {
-        v2dTmp1 = _mm_sub_pd(v2dOnes, v2dTmp1);
-        v2dTmpRec = rbdKooNRecursiveStepV2dSse2(data, time, n, k);
-        v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmpRec);
-        v2dRes = _mm_add_pd(v2dRes, v2dTmp1);
-    }
+    v2dTmpRec = rbdKooNRecursiveStepV2dSse2(data, time, n, k-1);
+    v2dRes = _mm_mul_pd(v2dTmp1, v2dTmpRec);
+    v2dTmp1 = _mm_sub_pd(v2dOnes, v2dTmp1);
+    v2dTmpRec = rbdKooNRecursiveStepV2dSse2(data, time, n, k);
+    v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmpRec);
+    v2dRes = _mm_add_pd(v2dRes, v2dTmp1);
     return v2dRes;
-#endif
 }
 
 

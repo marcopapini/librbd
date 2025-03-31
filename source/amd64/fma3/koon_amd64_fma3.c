@@ -266,6 +266,25 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooN
     int ii, jj;
     int nextCombs;
 
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        v4dRes = v4dOnes;
+        while (n > 0) {
+            v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
+            v4dRes = _mm256_mul_pd(v4dRes, v4dTmp1);
+        }
+        return v4dRes;
+    }
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        v4dRes = v4dOnes;
+        while (n > 0) {
+            v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
+            v4dRes = _mm256_fnmadd_pd(v4dRes, v4dTmp1, v4dRes);
+        }
+        return _mm256_sub_pd(v4dOnes, v4dRes);
+    }
+
     best = (short)minimum((int)(k-1), (int)(n-k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
@@ -349,36 +368,13 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooN
         return v4dRes;
     }
 
-    if (k == 1) {
-        /* Compute the Reliability as Parallel block */
-        v4dRes = v4dOnes;
-        while (n > 0) {
-            v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v4dRes = _mm256_fnmadd_pd(v4dRes, v4dTmp1, v4dRes);
-        }
-        return _mm256_sub_pd(v4dOnes, v4dRes);
-    }
-    if (k == n) {
-        /* Compute the Reliability as Series block */
-        v4dRes = v4dOnes;
-        while (n > 0) {
-            v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v4dRes = _mm256_mul_pd(v4dRes, v4dTmp1);
-        }
-        return v4dRes;
-    }
     /* Recursively compute the Reliability */
     v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v4dRes = v4dTmp1;
-    if (k > 1) {
-        v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k-1);
-        v4dRes = _mm256_mul_pd(v4dRes, v4dTmpRec);
-    }
-    if (k <= n) {
-        v4dTmp1 = _mm256_sub_pd(v4dOnes, v4dTmp1);
-        v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k);
-        v4dRes = _mm256_fmadd_pd(v4dTmp1, v4dTmpRec, v4dRes);
-    }
+    v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k-1);
+    v4dRes = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
+    v4dTmp1 = _mm256_sub_pd(v4dOnes, v4dTmp1);
+    v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k);
+    v4dRes = _mm256_fmadd_pd(v4dTmp1, v4dTmpRec, v4dRes);
     return v4dRes;
 }
 
@@ -421,6 +417,25 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma3(struct rbdKooN
     int offset;
     int ii, jj;
     int nextCombs;
+
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        v2dRes = v2dOnes;
+        while (n > 0) {
+            v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
+            v2dRes = _mm_mul_pd(v2dRes, v2dTmp1);
+        }
+        return v2dRes;
+    }
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        v2dRes = v2dOnes;
+        while (n > 0) {
+            v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
+            v2dRes = _mm_fnmadd_pd(v2dRes, v2dTmp1, v2dRes);
+        }
+        return _mm_sub_pd(v2dOnes, v2dRes);
+    }
 
     best = (short)minimum((int)(k-1), (int)(n-k));
     if (best > 1) {
@@ -505,36 +520,13 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma3(struct rbdKooN
         return v2dRes;
     }
 
-    if (k == 1) {
-        /* Compute the Reliability as Parallel block */
-        v2dRes = v2dOnes;
-        while (n > 0) {
-            v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v2dRes = _mm_fnmadd_pd(v2dRes, v2dTmp1, v2dRes);
-        }
-        return _mm_sub_pd(v2dOnes, v2dRes);
-    }
-    if (k == n) {
-        /* Compute the Reliability as Series block */
-        v2dRes = v2dOnes;
-        while (n > 0) {
-            v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v2dRes = _mm_mul_pd(v2dRes, v2dTmp1);
-        }
-        return v2dRes;
-    }
     /* Recursively compute the Reliability */
     v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v2dRes = v2dTmp1;
-    if (k > 1) {
-        v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k-1);
-        v2dRes = _mm_mul_pd(v2dRes, v2dTmpRec);
-    }
-    if (k <= n) {
-        v2dTmp1 = _mm_sub_pd(v2dOnes, v2dTmp1);
-        v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k);
-        v2dRes = _mm_fmadd_pd(v2dTmp1, v2dTmpRec, v2dRes);
-    }
+    v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k-1);
+    v2dRes = _mm_mul_pd(v2dTmp1, v2dTmpRec);
+    v2dTmp1 = _mm_sub_pd(v2dOnes, v2dTmp1);
+    v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k);
+    v2dRes = _mm_fmadd_pd(v2dTmp1, v2dTmpRec, v2dRes);
     return v2dRes;
 }
 

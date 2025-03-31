@@ -236,6 +236,26 @@ static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNG
     int ii, jj;
     int nextCombs;
 
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        v4dRes = v4dOnes;
+        while (n > 0) {
+            v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
+            v4dRes = _mm256_mul_pd(v4dRes, v4dTmp1);
+        }
+        return v4dRes;
+    }
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        v4dRes = v4dOnes;
+        while (n > 0) {
+            v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
+            v4dTmp1 = _mm256_sub_pd(v4dOnes, v4dTmp1);
+            v4dRes = _mm256_mul_pd(v4dRes, v4dTmp1);
+        }
+        return _mm256_sub_pd(v4dOnes, v4dRes);
+    }
+
     best = (short)minimum((int)(k-1), (int)(n-k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
@@ -327,38 +347,14 @@ static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNG
         return v4dRes;
     }
 
-    if (k == 1) {
-        /* Compute the Reliability as Parallel block */
-        v4dRes = v4dOnes;
-        while (n > 0) {
-            v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v4dTmp1 = _mm256_sub_pd(v4dOnes, v4dTmp1);
-            v4dRes = _mm256_mul_pd(v4dRes, v4dTmp1);
-        }
-        return _mm256_sub_pd(v4dOnes, v4dRes);
-    }
-    if (k == n) {
-        /* Compute the Reliability as Series block */
-        v4dRes = v4dOnes;
-        while (n > 0) {
-            v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v4dRes = _mm256_mul_pd(v4dRes, v4dTmp1);
-        }
-        return v4dRes;
-    }
     /* Recursively compute the Reliability */
     v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v4dRes = v4dTmp1;
-    if (k > 1) {
-        v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k-1);
-        v4dRes = _mm256_mul_pd(v4dRes, v4dTmpRec);
-    }
-    if (k <= n) {
-        v4dTmp1 = _mm256_sub_pd(v4dOnes, v4dTmp1);
-        v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k);
-        v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
-        v4dRes = _mm256_add_pd(v4dRes, v4dTmp1);
-    }
+    v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k-1);
+    v4dRes = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
+    v4dTmp1 = _mm256_sub_pd(v4dOnes, v4dTmp1);
+    v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k);
+    v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
+    v4dRes = _mm256_add_pd(v4dRes, v4dTmp1);
     return v4dRes;
 }
 

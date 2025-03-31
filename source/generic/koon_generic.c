@@ -380,6 +380,23 @@ static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned 
     int ii, jj;
     int nextCombs;
 
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        s1dRes = 1.0;
+        while (n > 0) {
+            s1dRes *= data->reliabilities[(--n * data->numTimes) + time];
+        }
+        return s1dRes;
+    }
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        s1dRes = 1.0;
+        while (n > 0) {
+            s1dRes *= (1.0 - data->reliabilities[(--n * data->numTimes) + time]);
+        }
+        return 1.0 - s1dRes;
+    }
+
     best = (short)minimum((int)(k-1), (int)(n-k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
@@ -458,30 +475,9 @@ static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned 
         return s1dRes;
     }
 
-    if (k == 1) {
-        /* Compute the Reliability as Parallel block */
-        s1dRes = 1.0;
-        while (n > 0) {
-            s1dRes *= (1.0 - data->reliabilities[(--n * data->numTimes) + time]);
-        }
-        return 1.0 - s1dRes;
-    }
-    if (k == n) {
-        /* Compute the Reliability as Series block */
-        s1dRes = 1.0;
-        while (n > 0) {
-            s1dRes *= data->reliabilities[(--n * data->numTimes) + time];
-        }
-        return s1dRes;
-    }
     /* Recursively compute the Reliability */
     s1dTmp1 = data->reliabilities[(--n * data->numTimes) + time];
-    s1dRes = s1dTmp1;
-    if (k > 1) {
-        s1dRes *= rbdKooNRecursiveStepS1d(data, time, n, k-1);
-    }
-    if (k <= n) {
-        s1dRes += (1.0 - s1dTmp1) * rbdKooNRecursiveStepS1d(data, time, n, k);
-    }
+    s1dRes = s1dTmp1 * rbdKooNRecursiveStepS1d(data, time, n, k-1);
+    s1dRes += (1.0 - s1dTmp1) * rbdKooNRecursiveStepS1d(data, time, n, k);
     return s1dRes;
 }

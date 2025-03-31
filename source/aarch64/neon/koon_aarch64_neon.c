@@ -234,6 +234,25 @@ static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(s
     int ii, jj;
     int nextCombs;
 
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        v2dRes = v2dOnes;
+        while (n > 0) {
+            v2dTmp1 = vld1q_f64(&data->reliabilities[(--n * data->numTimes) + time]);
+            v2dRes = vmulq_f64(v2dRes, v2dTmp1);
+        }
+        return v2dRes;
+    }
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        v2dRes = v2dOnes;
+        while (n > 0) {
+            v2dTmp1 = vld1q_f64(&data->reliabilities[(--n * data->numTimes) + time]);
+            v2dRes = vfmsq_f64(v2dRes, v2dTmp1, v2dRes);
+        }
+        return vsubq_f64(v2dOnes, v2dRes);
+    }
+
     best = (short)minimum((int)(k-1), (int)(n-k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
@@ -317,36 +336,13 @@ static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(s
         return v2dRes;
     }
 
-    if (k == 1) {
-        /* Compute the Reliability as Parallel block */
-        v2dRes = v2dOnes;
-        while (n > 0) {
-            v2dTmp1 = vld1q_f64(&data->reliabilities[(--n * data->numTimes) + time]);
-            v2dRes = vfmsq_f64(v2dRes, v2dTmp1, v2dRes);
-        }
-        return vsubq_f64(v2dOnes, v2dRes);
-    }
-    if (k == n) {
-        /* Compute the Reliability as Series block */
-        v2dRes = v2dOnes;
-        while (n > 0) {
-            v2dTmp1 = vld1q_f64(&data->reliabilities[(--n * data->numTimes) + time]);
-            v2dRes = vmulq_f64(v2dRes, v2dTmp1);
-        }
-        return v2dRes;
-    }
     /* Recursively compute the Reliability */
     v2dTmp1 = vld1q_f64(&data->reliabilities[(--n * data->numTimes) + time]);
-    v2dRes = v2dTmp1;
-    if (k > 1) {
-        v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k-1);
-        v2dRes = vmulq_f64(v2dRes, v2dTmpRec);
-    }
-    if (k <= n) {
-        v2dTmp1 = vsubq_f64(v2dOnes, v2dTmp1);
-        v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k);
-        v2dRes = vfmaq_f64(v2dRes, v2dTmp1, v2dTmpRec);
-    }
+    v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k-1);
+    v2dRes = vmulq_f64(v2dTmp1, v2dTmpRec);
+    v2dTmp1 = vsubq_f64(v2dOnes, v2dTmp1);
+    v2dTmpRec = rbdKooNRecursiveStepV2dNeon(data, time, n, k);
+    v2dRes = vfmaq_f64(v2dRes, v2dTmp1, v2dTmpRec);
     return v2dRes;
 }
 

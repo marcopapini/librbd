@@ -234,6 +234,25 @@ static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct 
     int ii, jj;
     int nextCombs;
 
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        v8dRes = v8dOnes;
+        while (n > 0) {
+            v8dTmp1 = _mm512_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
+            v8dRes = _mm512_mul_pd(v8dRes, v8dTmp1);
+        }
+        return v8dRes;
+    }
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        v8dRes = v8dOnes;
+        while (n > 0) {
+            v8dTmp1 = _mm512_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
+            v8dRes = _mm512_fnmadd_pd(v8dRes, v8dTmp1, v8dRes);
+        }
+        return _mm512_sub_pd(v8dOnes, v8dRes);
+    }
+
     best = (short)minimum((int)(k-1), (int)(n-k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
@@ -317,36 +336,13 @@ static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct 
         return v8dRes;
     }
 
-    if (k == 1) {
-        /* Compute the Reliability as Parallel block */
-        v8dRes = v8dOnes;
-        while (n > 0) {
-            v8dTmp1 = _mm512_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v8dRes = _mm512_fnmadd_pd(v8dRes, v8dTmp1, v8dRes);
-        }
-        return _mm512_sub_pd(v8dOnes, v8dRes);
-    }
-    if (k == n) {
-        /* Compute the Reliability as Series block */
-        v8dRes = v8dOnes;
-        while (n > 0) {
-            v8dTmp1 = _mm512_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v8dRes = _mm512_mul_pd(v8dRes, v8dTmp1);
-        }
-        return v8dRes;
-    }
     /* Recursively compute the Reliability */
     v8dTmp1 = _mm512_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v8dRes = v8dTmp1;
-    if (k > 1) {
-        v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k-1);
-        v8dRes = _mm512_mul_pd(v8dRes, v8dTmpRec);
-    }
-    if (k <= n) {
-        v8dTmp1 = _mm512_sub_pd(v8dOnes, v8dTmp1);
-        v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k);
-        v8dRes = _mm512_fmadd_pd(v8dTmp1, v8dTmpRec, v8dRes);
-    }
+    v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k-1);
+    v8dRes = _mm512_mul_pd(v8dTmp1, v8dTmpRec);
+    v8dTmp1 = _mm512_sub_pd(v8dOnes, v8dTmp1);
+    v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k);
+    v8dRes = _mm512_fmadd_pd(v8dTmp1, v8dTmpRec, v8dRes);
     return v8dRes;
 }
 
