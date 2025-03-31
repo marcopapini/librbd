@@ -75,6 +75,13 @@ static const rbdDim rbdBridgeTests[] = {
 
 static const rbdDim rbdKooNDimComparison = {KOON_COMPARISON_N, 200000};
 
+static const double lambda[] = {
+        0.0000084019, 0.0000039438, 0.0000078310, 0.0000079844, 0.0000091165,
+        0.0000019755, 0.0000033522, 0.0000076823, 0.0000027777, 0.0000055397,
+        0.0000047740, 0.0000062887, 0.0000036478, 0.0000051340, 0.0000095223,
+        0.0000091620, 0.0000063571, 0.0000071730, 0.0000014160, 0.0000060697
+};
+
 
 #define NUM_EXPERIMENTS                 ((sizeof(rbdTests) / sizeof(rbdDim)))
 #define NUM_BRIDGE_EXPERIMENTS          ((sizeof(rbdBridgeTests) / sizeof(rbdDim)))
@@ -221,7 +228,6 @@ int main(int argc, char **argv)
     struct timespec diff;
     double *relMat;
     double *relArr;
-    double *lambda;
     double *output;
     int ii, jj, kk;
     unsigned char minComponents;
@@ -229,15 +235,10 @@ int main(int argc, char **argv)
     char filename[300];
 
     for(ii = 0; ii < NUM_EXPERIMENTS; ++ii) {
-        lambda = (double *)malloc(sizeof(double) * rbdTests[ii].numComponents);
         relMat = (double *)malloc(sizeof(double) * rbdTests[ii].numComponents * rbdTests[ii].numTimes);
         relArr = (double *)malloc(sizeof(double) * rbdTests[ii].numTimes);
         output = (double *)malloc(sizeof(double) * rbdTests[ii].numTimes);
 
-        srand(0);
-        for (jj = 0; jj < rbdTests[ii].numComponents; jj++) {
-            lambda[jj] = ((double)rand() / (double)RAND_MAX) / 100000.0;
-        }
         for (kk = 0; kk < rbdTests[ii].numComponents; kk++) {
             for (jj = 0; jj < rbdTests[ii].numTimes; jj++) {
                 relMat[jj + kk * rbdTests[ii].numTimes] = exp((0.0 - lambda[kk]) * (double)jj);
@@ -313,22 +314,16 @@ int main(int argc, char **argv)
         resultSeriesIdentical[ii].minTime = resultSeriesIdentical[ii].time[0];
         resultSeriesIdentical[ii].maxTime = resultSeriesIdentical[ii].time[NUM_RUNS - 1];
 
-        free(lambda);
         free(relMat);
         free(relArr);
         free(output);
     }
 
     for(ii = 0; ii < NUM_EXPERIMENTS; ++ii) {
-        lambda = (double *)malloc(sizeof(double) * rbdTests[ii].numComponents);
         relMat = (double *)malloc(sizeof(double) * rbdTests[ii].numComponents * rbdTests[ii].numTimes);
         relArr = (double *)malloc(sizeof(double) * rbdTests[ii].numTimes);
         output = (double *)malloc(sizeof(double) * rbdTests[ii].numTimes);
 
-        srand(0);
-        for (jj = 0; jj < rbdTests[ii].numComponents; jj++) {
-            lambda[jj] = ((double)rand() / (double)RAND_MAX) / 100000.0;
-        }
         for (kk = 0; kk < rbdTests[ii].numComponents; kk++) {
             for (jj = 0; jj < rbdTests[ii].numTimes; jj++) {
                 relMat[jj + kk * rbdTests[ii].numTimes] = exp((0.0 - lambda[kk]) * (double)jj);
@@ -374,22 +369,16 @@ int main(int argc, char **argv)
         resultParallelIdentical[ii].minTime = resultParallelIdentical[ii].time[0];
         resultParallelIdentical[ii].maxTime = resultParallelIdentical[ii].time[NUM_RUNS - 1];
 
-        free(lambda);
         free(relMat);
         free(relArr);
         free(output);
     }
 
     for(ii = 0; ii < NUM_EXPERIMENTS; ++ii) {
-        lambda = (double *)malloc(sizeof(double) * rbdTests[ii].numComponents);
         relMat = (double *)malloc(sizeof(double) * rbdTests[ii].numComponents * rbdTests[ii].numTimes);
         relArr = (double *)malloc(sizeof(double) * rbdTests[ii].numTimes);
         output = (double *)malloc(sizeof(double) * rbdTests[ii].numTimes);
 
-        srand(0);
-        for (jj = 0; jj < rbdTests[ii].numComponents; jj++) {
-            lambda[jj] = ((double)rand() / (double)RAND_MAX) / 100000.0;
-        }
         for (kk = 0; kk < rbdTests[ii].numComponents; kk++) {
             for (jj = 0; jj < rbdTests[ii].numTimes; jj++) {
                 relMat[jj + kk * rbdTests[ii].numTimes] = exp((0.0 - lambda[kk]) * (double)jj);
@@ -436,22 +425,16 @@ int main(int argc, char **argv)
         resultKooNIdentical[ii].minTime = resultKooNIdentical[ii].time[0];
         resultKooNIdentical[ii].maxTime = resultKooNIdentical[ii].time[NUM_RUNS - 1];
 
-        free(lambda);
         free(relMat);
         free(relArr);
         free(output);
     }
 
     for(ii = 0; ii < NUM_BRIDGE_EXPERIMENTS; ++ii) {
-        lambda = (double *)malloc(sizeof(double) * rbdBridgeTests[ii].numComponents);
         relMat = (double *)malloc(sizeof(double) * rbdBridgeTests[ii].numComponents * rbdBridgeTests[ii].numTimes);
         relArr = (double *)malloc(sizeof(double) * rbdBridgeTests[ii].numTimes);
         output = (double *)malloc(sizeof(double) * rbdBridgeTests[ii].numTimes);
 
-        srand(0);
-        for (jj = 0; jj < rbdBridgeTests[ii].numComponents; jj++) {
-            lambda[jj] = ((double)rand() / (double)RAND_MAX) / 100000.0;
-        }
         for (kk = 0; kk < rbdBridgeTests[ii].numComponents; kk++) {
             for (jj = 0; jj < rbdBridgeTests[ii].numTimes; jj++) {
                 relMat[jj + kk * rbdBridgeTests[ii].numTimes] = exp((0.0 - lambda[kk]) * (double)jj);
@@ -497,21 +480,15 @@ int main(int argc, char **argv)
         resultBridgeIdentical[ii].minTime = resultBridgeIdentical[ii].time[0];
         resultBridgeIdentical[ii].maxTime = resultBridgeIdentical[ii].time[NUM_RUNS - 1];
 
-        free(lambda);
         free(relMat);
         free(relArr);
         free(output);
     }
 
-    lambda = (double *)malloc(sizeof(double) * rbdKooNDimComparison.numComponents);
     relMat = (double *)malloc(sizeof(double) * rbdKooNDimComparison.numComponents * rbdKooNDimComparison.numTimes);
     relArr = (double *)malloc(sizeof(double) * rbdKooNDimComparison.numTimes);
     output = (double *)malloc(sizeof(double) * rbdKooNDimComparison.numTimes);
 
-    srand(0);
-    for (jj = 0; jj < rbdKooNDimComparison.numComponents; jj++) {
-        lambda[jj] = ((double)rand() / (double)RAND_MAX) / 100000.0;
-    }
     for (kk = 0; kk < rbdKooNDimComparison.numComponents; kk++) {
         for (jj = 0; jj < rbdKooNDimComparison.numTimes; jj++) {
             relMat[jj + kk * rbdKooNDimComparison.numTimes] = exp((0.0 - lambda[kk]) * (double)jj);
@@ -559,7 +536,6 @@ int main(int argc, char **argv)
         resultKooNIdenticalComparison[ii].maxTime = resultKooNIdenticalComparison[ii].time[NUM_RUNS - 1];
     }
 
-    free(lambda);
     free(relMat);
     free(relArr);
     free(output);
