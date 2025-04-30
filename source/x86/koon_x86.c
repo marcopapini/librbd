@@ -53,7 +53,7 @@
  * Return (void *):
  *  NULL
  */
-HIDDEN FUNCTION_TARGET("sse2") void *rbdKooNFillWorker(void *arg)
+HIDDEN void *rbdKooNFillWorker(void *arg)
 {
     struct rbdKooNFillData *data;
     unsigned int time;
