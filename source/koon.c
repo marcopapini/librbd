@@ -334,7 +334,7 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
     unsigned short ii;
     unsigned int idx;
     int res;
-    unsigned long long nCi[UCHAR_MAX];
+    unsigned long long nCi[SCHAR_MAX];
     unsigned char minFaultyComponents;
     unsigned char bComputeUnreliability;
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
