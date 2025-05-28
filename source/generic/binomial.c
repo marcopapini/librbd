@@ -30,7 +30,7 @@
 
 
 static unsigned char computeGcd(unsigned long long a, unsigned char b);
-static void divideBy(unsigned long long *res, unsigned char *dividends, unsigned char numDividends);
+static void divideBy(unsigned long long *res, unsigned char *divisors, unsigned char numDivisors);
 
 
 /**
@@ -60,8 +60,8 @@ HIDDEN unsigned long long binomialCoefficient(unsigned char n, unsigned char k)
 {
     unsigned long long res = 1;
     int idx;
-    unsigned int i;
-    unsigned char dividends[UCHAR_MAX];
+    int i;
+    unsigned char divisors[SCHAR_MAX];
 
     /* In case k is greater than n, nCk computation is not possible. Return 0 */
     if (k > n) {
@@ -85,14 +85,13 @@ HIDDEN unsigned long long binomialCoefficient(unsigned char n, unsigned char k)
 
     /* Initialize array values from 1 to k */
     for (idx = k - 1; idx >= 0; --idx) {
-        dividends[idx] = idx + 1;
+        divisors[idx] = idx + 1;
     }
 
-    i = k;
+    i = k - 1;
     res = 1ULL;
-    ++n;
 
-    /* For i=0, ..., k */
+    /* For i=0, ..., k-1 */
     do {
         if (res > (18446744073709551615ULL / (n - i))) {
             /* Overflow condition detected, return 0. */
@@ -100,14 +99,14 @@ HIDDEN unsigned long long binomialCoefficient(unsigned char n, unsigned char k)
         }
         /* Multiply partial result by (n-i) */
         res *= (n - i);
-        /* Divide partial result using all dividends */
-        divideBy(&res, dividends, k);
+        /* Divide partial result using all divisors */
+        divideBy(&res, divisors, k);
     }
-    while (--i > 0);
+    while (i-- > 0);
 
-    /* Divide partial result by remaining dividends */
+    /* Divide partial result by remaining divisors */
     for (idx = k - 1; idx >= 0; --idx) {
-        res /= dividends[idx];
+        res /= divisors[idx];
     }
 
     /* Return nCk */
@@ -153,37 +152,37 @@ static unsigned char computeGcd(unsigned long long a, unsigned char b)
 /**
  * divideBy
  *
- * Divide partial result by array of dividends avoiding numerical errors
+ * Divide partial result by array of divisors avoiding numerical errors
  *
  * Input:
- *      unsigned char *dividends
- *      unsigned char numDividends
+ *      unsigned char *divisors
+ *      unsigned char numDivisors
  *
  * Output:
  *      unsigned long long *res
  *
  * Description:
- *  This function divides partial result by array of dividends avoiding numerical errors
+ *  This function divides partial result by array of divisors avoiding numerical errors
  *
  * Parameters:
  *      res: partial result
- *      dividends: array of dividends
- *      numDividends: number of dividends
+ *      divisors: array of divisors
+ *      numDivisors: number of divisors
  *
  * Return: None
  */
-static void divideBy(unsigned long long *res, unsigned char *dividends, unsigned char numDividends)
+static void divideBy(unsigned long long *res, unsigned char *divisors, unsigned char numDivisors)
 {
     int idx;
     unsigned char gcd;
 
     /* For each divisor... */
-    for (idx = numDividends - 1; idx >= 0; --idx) {
+    for (idx = numDivisors - 1; idx >= 0; --idx) {
         /* Compute GCD between partial result and current divisor */
-        gcd = computeGcd(*res, dividends[idx]);
+        gcd = computeGcd(*res, divisors[idx]);
         /* Divide partial result by GCD */
         *res /= gcd;
         /* Update current divisor by performing division by GCD */
-        dividends[idx] /= gcd;
+        divisors[idx] /= gcd;
     }
 }
