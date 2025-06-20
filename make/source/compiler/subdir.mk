@@ -1,19 +1,23 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/compiler/clang.c \
-../source/compiler/gcc.c
+../source/compiler/gcc.c \
+../source/compiler/vs.c
 
 C_DEPS += \
 ./source/compiler/clang.d \
-./source/compiler/gcc.d
+./source/compiler/gcc.d \
+./source/compiler/vs.d
 
 OBJS_AR += \
 ./source/compiler/clang.ar.o \
-./source/compiler/gcc.ar.o
+./source/compiler/gcc.ar.o \
+./source/compiler/vs.ar.o
 
 OBJS_SO += \
 ./source/compiler/clang.so.o \
-./source/compiler/gcc.so.o
+./source/compiler/gcc.so.o \
+./source/compiler/vs.so.o
 
 
 # Each subdirectory must supply rules for building sources it contributes
