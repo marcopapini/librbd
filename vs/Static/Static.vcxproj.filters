@@ -75,7 +75,7 @@
     <ClInclude Include="..\..\source\parallel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\rbd.h">
+    <ClInclude Include="..\..\include\rbd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\source\series.h">

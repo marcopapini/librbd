@@ -23,7 +23,7 @@
 #define KOON_H_
 
 
-#include "rbd.h"
+#include "../include/rbd.h"
 
 #include <limits.h>
 

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\rbd.h" />
     <ClInclude Include="..\..\source\aarch64\bridge_aarch64.h" />
     <ClInclude Include="..\..\source\aarch64\koon_aarch64.h" />
     <ClInclude Include="..\..\source\aarch64\parallel_aarch64.h" />
@@ -41,7 +42,6 @@
     <ClInclude Include="..\..\source\koon.h" />
     <ClInclude Include="..\..\source\os\os.h" />
     <ClInclude Include="..\..\source\parallel.h" />
-    <ClInclude Include="..\..\source\rbd.h" />
     <ClInclude Include="..\..\source\series.h" />
     <ClInclude Include="..\..\source\x86\bridge_x86.h" />
     <ClInclude Include="..\..\source\x86\koon_x86.h" />
