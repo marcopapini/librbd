@@ -27,6 +27,7 @@
 
 
 #include <arm_neon.h>
+#include <arm_sve.h>
 #include <limits.h>
 #include <string.h>
 
@@ -72,7 +73,7 @@ static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionDa
 }
 
 
-FUNCTION_TARGET("arch=armv8-a") float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);
+float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);
 
 
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */

@@ -28,10 +28,10 @@
 #include <arm_acle.h>
 
 
-VARIABLE_TARGET("arch=armv8-a") const float64x2_t v2dZeros = {0.0, 0.0};
-VARIABLE_TARGET("arch=armv8-a") const float64x2_t v2dOnes = {1.0, 1.0};
-VARIABLE_TARGET("arch=armv8-a") const float64x2_t v2dTwos = {2.0, 2.0};
-VARIABLE_TARGET("arch=armv8-a") const float64x2_t v2dMinusTwos = {-2.0, -2.0};
+VARIABLE_TARGET("+simd") const float64x2_t v2dZeros = {0.0, 0.0};
+VARIABLE_TARGET("+simd") const float64x2_t v2dOnes = {1.0, 1.0};
+VARIABLE_TARGET("+simd") const float64x2_t v2dTwos = {2.0, 2.0};
+VARIABLE_TARGET("+simd") const float64x2_t v2dMinusTwos = {-2.0, -2.0};
 
 
 /**
@@ -55,7 +55,7 @@ VARIABLE_TARGET("arch=armv8-a") const float64x2_t v2dMinusTwos = {-2.0, -2.0};
  * Return (float64x2_t):
  *  Reliability within accepted bounds
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") float64x2_t capReliabilityV2dNeon(float64x2_t v2dR) {
+HIDDEN FUNCTION_TARGET("+simd") float64x2_t capReliabilityV2dNeon(float64x2_t v2dR) {
     /* Cap computed reliability to accepted bounds [0, 1] */
     return vminnmq_f64(vmaxnmq_f64(v2dZeros, v2dR), v2dOnes);
 }

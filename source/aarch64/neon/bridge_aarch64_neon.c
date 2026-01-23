@@ -28,7 +28,7 @@
 
 
 /**
- * rbdBridgeGenericWorker
+ * rbdBridgeGenericWorkerNeon
  *
  * Generic Bridge RBD Worker function with AArch64 NEON instruction set
  *
