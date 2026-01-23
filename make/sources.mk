@@ -19,6 +19,7 @@ source/amd64 \
 source/amd64/fma3 \
 source/compiler \
 source/generic \
+source/noarch \
 source/os \
 source/x86 \
 source/x86/sse2 \

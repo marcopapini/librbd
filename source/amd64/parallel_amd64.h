@@ -29,14 +29,22 @@
 
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for amd64 AVX instruction set */
+void *rbdParallelGenericWorkerAvx(struct rbdParallelData *data);
+void *rbdParallelIdenticalWorkerAvx(void *arg);
+
 void rbdParallelGenericStepV4dAvx(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepV4dAvx(struct rbdParallelData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 FMA3 instruction set */
+void *rbdParallelGenericWorkerFma3(struct rbdParallelData *data);
+
 void rbdParallelGenericStepV4dFma3(struct rbdParallelData *data, unsigned int time);
 void rbdParallelGenericStepV2dFma3(struct rbdParallelData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 AVX512F instruction set */
+void *rbdParallelGenericWorkerAvx512f(struct rbdParallelData *data);
+void *rbdParallelIdenticalWorkerAvx512f(struct rbdParallelData *data);
+
 void rbdParallelGenericStepV8dAvx512f(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepV8dAvx512f(struct rbdParallelData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */

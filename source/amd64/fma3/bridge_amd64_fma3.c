@@ -28,6 +28,129 @@
 
 
 /**
+ * rbdBridgeGenericWorkerFma3
+ *
+ * Generic Bridge RBD Worker function with amd64 FMA3 instruction set
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Bridge RBD Worker exploiting amd64 FMA3 instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdBridgeGenericWorkerFma3(struct rbdBridgeData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V4D;
+
+    /* For each time instant to be processed (blocks of 4 time instants)... */
+    while ((time + V4D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeGenericStepV4dFma3(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V4D);
+    }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeGenericStepV2dFma3(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeGenericStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdBridgeIdenticalWorkerFma3
+ *
+ * Identical Bridge RBD Worker function with amd64 FMA3 instruction set
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Bridge RBD Worker exploiting amd64 FMA3 instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdBridgeIdenticalWorkerFma3(struct rbdBridgeData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V4D;
+
+    /* Align, if possible, to vector size */
+    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Bridge RBD at current time instant */
+            rbdBridgeIdenticalStepS1d(data, time);
+            /* Increment current time instant */
+            time += S1D;
+        }
+        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Bridge RBD at current time instant */
+            rbdBridgeIdenticalStepV2dFma3(data, time);
+            /* Increment current time instant */
+            time += V2D;
+        }
+    }
+    /* For each time instant to be processed (blocks of 4 time instants)... */
+    while ((time + V4D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V4D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeIdenticalStepV4dFma3(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V4D);
+    }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeIdenticalStepV2dFma3(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeIdenticalStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
  * rbdBridgeGenericStepV4dFma3
  *
  * Generic Bridge RBD step function with amd64 FMA3 256bit

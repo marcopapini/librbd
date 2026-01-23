@@ -28,13 +28,195 @@
 #include "../../generic/combinations.h"
 
 
-static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
+static float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
 
+
+/**
+ * rbdKooNFillWorkerNeon
+ *
+ * Fill output Reliability with fixed value Worker function with AArch64 NEON instruction set
+ *
+ * Input:
+ *      struct rbdKooNFillData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function fills Reliability with fixed value for KooN Worker exploiting AArch64 NEON instruction set.
+ *  It is responsible to fill a given batch of output Reliabilities with a given fixed value
+ *
+ * Parameters:
+ *      data: Fill KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN FUNCTION_TARGET("+simd") void *rbdKooNFillWorkerNeon(struct rbdKooNFillData *data)
+{
+    unsigned int time;
+    float64x2_t m128d;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+    /* Define vector (2d) with provided value */
+    m128d = vdupq_n_f64(data->value);
+
+    /* For each time instant (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Fill output Reliability array with fixed value */
+        vst1q_f64(&data->output[time], m128d);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Fill output Reliability array with fixed value */
+        data->output[time++] = data->value;
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdKooNGenericWorkerNeon
+ *
+ * Generic KooN RBD Worker function with AArch64 NEON instruction set
+ *
+ * Input:
+ *      struct rbdKooNGenericData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic KooN RBD Worker exploiting AArch64 NEON instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
+ *
+ * Parameters:
+ *      data: Generic KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNGenericWorkerNeon(struct rbdKooNGenericData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV2dNeon(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdKooNIdenticalWorkerNeon
+ *
+ * Identical KooN RBD Worker function with AArch64 NEON instruction set
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD Worker exploiting AArch64 NEON instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of an identical KooN RBD system
+ *  using the previously computed nCk values
+ *
+ * Parameters:
+ *      data: Identical KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNIdenticalWorkerNeon(struct rbdKooNIdenticalData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* If compute unreliability flag is not set... */
+    if (data->bComputeUnreliability == 0) {
+        /* Align, if possible, to vector size */
+        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of KooN RBD at current time instant from working components */
+                rbdKooNIdenticalSuccessStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+        }
+        /* For each time instant to be processed (blocks of 2 time instants)... */
+        while ((time + V2D) <= data->numTimes) {
+            /* Prefetch for next iteration */
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+            /* Compute reliability of KooN RBD at current time instant from working components */
+            rbdKooNIdenticalSuccessStepV2dNeon(data, time);
+            /* Increment current time instant */
+            time += (data->numCores * V2D);
+        }
+        /* Is 1 time instant remaining? */
+        if (time < data->numTimes) {
+            /* Compute reliability of KooN RBD at current time instant from working components */
+            rbdKooNIdenticalSuccessStepS1d(data, time);
+        }
+    }
+    else {
+        /* Align, if possible, to vector size */
+        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of KooN RBD at current time instant from failed components */
+                rbdKooNIdenticalFailStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+        }
+        /* For each time instant to be processed (blocks of 2 time instants)... */
+        while ((time + V2D) <= data->numTimes) {
+            /* Prefetch for next iteration */
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+            /* Compute reliability of KooN RBD at current time instant from failed components */
+            rbdKooNIdenticalFailStepV2dNeon(data, time);
+            /* Increment current time instant */
+            time += (data->numCores * V2D);
+        }
+        /* Is 1 time instant remaining? */
+        if (time < data->numTimes) {
+            /* Compute reliability of KooN RBD at current time instant from failed components */
+            rbdKooNIdenticalFailStepS1d(data, time);
+        }
+    }
+
+    return NULL;
+}
 
 /**
  * rbdKooNRecursionV2dNeon
  *
- * Compute KooN RBD though Recursive method with AArch64 NEON 128bit
+ * Compute KooN RBD through Recursive method with AArch64 NEON 128bit
  *
  * Input:
  *      struct rbdKooNGenericData *data
@@ -48,13 +230,13 @@ static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(s
  *  exploiting AArch64 NEON 128bit
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Generic KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNRecursionV2dNeon(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+simd") void rbdKooNRecursionV2dNeon(struct rbdKooNGenericData *data, unsigned int time)
 {
     float64x2_t v2dRes;
 
@@ -82,13 +264,13 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNRecursionV2dNeon(struct rbdKo
  *  taking into account the working components
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     float64x2_t v2dR;
     float64x2_t v2dTmp1, v2dTmp2;
@@ -146,13 +328,13 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNIdenticalSuccessStepV2dNeon(s
  *  taking into account the failed components
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     float64x2_t v2dU;
     float64x2_t v2dTmp1, v2dTmp2;
@@ -213,7 +395,7 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNIdenticalFailStepV2dNeon(stru
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Generic KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
@@ -221,7 +403,7 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdKooNIdenticalFailStepV2dNeon(stru
  * Return (float64x2_t):
  *  Computed reliability
  */
-static FUNCTION_TARGET("arch=armv8-a") float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("+simd") float64x2_t rbdKooNRecursiveStepV2dNeon(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
 {
     short best;
     float64x2_t *v2dR;

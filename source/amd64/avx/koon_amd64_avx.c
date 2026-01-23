@@ -25,11 +25,237 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../koon_amd64.h"
+#include "../../x86/koon_x86.h"
 #include "../../generic/combinations.h"
 
 
-static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
+static __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
 
+
+/**
+ * rbdKooNFillWorkerAvx
+ *
+ * Fill output Reliability with fixed value Worker function with amd64 AVX instruction set
+ *
+ * Input:
+ *      struct rbdKooNFillData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function fills Reliability with fixed value for KooN Worker amd64 AVX instruction set.
+ *  It is responsible to fill a given batch of output Reliabilities with a given fixed value
+ *
+ * Parameters:
+ *      data: Fill KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN FUNCTION_TARGET("avx") void *rbdKooNFillWorkerAvx(struct rbdKooNFillData *data)
+{
+    unsigned int time;
+    __m256d m256d;
+    __m128d m128d;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V4D;
+
+    /* Define vectors (4d and 2d) with provided value */
+    m256d = _mm256_set1_pd(data->value);
+    m128d = _mm_set1_pd(data->value);
+
+    /* For each time instant (blocks of 4 time instants)... */
+    while ((time + V4D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+        /* Fill output Reliability array with fixed value */
+        _mm256_storeu_pd(&data->output[time], m256d);
+        /* Increment current time instant */
+        time += (data->numCores * V4D);
+    }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Fill output Reliability array with fixed value */
+        _mm_storeu_pd(&data->output[time], m128d);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Fill output Reliability array with fixed value */
+        data->output[time++] = data->value;
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdKooNGenericWorkerAvx
+ *
+ * Generic KooN RBD Worker function with amd64 AVX instruction set
+ *
+ * Input:
+ *      struct rbdKooNGenericData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic KooN RBD Worker exploiting amd64 AVX instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
+ *
+ * Parameters:
+ *      data: Generic KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNGenericWorkerAvx(struct rbdKooNGenericData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V4D;
+
+    /* For each time instant to be processed (blocks of 4 time instants)... */
+    while ((time + V4D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV4dAvx(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V4D);
+    }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV2dSse2(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdKooNIdenticalWorkerAvx
+ *
+ * Identical KooN RBD Worker function with amd64 AVX instruction set
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD Worker exploiting amd64 AVX instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of an identical KooN RBD system
+ *  using the previously computed nCk values
+ *
+ * Parameters:
+ *      data: Identical KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V4D;
+
+    /* If compute unreliability flag is not set... */
+    if (data->bComputeUnreliability == 0) {
+        /* Align, if possible, to vector size */
+        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of KooN RBD at current time instant from working components */
+                rbdKooNIdenticalSuccessStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+            if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of KooN RBD at current time instant from working components */
+                rbdKooNIdenticalSuccessStepV2dSse2(data, time);
+                /* Increment current time instant */
+                time += V2D;
+            }
+        }
+        /* For each time instant to be processed (blocks of 4 time instants)... */
+        while ((time + V4D) <= data->numTimes) {
+            /* Prefetch for next iteration */
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V4D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+            /* Compute reliability of KooN RBD at current time instant from working components */
+            rbdKooNIdenticalSuccessStepV4dAvx(data, time);
+            /* Increment current time instant */
+            time += (data->numCores * V4D);
+        }
+        /* Are (at least) 2 time instants remaining? */
+        if ((time + V2D) <= data->numTimes) {
+            /* Compute reliability of KooN RBD at current time instant from working components */
+            rbdKooNIdenticalSuccessStepV2dSse2(data, time);
+            /* Increment current time instant */
+            time += V2D;
+        }
+        /* Is 1 time instant remaining? */
+        if (time < data->numTimes) {
+            /* Compute reliability of KooN RBD at current time instant from working components */
+            rbdKooNIdenticalSuccessStepS1d(data, time);
+        }
+    }
+    else {
+        /* Align, if possible, to vector size */
+        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of KooN RBD at current time instant from failed components */
+                rbdKooNIdenticalFailStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+            if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of KooN RBD at current time instant from failed components */
+                rbdKooNIdenticalFailStepV2dSse2(data, time);
+                /* Increment current time instant */
+                time += V2D;
+            }
+        }
+        /* For each time instant to be processed (blocks of 4 time instants)... */
+        while ((time + V4D) <= data->numTimes) {
+            /* Prefetch for next iteration */
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V4D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+            /* Compute reliability of KooN RBD at current time instant from failed components */
+            rbdKooNIdenticalFailStepV4dAvx(data, time);
+            /* Increment current time instant */
+            time += (data->numCores * V4D);
+        }
+        /* Are (at least) 2 time instants remaining? */
+        if ((time + V2D) <= data->numTimes) {
+            /* Compute reliability of KooN RBD at current time instant from failed components */
+            rbdKooNIdenticalFailStepV2dSse2(data, time);
+            /* Increment current time instant */
+            time += V2D;
+        }
+        /* Is 1 time instant remaining? */
+        if (time < data->numTimes) {
+            /* Compute reliability of KooN RBD at current time instant from failed components */
+            rbdKooNIdenticalFailStepS1d(data, time);
+        }
+    }
+
+    return NULL;
+}
 
 /**
  * rbdKooNRecursionV4dAvx
@@ -48,7 +274,7 @@ static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNG
  *  exploiting amd64 AVX 256bit
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Generic KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
@@ -82,7 +308,7 @@ HIDDEN FUNCTION_TARGET("avx") void rbdKooNRecursionV4dAvx(struct rbdKooNGenericD
  *  taking into account the working components
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
@@ -147,7 +373,7 @@ HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalSuccessStepV4dAvx(struct rbdK
  *  taking into account the failed components
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
@@ -214,7 +440,7 @@ HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooN
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Generic KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD

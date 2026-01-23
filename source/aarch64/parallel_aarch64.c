@@ -28,11 +28,10 @@
 #include "../parallel.h"
 
 
-
 /**
  * rbdParallelGenericWorker
  *
- * Parallel RBD Worker function with AArch64 NEON
+ * Generic Parallel RBD Worker function with AArch64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -41,13 +40,12 @@
  *      None
  *
  * Description:
- *  This function implements the generic Parallel RBD Worker exploiting AArch64 NEON instruction set.
+ *  This function implements the generic Parallel RBD Worker exploiting AArch64 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of a Parallel RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Parallel RBD
+ *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Parallel RBD
  *
  * Return (void *):
  *  NULL
@@ -55,36 +53,17 @@
 HIDDEN void *rbdParallelGenericWorker(void *arg)
 {
     struct rbdParallelData *data;
-    unsigned int time;
 
     /* Retrieve Parallel RBD data */
     data = (struct rbdParallelData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V2D;
 
-    /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-        /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepV2dNeon(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V2D);
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepS1d(data, time);
-    }
-
-    return NULL;
+    return rbdParallelGenericWorkerNeon(data);
 }
 
 /**
  * rbdParallelIdenticalWorker
  *
- * Identical Parallel RBD Worker function with AArch64 NEON
+ * Identical Parallel RBD Worker function with AArch64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -93,13 +72,12 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical Parallel RBD Worker exploiting AArch64 NEON instruction set.
+ *  This function implements the identical Parallel RBD Worker exploiting AArch64 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of an identical Parallel RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Parallel RBD
+ *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Parallel RBD
  *
  * Return (void *):
  *  NULL
@@ -107,39 +85,11 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
 HIDDEN void *rbdParallelIdenticalWorker(void *arg)
 {
     struct rbdParallelData *data;
-    unsigned int time;
 
     /* Retrieve Parallel RBD data */
     data = (struct rbdParallelData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V2D;
 
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-    }
-    /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-        /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelIdenticalStepV2dNeon(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V2D);
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelIdenticalStepS1d(data, time);
-    }
-
-    return NULL;
+    return rbdParallelIdenticalWorkerNeon(data);
 }
 
 #endif /* defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0 */

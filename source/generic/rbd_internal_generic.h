@@ -43,6 +43,8 @@
 #endif /* CPU_ENABLE_SIMD */
 
 
+/* Include architecture-independent RBD Internal header */
+#include "../noarch/rbd_internal_noarch.h"
 /*< Include architecture-specific RBD Internal header */
 #if defined(ARCH_X86)
 #include "../x86/rbd_internal_x86.h"
@@ -52,11 +54,6 @@
 #include "../aarch64/rbd_internal_aarch64.h"
 #endif
 
-
-#define S1D                         (1)         /* Scalar of 1 double (64 bit)          */
-#define V2D                         (2)         /* Vector of 2 doubles (128bit)         */
-#define V4D                         (4)         /* Vector of 4 doubles (256bit)         */
-#define V8D                         (8)         /* Vector of 8 doubles (512bit)         */
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
 #define MIN_BATCH_SIZE              (20000)     /* Minimum batch size in SMP RBD resolution */
@@ -200,30 +197,6 @@ static inline ALWAYS_INLINE int floorDivision(int dividend, int divisor) {
 static inline ALWAYS_INLINE int ceilDivision(int dividend, int divisor) {
     return floorDivision(dividend + divisor - 1, divisor);
 }
-
-
-/**
- * capReliabilityS1d
- *
- * Cap reliability to accepted bounds [0.0, 1.0]
- *
- * Input:
- *      double s1dR
- *
- * Output:
- *      None
- *
- * Description:
- *  This function caps the provided reliability (scalar value, double-precision FP)
- *      to the accepted bounds
- *
- * Parameters:
- *      s1dR: Reliability
- *
- * Return (double):
- *  Reliability within accepted bounds
- */
-double capReliabilityS1d(double s1dR);
 
 /**
  * prefetchRead

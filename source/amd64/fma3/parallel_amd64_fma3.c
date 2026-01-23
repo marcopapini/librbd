@@ -28,6 +28,60 @@
 
 
 /**
+ * rbdParallelGenericWorkerFma3
+ *
+ * Generic Parallel RBD Worker function with amd64 FMA3 instruction set
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Parallel RBD Worker exploiting amd64 FMA3 instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a Parallel RBD system
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdParallelGenericWorkerFma3(struct rbdParallelData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V4D;
+
+    /* For each time instant to be processed (blocks of 4 time instants)... */
+    while ((time + V4D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelGenericStepV4dFma3(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V4D);
+    }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelGenericStepV2dFma3(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelGenericStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
  * rbdParallelGenericStepV4dFma3
  *
  * Generic Parallel RBD step function with amd64 FMA3 256bit

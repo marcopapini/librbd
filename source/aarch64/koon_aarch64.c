@@ -32,7 +32,7 @@
 /**
  * rbdKooNFillWorker
  *
- * Fill output Reliability with fixed value Worker function with AArch64 NEON
+ * Fill output Reliability with fixed value Worker function with AArch64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -41,52 +41,30 @@
  *      None
  *
  * Description:
- *  This function fills Reliability with fixed value for KooN Worker exploiting AArch64 NEON instruction sets.
+ *  This function fills Reliability with fixed value for KooN Worker AArch64 platform-specific instruction sets.
  *  It is responsible to fill a given batch of output Reliabilities with a given fixed value
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a fill KooN data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation
+ *      arg: this parameter shall be the pointer to a fill KooN data. It is provided as a void *
+ *                      to be compliant with the SMP of the Fill KooN RBD
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void *rbdKooNFillWorker(void *arg)
+HIDDEN void *rbdKooNFillWorker(void *arg)
 {
     struct rbdKooNFillData *data;
-    unsigned int time;
-    float64x2_t m128d;
 
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNFillData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V2D;
-    /* Define vector (2d) with provided value */
-    m128d = vdupq_n_f64(data->value);
 
-    /* For each time instant (blocks of 2 time instants)... */
-    while ((time + V2D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-        /* Fill output Reliability array with fixed value */
-        vst1q_f64(&data->output[time], m128d);
-        /* Increment current time instant */
-        time += (data->numCores * V2D);
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Fill output Reliability array with fixed value */
-        data->output[time++] = data->value;
-    }
-
-    return NULL;
+    return rbdKooNFillWorkerNeon(data);
 }
 
 /**
  * rbdKooNGenericWorker
  *
- * Generic KooN RBD Worker function with AArch64 NEON
+ * Generic KooN RBD Worker function with AArch64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -95,13 +73,12 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void *rbdKooNFillWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker exploiting AArch64 NEON instruction sets.
- *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
+ *  This function implements the generic KooN RBD Worker AArch64 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a generic KooN RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a generic KooN RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of KooN RBD
+ *      arg: this parameter shall be the pointer to a generic KooN RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Generic KooN RBD
  *
  * Return (void *):
  *  NULL
@@ -109,36 +86,17 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void *rbdKooNFillWorker(void *arg)
 HIDDEN void *rbdKooNGenericWorker(void *arg)
 {
     struct rbdKooNGenericData *data;
-    unsigned int time;
 
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNGenericData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V2D;
 
-    /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-        /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionV2dNeon(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V2D);
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionS1d(data, time);
-    }
-
-    return NULL;
+    return rbdKooNGenericWorkerNeon(data);
 }
 
 /**
  * rbdKooNIdenticalWorker
  *
- * Identical KooN RBD Worker function with AArch64 NEON
+ * Identical KooN RBD Worker function with AArch64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -147,14 +105,12 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD Worke exploiting AArch64 NEON instruction set.
- *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system by using
- *  previously computed nCk values
+ *  This function implements the identical KooN RBD Worker AArch64 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of an identical KooN RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a identical KooN RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of KooN RBD
+ *      arg: this parameter shall be the pointer to an identical KooN RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Identical KooN RBD
  *
  * Return (void *):
  *  NULL
@@ -162,68 +118,11 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
 HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 {
     struct rbdKooNIdenticalData *data;
-    unsigned int time;
 
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNIdenticalData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V2D;
 
-    /* If compute unreliability flag is not set... */
-    if (data->bComputeUnreliability == 0) {
-        /* Align, if possible, to vector size */
-        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNIdenticalSuccessStepS1d(data, time);
-                /* Increment current time instant */
-                time += S1D;
-            }
-        }
-        /* For each time instant to be processed (blocks of 2 time instants)... */
-        while ((time + V2D) <= data->numTimes) {
-            /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-            /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepV2dNeon(data, time);
-            /* Increment current time instant */
-            time += (data->numCores * V2D);
-        }
-        /* Is 1 time instant remaining? */
-        if (time < data->numTimes) {
-            /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepS1d(data, time);
-        }
-    }
-    else {
-        /* Align, if possible, to vector size */
-        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNIdenticalFailStepS1d(data, time);
-                /* Increment current time instant */
-                time += S1D;
-            }
-        }
-        /* For each time instant to be processed (blocks of 2 time instants)... */
-        while ((time + V2D) <= data->numTimes) {
-            /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-            /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepV2dNeon(data, time);
-            /* Increment current time instant */
-            time += (data->numCores * V2D);
-        }
-        /* Is 1 time instant remaining? */
-        if (time < data->numTimes) {
-            /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepS1d(data, time);
-        }
-    }
-
-    return NULL;
+    return rbdKooNIdenticalWorkerNeon(data);
 }
 
 #endif /* defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0 */

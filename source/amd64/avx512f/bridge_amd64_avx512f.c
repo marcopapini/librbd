@@ -28,9 +28,152 @@
 
 
 /**
+ * rbdBridgeGenericWorkerAvx512f
+ *
+ * Generic Bridge RBD Worker function with amd64 AVX512F 512bit
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Bridge RBD Worker exploiting amd64 AVX512F 512bit.
+ *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdBridgeGenericWorkerAvx512f(struct rbdBridgeData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V8D;
+
+    /* For each time instant to be processed (blocks of 8 time instants)... */
+    while ((time + V8D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V8D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeGenericStepV8dAvx512f(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V8D);
+    }
+    /* Are (at least) 4 time instants remaining? */
+    if ((time + V4D) <= data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeGenericStepV4dFma3(data, time);
+        /* Increment current time instant */
+        time += V4D;
+    }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeGenericStepV2dFma3(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeGenericStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdBridgeIdenticalWorkerAvx512f
+ *
+ * Identical Bridge RBD Worker function with amd64 AVX512F 512bit
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Bridge RBD Worker exploiting amd64 AVX512F 512bit.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V8D;
+
+    /* Align, if possible, to vector size */
+    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Bridge RBD at current time instant */
+            rbdBridgeIdenticalStepS1d(data, time);
+            /* Increment current time instant */
+            time += S1D;
+        }
+        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Bridge RBD at current time instant */
+            rbdBridgeIdenticalStepV2dFma3(data, time);
+            /* Increment current time instant */
+            time += V2D;
+        }
+        if (((long)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Bridge RBD at current time instant */
+            rbdBridgeIdenticalStepV4dFma3(data, time);
+            /* Increment current time instant */
+            time += V4D;
+        }
+    }
+    /* For each time instant to be processed (blocks of 8 time instants)... */
+    while ((time + V8D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V8D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeIdenticalStepV8dAvx512f(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V8D);
+    }
+    /* Are (at least) 4 time instants remaining? */
+    if ((time + V4D) <= data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeIdenticalStepV4dFma3(data, time);
+        /* Increment current time instant */
+        time += V4D;
+    }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeIdenticalStepV2dFma3(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeIdenticalStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
  * rbdBridgeGenericStepV8dAvx512f
  *
- * Generic Bridge RBD step function with amd64 AVX512F 512bit
+ * Generic Bridge RBD step function with amd64 AVX512F instruction set
  *
  * Input:
  *      struct rbdBridgeData *data
@@ -40,7 +183,7 @@
  *      None
  *
  * Description:
- *  This function implements the generic Bridge RBD step exploiting amd64 AVX512F 512bit.
+ *  This function implements the generic Bridge RBD step exploiting amd64 AVX512F instruction set.
  *  It is responsible to compute the reliability of a Bridge block with generic components
  *  given their reliabilities
  *
@@ -93,7 +236,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepV8dAvx512f(struct rbd
 /**
  * rbdBridgeIdenticalStepV8dAvx512f
  *
- * Identical Bridge RBD step function with amd64 AVX512F 512bit
+ * Identical Bridge RBD step function with amd64 AVX512F instruction set
  *
  * Input:
  *      struct rbdBridgeData *data
@@ -103,7 +246,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepV8dAvx512f(struct rbd
  *      None
  *
  * Description:
- *  This function implements the identical Bridge RBD step exploiting amd64 AVX512F 512bit.
+ *  This function implements the identical Bridge RBD step exploiting amd64 AVX512F instruction set.
  *  It is responsible to compute the reliability of a Bridge block with identical components
  *  given their reliability
  *

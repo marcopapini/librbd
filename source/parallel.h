@@ -45,6 +45,9 @@ void *rbdParallelGenericWorker(void *arg);
 void *rbdParallelIdenticalWorker(void *arg);
 
 /* Platform-generic functions */
+void *rbdParallelGenericWorkerNoarch(struct rbdParallelData *data);
+void *rbdParallelIdenticalWorkerNoarch(struct rbdParallelData *data);
+
 void rbdParallelGenericStepS1d(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepS1d(struct rbdParallelData *data, unsigned int time);
 

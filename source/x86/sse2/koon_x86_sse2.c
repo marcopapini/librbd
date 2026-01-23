@@ -28,8 +28,191 @@
 #include "../../generic/combinations.h"
 
 
-static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
+static __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
 
+
+/**
+ * rbdKooNFillWorkerSse2
+ *
+ * Fill output Reliability with fixed value Worker function with x86 SSE2 instruction set
+ *
+ * Input:
+ *      struct rbdKooNFillData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function fills Reliability with fixed value for KooN Worker x86 SSE2 instruction set.
+ *  It is responsible to fill a given batch of output Reliabilities with a given fixed value
+ *
+ * Parameters:
+ *      data: Fill KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN FUNCTION_TARGET("sse2") void *rbdKooNFillWorkerSse2(struct rbdKooNFillData *data)
+{
+    unsigned int time;
+    __m128d m128d;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* Define vector (2d) with provided value */
+    m128d = _mm_set1_pd(data->value);
+
+    /* For each time instant (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Fill output Reliability array with fixed value */
+        _mm_storeu_pd(&data->output[time], m128d);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Fill output Reliability array with fixed value */
+        data->output[time++] = data->value;
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdKooNGenericWorkerSse2
+ *
+ * Generic KooN RBD Worker function with x86 SSE2 instruction set
+ *
+ * Input:
+ *      struct rbdKooNGenericData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic KooN RBD Worker exploiting x86 SSE2 instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
+ *
+ * Parameters:
+ *      data: Generic KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNGenericWorkerSse2(struct rbdKooNGenericData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionV2dSse2(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdKooNIdenticalWorkerSse2
+ *
+ * Identical KooN RBD Worker function with x86 SSE2 instruction set
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD Worker exploiting x86 SSE2 instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of an identical KooN RBD system
+ *  using the previously computed nCk values
+ *
+ * Parameters:
+ *      data: Identical KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNIdenticalWorkerSse2(struct rbdKooNIdenticalData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* If compute unreliability flag is not set... */
+    if (data->bComputeUnreliability == 0) {
+        /* Align, if possible, to vector size */
+        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of KooN RBD at current time instant from working components */
+                rbdKooNIdenticalSuccessStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+        }
+        /* For each time instant to be processed (blocks of 2 time instants)... */
+        while ((time + V2D) <= data->numTimes) {
+            /* Prefetch for next iteration */
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+            /* Compute reliability of KooN RBD at current time instant from working components */
+            rbdKooNIdenticalSuccessStepV2dSse2(data, time);
+            /* Increment current time instant */
+            time += (data->numCores * V2D);
+        }
+        /* Is 1 time instant remaining? */
+        if (time < data->numTimes) {
+            /* Compute reliability of KooN RBD at current time instant from working components */
+            rbdKooNIdenticalSuccessStepS1d(data, time);
+        }
+    }
+    else {
+        /* Align, if possible, to vector size */
+        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of KooN RBD at current time instant from failed components */
+                rbdKooNIdenticalFailStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+        }
+        /* For each time instant to be processed (blocks of 2 time instants)... */
+        while ((time + V2D) <= data->numTimes) {
+            /* Prefetch for next iteration */
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+            /* Compute reliability of KooN RBD at current time instant from failed components */
+            rbdKooNIdenticalFailStepV2dSse2(data, time);
+            /* Increment current time instant */
+            time += (data->numCores * V2D);
+        }
+        /* Is 1 time instant remaining? */
+        if (time < data->numTimes) {
+            /* Compute reliability of KooN RBD at current time instant from failed components */
+            rbdKooNIdenticalFailStepS1d(data, time);
+        }
+    }
+
+    return NULL;
+}
 
 /**
  * rbdKooNRecursionV2dSse2
@@ -48,7 +231,7 @@ static FUNCTION_TARGET("sse2") __m128d rbdKooNRecursiveStepV2dSse2(struct rbdKoo
  *  exploiting x86 SSE2 128bit
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Generic KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
@@ -82,7 +265,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNRecursionV2dSse2(struct rbdKooNGeneri
  *  taking into account the working components
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
@@ -147,7 +330,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV2dSse2(struct rb
  *  taking into account the failed components
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
@@ -214,7 +397,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKo
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Generic KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD

@@ -1,6 +1,6 @@
 /*
- *  Component: parallel_generic.c
- *  Parallel RBD management - Generic implementation
+ *  Component: parallel_noarch.c
+ *  Parallel RBD management - Platform-independent implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -20,7 +20,7 @@
  */
 
 
-#include "rbd_internal_generic.h"
+#include "../generic/rbd_internal_generic.h"
 
 #include "../parallel.h"
 
@@ -29,7 +29,7 @@
 /**
  * rbdParallelGenericWorker
  *
- * Parallel RBD Worker function
+ * Generic Parallel RBD Worker function
  *
  * Input:
  *      void *arg
@@ -42,9 +42,8 @@
  *  It is responsible to compute the reliabilities over a given batch of a Parallel RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Parallel RBD
+ *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Parallel RBD
  *
  * Return (void *):
  *  NULL
@@ -52,22 +51,11 @@
 HIDDEN void *rbdParallelGenericWorker(void *arg)
 {
     struct rbdParallelData *data;
-    unsigned int time;
 
     /* Retrieve Parallel RBD data */
     data = (struct rbdParallelData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
 
-    /* For each time instant to be processed... */
-    while (time < data->numTimes) {
-        /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepS1d(data, time);
-        /* Increment current time instant */
-        time += data->numCores;
-    }
-
-    return NULL;
+    return rbdParallelGenericWorkerNoarch(data);
 }
 
 /**
@@ -86,9 +74,8 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
  *  It is responsible to compute the reliabilities over a given batch of an identical Parallel RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Parallel RBD
+ *      arg: this parameter shall be the pointer to a Parallel RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Parallel RBD
  *
  * Return (void *):
  *  NULL
@@ -96,10 +83,78 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
 HIDDEN void *rbdParallelIdenticalWorker(void *arg)
 {
     struct rbdParallelData *data;
-    unsigned int time;
 
     /* Retrieve Parallel RBD data */
     data = (struct rbdParallelData *)arg;
+
+    return rbdParallelIdenticalWorkerNoarch(data);
+}
+#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
+
+/**
+ * rbdParallelGenericWorkerNoarch
+ *
+ * Generic Parallel RBD Worker function with platform-independent instruction sets
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Parallel RBD Worker with platform-independent instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a Parallel RBD system
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdParallelGenericWorkerNoarch(struct rbdParallelData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx;
+
+    /* For each time instant to be processed... */
+    while (time < data->numTimes) {
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelGenericStepS1d(data, time);
+        /* Increment current time instant */
+        time += data->numCores;
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdParallelIdenticalWorkerNoarch
+ *
+ * Identical Parallel RBD Worker function with platform-independent instruction sets
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Parallel RBD Worker with platform-independent instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Parallel RBD system
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdParallelIdenticalWorkerNoarch(struct rbdParallelData *data)
+{
+    unsigned int time;
+
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
@@ -113,7 +168,6 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
 
     return NULL;
 }
-#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
 
 /**
  * rbdParallelGenericStepS1d

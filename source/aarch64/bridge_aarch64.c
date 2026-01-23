@@ -28,11 +28,10 @@
 #include "../bridge.h"
 
 
-
 /**
  * rbdBridgeGenericWorker
  *
- * Bridge RBD Worker function with AArch64 NEON
+ * Generic Bridge RBD Worker function with AArch64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -41,13 +40,12 @@
  *      None
  *
  * Description:
- *  This function implements the generic Bridge RBD Worker exploiting AArch64 NEON instruction set.
- *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
+ *  This function implements the generic Bridge RBD Worker exploiting AArch64 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a generic Bridge RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Bridge RBD
+ *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Bridge RBD
  *
  * Return (void *):
  *  NULL
@@ -55,36 +53,17 @@
 HIDDEN void *rbdBridgeGenericWorker(void *arg)
 {
     struct rbdBridgeData *data;
-    unsigned int time;
 
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V2D;
 
-    /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV2dNeon(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V2D);
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
-    }
-
-    return NULL;
+    return rbdBridgeGenericWorkerNeon(data);
 }
 
 /**
  * rbdBridgeIdenticalWorker
  *
- * Identical Bridge RBD Worker function with AArch64 NEON
+ * Identical Bridge RBD Worker function with AArch64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -93,13 +72,12 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical Bridge RBD Worker exploiting AArch64 NEON instruction set.
+ *  This function implements the identical Bridge RBD Worker exploiting AArch64 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Bridge RBD
+ *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Bridge RBD
  *
  * Return (void *):
  *  NULL
@@ -107,39 +85,11 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
 HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
 {
     struct rbdBridgeData *data;
-    unsigned int time;
 
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V2D;
 
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-    }
-    /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV2dNeon(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V2D);
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
-    }
-
-    return NULL;
+    return rbdBridgeIdenticalWorkerNeon(data);
 }
 
 #endif /* defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0 */

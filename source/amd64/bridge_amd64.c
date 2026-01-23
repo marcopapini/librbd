@@ -25,22 +25,14 @@
 #if defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0
 #include "rbd_internal_amd64.h"
 #include "bridge_amd64.h"
-#include "../x86/bridge_x86.h"
 #include "../bridge.h"
-
-
-static void *rbdBridgeGenericWorkerAvx512f(struct rbdBridgeData *data);
-static void *rbdBridgeGenericWorkerFma3(struct rbdBridgeData *data);
-static void *rbdBridgeGenericWorkerAvx(struct rbdBridgeData *data);
-static void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data);
-static void *rbdBridgeIdenticalWorkerFma3(struct rbdBridgeData *data);
-static void *rbdBridgeIdenticalWorkerAvx(struct rbdBridgeData *data);
+#include "../x86/bridge_x86.h"
 
 
 /**
  * rbdBridgeGenericWorker
  *
- * Bridge RBD Worker function with amd64 platform-specific instruction sets
+ * Generic Bridge RBD Worker function with amd64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -53,9 +45,8 @@ static void *rbdBridgeIdenticalWorkerAvx(struct rbdBridgeData *data);
  *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Bridge RBD
+ *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Bridge RBD
  *
  * Return (void *):
  *  NULL
@@ -63,7 +54,6 @@ static void *rbdBridgeIdenticalWorkerAvx(struct rbdBridgeData *data);
 HIDDEN void *rbdBridgeGenericWorker(void *arg)
 {
     struct rbdBridgeData *data;
-    unsigned int time;
 
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
@@ -84,17 +74,7 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
         return rbdBridgeGenericWorkerSse2(data);
     }
 
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
-    /* For each time instant to be processed... */
-    while (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
-        /* Increment current time instant */
-        time += data->numTimes;
-    }
-
-    return NULL;
+    return rbdBridgeGenericWorkerNoarch(data);
 }
 
 /**
@@ -123,7 +103,6 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
 HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
 {
     struct rbdBridgeData *data;
-    unsigned int time;
 
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
@@ -144,406 +123,7 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
         return rbdBridgeIdenticalWorkerSse2(data);
     }
 
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
-    /* For each time instant to be processed... */
-    while (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
-        /* Increment current time instant */
-        time += data->numCores;
-    }
-
-    return NULL;
-}
-
-/**
- * rbdBridgeGenericWorkerAvx512f
- *
- * Bridge RBD Worker function with amd64 AVX512F instruction set
- *
- * Input:
- *      struct rbdBridgeData *data
- *
- * Output:
- *      None
- *
- * Description:
- *  This function implements the generic Bridge RBD Worker exploiting amd64 AVX512F instruction set.
- *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
- *
- * Parameters:
- *      data: the pointer to a Bridge RBD data
- *
- * Return (void *):
- *  NULL
- */
-static void *rbdBridgeGenericWorkerAvx512f(struct rbdBridgeData *data)
-{
-    unsigned int time;
-
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V8D;
-
-    /* For each time instant to be processed (blocks of 8 time instants)... */
-    while ((time + V8D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V8D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV8dAvx512f(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V8D);
-    }
-    /* Are (at least) 4 time instants remaining? */
-    if ((time + V4D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV4dFma3(data, time);
-        /* Increment current time instant */
-        time += V4D;
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV2dFma3(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
-    }
-
-    return NULL;
-}
-
-/**
- * rbdBridgeGenericWorkerFma3
- *
- * Bridge RBD Worker function with amd64 FMA3 instruction set
- *
- * Input:
- *      struct rbdBridgeData *data
- *
- * Output:
- *      None
- *
- * Description:
- *  This function implements the generic Bridge RBD Worker exploiting amd64 FMA3 instruction set.
- *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
- *
- * Parameters:
- *      data: the pointer to a Bridge RBD data
- *
- * Return (void *):
- *  NULL
- */
-static void *rbdBridgeGenericWorkerFma3(struct rbdBridgeData *data)
-{
-    unsigned int time;
-
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V4D;
-
-    /* For each time instant to be processed (blocks of 4 time instants)... */
-    while ((time + V4D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV4dFma3(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V4D);
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV2dFma3(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
-    }
-
-    return NULL;
-}
-
-/**
- * rbdBridgeGenericWorkerAvx
- *
- * Bridge RBD Worker function with amd64 AVX instruction set
- *
- * Input:
- *      struct rbdBridgeData *data
- *
- * Output:
- *      None
- *
- * Description:
- *  This function implements the generic Bridge RBD Worker exploiting amd64 AVX instruction set.
- *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
- *
- * Parameters:
- *      data: the pointer to a Bridge RBD data
- *
- * Return (void *):
- *  NULL
- */
-static void *rbdBridgeGenericWorkerAvx(struct rbdBridgeData *data)
-{
-    unsigned int time;
-
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V4D;
-
-    /* For each time instant to be processed (blocks of 4 time instants)... */
-    while ((time + V4D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV4dAvx(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V4D);
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV2dSse2(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
-    }
-
-    return NULL;
-}
-
-/**
- * rbdBridgeIdenticalWorkerAvx512f
- *
- * Identical Bridge RBD Worker function with amd64 AVX512F instruction set
- *
- * Input:
- *      struct rbdBridgeData *data
- *
- * Output:
- *      None
- *
- * Description:
- *  This function implements the identical Bridge RBD Worker exploiting amd64 AVX512F instruction set.
- *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
- *
- * Parameters:
- *      data: the pointer to a Bridge RBD data
- *
- * Return (void *):
- *  NULL
- */
-static void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data)
-{
-    unsigned int time;
-
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V8D;
-
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV2dFma3(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-        if (((long)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV4dFma3(data, time);
-            /* Increment current time instant */
-            time += V4D;
-        }
-    }
-    /* For each time instant to be processed (blocks of 8 time instants)... */
-    while ((time + V8D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V8D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV8dAvx512f(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V8D);
-    }
-    /* Are (at least) 4 time instants remaining? */
-    if ((time + V4D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV4dFma3(data, time);
-        /* Increment current time instant */
-        time += V4D;
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV2dFma3(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
-    }
-
-    return NULL;
-}
-
-/**
- * rbdBridgeIdenticalWorkerFma3
- *
- * Identical Bridge RBD Worker function with amd64 FMA3 instruction set
- *
- * Input:
- *      struct rbdBridgeData *data
- *
- * Output:
- *      None
- *
- * Description:
- *  This function implements the identical Bridge RBD Worker exploiting amd64 FMA3 instruction set.
- *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
- *
- * Parameters:
- *      data: the pointer to a Bridge RBD data
- *
- * Return (void *):
- *  NULL
- */
-static void *rbdBridgeIdenticalWorkerFma3(struct rbdBridgeData *data)
-{
-    unsigned int time;
-
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V4D;
-
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV2dFma3(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-    }
-    /* For each time instant to be processed (blocks of 4 time instants)... */
-    while ((time + V4D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V4D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV4dFma3(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V4D);
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV2dFma3(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
-    }
-
-    return NULL;
-}
-
-/**
- * rbdBridgeIdenticalWorkerAvx
- *
- * Identical Bridge RBD Worker function with amd64 AVX instruction set
- *
- * Input:
- *      struct rbdBridgeData *data
- *
- * Output:
- *      None
- *
- * Description:
- *  This function implements the identical Bridge RBD Worker exploiting amd64 AVX instruction set.
- *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
- *
- * Parameters:
- *      data: the pointer to a Bridge RBD data
- *
- * Return (void *):
- *  NULL
- */
-static void *rbdBridgeIdenticalWorkerAvx(struct rbdBridgeData *data)
-{
-    unsigned int time;
-
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V4D;
-
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV2dSse2(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-    }
-    /* For each time instant to be processed (blocks of 4 time instants)... */
-    while ((time + V4D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V4D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV4dAvx(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V4D);
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV2dSse2(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
-    }
-
-    return NULL;
+    return rbdBridgeIdenticalWorkerNoarch(data);
 }
 
 #endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */

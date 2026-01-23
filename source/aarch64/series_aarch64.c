@@ -31,7 +31,7 @@
 /**
  * rbdSeriesGenericWorker
  *
- * Generic Series RBD Worker function with AArch64 NEON
+ * Generic Series RBD Worker function with AArch64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -40,12 +40,12 @@
  *      None
  *
  * Description:
- *  This function implements the generic Series RBD Worker exploiting AArch64 NEON instruction set.
+ *  This function implements the generic Series RBD Worker exploiting AArch64 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of a generic Series RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Series RBD data. It is provided as a
- *                      void pointer to allow SMP computation of Series RBD
+ *      arg: this parameter shall be the pointer to a Series RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Series RBD
  *
  * Return (void *):
  *  NULL
@@ -53,36 +53,17 @@
 HIDDEN void *rbdSeriesGenericWorker(void *arg)
 {
     struct rbdSeriesData *data;
-    unsigned int time;
 
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V2D;
 
-    /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepV2dNeon(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V2D);
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepS1d(data, time);
-    }
-
-    return NULL;
+    return rbdSeriesGenericWorkerNeon(data);
 }
 
 /**
  * rbdSeriesIdenticalWorker
  *
- * Identical Series RBD Worker function with AArch64 NEON
+ * Identical Series RBD Worker function with AArch64 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -91,12 +72,12 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical Series RBD Worker exploiting AArch64 NEON instruction set.
+ *  This function implements the identical Series RBD Worker exploiting AArch64 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of an identical Series RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Series RBD data. It is provided as a
- *                      void pointer to allow SMP computation of Series RBD
+ *      arg: this parameter shall be the pointer to a Series RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Series RBD
  *
  * Return (void *):
  *  NULL
@@ -104,39 +85,11 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
 HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 {
     struct rbdSeriesData *data;
-    unsigned int time;
 
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V2D;
 
-    /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-    }
-    /* For each time instant to be processed (blocks of 2 time instants)... */
-    while ((time + V2D) <= data->numTimes) {
-        /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepV2dNeon(data, time);
-        /* Increment current time instant */
-        time += (data->numCores * V2D);
-    }
-    /* Is 1 time instant remaining? */
-    if (time < data->numTimes) {
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepS1d(data, time);
-    }
-
-    return NULL;
+    return rbdSeriesIdenticalWorkerNeon(data);
 }
 
 #endif /* defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0 */

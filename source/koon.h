@@ -70,6 +70,10 @@ void *rbdKooNGenericWorker(void *arg);
 void *rbdKooNIdenticalWorker(void *arg);
 
 /* Platform-generic functions */
+void *rbdKooNFillWorkerNoarch(struct rbdKooNFillData *data);
+void *rbdKooNGenericWorkerNoarch(struct rbdKooNGenericData *data);
+void *rbdKooNIdenticalWorkerNoarch(struct rbdKooNIdenticalData *data);
+
 void rbdKooNRecursionS1d(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);

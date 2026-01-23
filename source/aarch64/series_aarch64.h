@@ -29,6 +29,9 @@
 
 #if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for AArch64 NEON instruction set */
+void *rbdSeriesGenericWorkerNeon(struct rbdSeriesData *data);
+void *rbdSeriesIdenticalWorkerNeon(struct rbdSeriesData *data);
+
 void rbdSeriesGenericStepV2dNeon(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV2dNeon(struct rbdSeriesData *data, unsigned int time);
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */

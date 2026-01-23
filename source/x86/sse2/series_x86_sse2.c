@@ -28,6 +28,109 @@
 
 
 /**
+ * rbdSeriesGenericWorkerSse2
+ *
+ * Generic Series RBD Worker function with x86 SSE2 instruction set
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Series RBD Worker exploiting x86 SSE2 instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a generic Series RBD system
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdSeriesGenericWorkerSse2(struct rbdSeriesData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepV2dSse2(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdSeriesIdenticalWorker
+ *
+ * Identical Series RBD Worker function with x86 platform-specific instruction sets
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Series RBD Worker exploiting x86 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Series RBD system
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdSeriesIdenticalWorkerSse2(struct rbdSeriesData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* Align, if possible, to vector size */
+    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepS1d(data, time);
+            /* Increment current time instant */
+            time += S1D;
+        }
+    }
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesIdenticalStepV2dSse2(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesIdenticalStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
  * rbdSeriesGenericStepV2dSse2
  *
  * Generic Series RBD step function with x86 SSE2 128bit

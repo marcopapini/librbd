@@ -1,6 +1,6 @@
 /*
- *  Component: series_generic.c
- *  Series RBD management - Generic implementation
+ *  Component: series_noarch.c
+ *  Series RBD management - Platform-independent implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -20,7 +20,7 @@
  */
 
 
-#include "rbd_internal_generic.h"
+#include "../generic/rbd_internal_generic.h"
 
 #include "../series.h"
 
@@ -42,8 +42,8 @@
  *  It is responsible to compute the reliabilities over a given batch of a generic Series RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Series RBD data. It is provided as a
- *                      void pointer to allow SMP computation of Series RBD
+ *      arg: this parameter shall be the pointer to a Series RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Series RBD
  *
  * Return (void *):
  *  NULL
@@ -51,22 +51,11 @@
 HIDDEN void *rbdSeriesGenericWorker(void *arg)
 {
     struct rbdSeriesData *data;
-    unsigned int time;
 
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
 
-    /* For each time instant to be processed... */
-    while (time < data->numTimes) {
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepS1d(data, time);
-        /* Increment current time instant */
-        time += data->numCores;
-    }
-
-    return NULL;
+    return rbdSeriesGenericWorkerNoarch(data);
 }
 
 /**
@@ -85,8 +74,8 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
  *  It is responsible to compute the reliabilities over a given batch of an identical Series RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Series RBD data. It is provided as a
- *                      void pointer to allow SMP computation of Series RBD
+ *      arg: this parameter shall be the pointer to a Series RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Series RBD
  *
  * Return (void *):
  *  NULL
@@ -94,10 +83,78 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
 HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 {
     struct rbdSeriesData *data;
-    unsigned int time;
 
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
+
+    return rbdSeriesIdenticalWorkerNoarch(data);
+}
+#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
+
+/**
+ * rbdSeriesGenericWorkerNoarch
+ *
+ * Generic Series RBD Worker function with platform-independent instruction sets
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Series RBD Worker with platform-independent instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a generic Series RBD system
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdSeriesGenericWorkerNoarch(struct rbdSeriesData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx;
+
+    /* For each time instant to be processed... */
+    while (time < data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepS1d(data, time);
+        /* Increment current time instant */
+        time += data->numCores;
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdSeriesIdenticalWorkerNoarch
+ *
+ * Identical Series RBD Worker function with platform-independent instruction sets
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Series RBD Worker with platform-independent instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Series RBD system
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdSeriesIdenticalWorkerNoarch(struct rbdSeriesData *data)
+{
+    unsigned int time;
+
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
@@ -111,7 +168,6 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
 
     return NULL;
 }
-#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
 
 /**
  * rbdSeriesGenericStepS1d

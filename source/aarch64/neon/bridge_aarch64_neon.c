@@ -28,6 +28,109 @@
 
 
 /**
+ * rbdBridgeGenericWorker
+ *
+ * Generic Bridge RBD Worker function with AArch64 NEON instruction set
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Bridge RBD Worker exploiting AArch64 NEON instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdBridgeGenericWorkerNeon(struct rbdBridgeData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeGenericStepV2dNeon(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeGenericStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdBridgeIdenticalWorkerNeon
+ *
+ * Identical Bridge RBD Worker function with AArch64 NEON instruction set
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Bridge RBD Worker exploiting AArch64 NEON instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdBridgeIdenticalWorkerNeon(struct rbdBridgeData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* Align, if possible, to vector size */
+    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Bridge RBD at current time instant */
+            rbdBridgeIdenticalStepS1d(data, time);
+            /* Increment current time instant */
+            time += S1D;
+        }
+    }
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeIdenticalStepV2dNeon(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeIdenticalStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
  * rbdBridgeGenericStepV2dNeon
  *
  * Generic Bridge RBD step function with AArch64 NEON 128bit
@@ -48,7 +151,7 @@
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdBridgeGenericStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeGenericStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
 {
     float64x2_t v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
     float64x2_t v2dTmp1, v2dTmp2;
@@ -111,7 +214,7 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdBridgeGenericStepV2dNeon(struct r
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdBridgeIdenticalStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeIdenticalStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
 {
     float64x2_t v2dR, v2dU;
     float64x2_t v2dTmp;

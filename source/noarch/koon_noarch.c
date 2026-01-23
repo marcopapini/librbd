@@ -1,6 +1,6 @@
 /*
- *  Component: koon_generic.c
- *  KooN (K-out-of-N) RBD management - Generic implementation
+ *  Component: koon_noarch.c
+ *  KooN (K-out-of-N) RBD management - Platform-independent implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -20,10 +20,10 @@
  */
 
 
-#include "rbd_internal_generic.h"
+#include "../generic/rbd_internal_generic.h"
 
 #include "../koon.h"
-#include "combinations.h"
+#include "../generic/combinations.h"
 
 #include <stdlib.h>
 #include <limits.h>
@@ -49,9 +49,8 @@ static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned 
  *  It is responsible to fill a given batch of output Reliabilities with a given fixed value
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a fill KooN data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation
+ *      arg: this parameter shall be the pointer to a fill KooN data. It is provided as a void *
+ *                      to be compliant with the SMP of the Fill KooN RBD
  *
  * Return (void *):
  *  NULL
@@ -59,21 +58,11 @@ static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned 
 HIDDEN void *rbdKooNFillWorker(void *arg)
 {
     struct rbdKooNFillData *data;
-    unsigned int time;
 
     /* Retrieve fill Output data structure */
     data = (struct rbdKooNFillData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
 
-    /* For each time instant... */
-    while (time < data->numTimes) {
-        /* Fill output Reliability array with fixed value */
-        data->output[time] = data->value;
-        time += data->numCores;
-    }
-
-    return NULL;
+    return rbdKooNFillWorkerNoarch(data);
 }
 
 /**
@@ -92,9 +81,8 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a generic KooN RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of KooN RBD
+ *      arg: this parameter shall be the pointer to a generic KooN RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Generic KooN RBD
  *
  * Return (void *):
  *  NULL
@@ -102,22 +90,11 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
 HIDDEN void *rbdKooNGenericWorker(void *arg)
 {
     struct rbdKooNGenericData *data;
-    unsigned int time;
 
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNGenericData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
 
-    /* For each time instant to be processed... */
-    while (time < data->numTimes) {
-        /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionS1d(data, time);
-        /* Increment current time instant */
-        time += data->numCores;
-    }
-
-    return NULL;
+    return rbdKooNGenericWorkerNoarch(data);
 }
 
 /**
@@ -133,13 +110,11 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
  *
  * Description:
  *  This function implements the identical KooN RBD Worker.
- *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system by using
- *  previously computed nCk values
+ *  It is responsible to compute the reliabilities over a given batch of an identical KooN RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a identical KooN RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of KooN RBD
+ *      arg: this parameter shall be the pointer to an identical KooN RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Identical KooN RBD
  *
  * Return (void *):
  *  NULL
@@ -147,10 +122,117 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
 HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 {
     struct rbdKooNIdenticalData *data;
-    unsigned int time;
 
     /* Retrieve identical KooN RBD data */
     data = (struct rbdKooNIdenticalData *)arg;
+
+    return rbdKooNIdenticalWorkerNoarch(data);
+}
+#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
+
+/**
+ * rbdKooNFillWorkerNoarch
+ *
+ * Fill output Reliability with fixed value Worker function with platform-independent instruction sets
+ *
+ * Input:
+ *      struct rbdKooNFillData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function fills Reliability with fixed value for KooN Worker with platform-independent instruction sets.
+ *  It is responsible to fill a given batch of output Reliabilities with a given fixed value
+ *
+ * Parameters:
+ *      data: Fill KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNFillWorkerNoarch(struct rbdKooNFillData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx;
+
+    /* For each time instant... */
+    while (time < data->numTimes) {
+        /* Fill output Reliability array with fixed value */
+        data->output[time] = data->value;
+        time += data->numCores;
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdKooNGenericWorkerNoarch
+ *
+ * Generic KooN RBD Worker function with platform-independent instruction sets
+ *
+ * Input:
+ *      struct rbdKooNGenericData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic KooN RBD Worker with platform-independent instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a generic KooN RBD system
+ *
+ * Parameters:
+ *      data: Generic KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNGenericWorkerNoarch(struct rbdKooNGenericData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx;
+
+    /* For each time instant to be processed... */
+    while (time < data->numTimes) {
+        /* Recursively compute reliability of KooN RBD at current time instant */
+        rbdKooNRecursionS1d(data, time);
+        /* Increment current time instant */
+        time += data->numCores;
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdKooNIdenticalWorkerNoarch
+ *
+ * Identical KooN RBD Worker function with platform-independent instruction sets
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD Worker with platform-independent instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of an identical KooN RBD system
+ *  using the previously computed nCk values
+ *
+ * Parameters:
+ *      data: Identical KooN RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNIdenticalWorkerNoarch(struct rbdKooNIdenticalData *data)
+{
+    unsigned int time;
+
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
@@ -176,7 +258,6 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
 
     return NULL;
 }
-#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
 
 /**
  * rbdKooNRecursionS1d

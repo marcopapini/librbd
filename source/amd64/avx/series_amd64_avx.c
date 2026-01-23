@@ -25,7 +25,131 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../series_amd64.h"
+#include "../../x86/series_x86.h"
 
+
+/**
+ * rbdSeriesGenericWorkerAvx
+ *
+ * Generic Series RBD Worker function with amd64 AVX instruction set
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Series RBD Worker exploiting amd64 AVX instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a generic Series RBD system
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdSeriesGenericWorkerAvx(struct rbdSeriesData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V4D;
+
+    /* For each time instant to be processed (blocks of 4 time instants)... */
+    while ((time + V4D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepV4dAvx(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V4D);
+    }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepV2dSse2(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdSeriesIdenticalWorkerAvx
+ *
+ * Identical Series RBD Worker function with amd64 AVX instruction set
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Series RBD Worker exploiting amd64 AVX instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Series RBD system
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdSeriesIdenticalWorkerAvx(struct rbdSeriesData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V4D;
+
+    /* Align, if possible, to vector size */
+    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepS1d(data, time);
+            /* Increment current time instant */
+            time += S1D;
+        }
+        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepV2dSse2(data, time);
+            /* Increment current time instant */
+            time += V2D;
+        }
+    }
+    /* For each time instant to be processed (blocks of 4 time instants)... */
+    while ((time + V4D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V4D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesIdenticalStepV4dAvx(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V4D);
+    }
+    /* Are (at least) 2 time instants remaining? */
+    if ((time + V2D) <= data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesIdenticalStepV2dSse2(data, time);
+        /* Increment current time instant */
+        time += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesIdenticalStepS1d(data, time);
+    }
+
+    return NULL;
+}
 
 /**
  * rbdSeriesGenericStepV4dAvx

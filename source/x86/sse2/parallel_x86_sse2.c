@@ -28,6 +28,109 @@
 
 
 /**
+ * rbdParallelGenericWorkerSse2
+ *
+ * Generic Parallel RBD Worker function with x86 SSE2 instruction set
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Parallel RBD Worker exploiting x86 SSE2 instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a Parallel RBD system
+ *
+ * Parameters:
+ *      data: the pointer to a Parallel RBD data
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdParallelGenericWorkerSse2(struct rbdParallelData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelGenericStepV2dSse2(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelGenericStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdParallelIdenticalWorkerSse2
+ *
+ * Identical Parallel RBD Worker function with x86 SSE2 instruction set
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Parallel RBD Worker exploiting x86 SSE2 instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Parallel RBD system
+ *
+ * Parameters:
+ *      data: the pointer to a Parallel RBD data
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdParallelIdenticalWorkerSse2(struct rbdParallelData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* Align, if possible, to vector size */
+    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepS1d(data, time);
+            /* Increment current time instant */
+            time += S1D;
+        }
+    }
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelIdenticalStepV2dSse2(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelIdenticalStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
  * rbdParallelGenericStepV2dSse2
  *
  * Generic Parallel RBD step function with x86 SSE2 128bit

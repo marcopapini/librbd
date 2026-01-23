@@ -1,6 +1,6 @@
 /*
- *  Component: parallel_aarch64.h
- *  Parallel RBD management - AArch64 platform-specific implementation
+ *  Component: rbd_internal_noarch.h
+ *  Internal APIs used by RBD library - Platform-independent implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -19,22 +19,40 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef PARALLEL_AARCH64_H_
-#define PARALLEL_AARCH64_H_
 
+#include "rbd_internal_noarch.h"
 
 #include "../generic/rbd_internal_generic.h"
-#include "../parallel.h"
 
 
-#if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
-/* Platform-specific functions for AArch64 NEON instruction set */
-void *rbdParallelGenericWorkerNeon(struct rbdParallelData *data);
-void *rbdParallelIdenticalWorkerNeon(struct rbdParallelData *data);
-
-void rbdParallelGenericStepV2dNeon(struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int time);
-#endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
-
-
-#endif /* PARALLEL_AARCH64_H_ */
+/**
+ * capReliabilityS1d
+ *
+ * Cap reliability to accepted bounds [0.0, 1.0]
+ *
+ * Input:
+ *      double s1dR
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function caps the provided reliability (scalar value, double-precision FP)
+ *      to the accepted bounds
+ *
+ * Parameters:
+ *      s1dR: Reliability
+ *
+ * Return (double):
+ *  Reliability within accepted bounds
+ */
+HIDDEN double capReliabilityS1d(double s1dR) {
+    /* Cap computed reliability to accepted bounds [0, 1] */
+    if ((isnan(s1dR) != 0) || (s1dR < 0.0)) {
+        return 0.0;
+    }
+    else if (s1dR > 1.0) {
+        return 1.0;
+    }
+    return s1dR;
+}

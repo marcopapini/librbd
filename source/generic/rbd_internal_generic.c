@@ -24,38 +24,6 @@
 
 
 /**
- * capReliabilityS1d
- *
- * Cap reliability to accepted bounds [0.0, 1.0]
- *
- * Input:
- *      double s1dR
- *
- * Output:
- *      None
- *
- * Description:
- *  This function caps the provided reliability (scalar value, double-precision FP)
- *      to the accepted bounds
- *
- * Parameters:
- *      s1dR: Reliability
- *
- * Return (double):
- *  Reliability within accepted bounds
- */
-HIDDEN double capReliabilityS1d(double s1dR) {
-    /* Cap computed reliability to accepted bounds [0, 1] */
-    if ((isnan(s1dR) != 0) || (s1dR < 0.0)) {
-        return 0.0;
-    }
-    else if (s1dR > 1.0) {
-        return 1.0;
-    }
-    return s1dR;
-}
-
-/**
  * prefetchRead
  *
  * Prefetch reliability for read

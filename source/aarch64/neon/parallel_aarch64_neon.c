@@ -28,6 +28,109 @@
 
 
 /**
+ * rbdParallelGenericWorkerNeon
+ *
+ * Generic Parallel RBD Worker function with AArch64 NEON instruction set
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Parallel RBD Worker exploiting AArch64 NEON instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a Parallel RBD system
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdParallelGenericWorkerNeon(struct rbdParallelData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelGenericStepV2dNeon(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelGenericStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdParallelIdenticalWorkerNeon
+ *
+ * Identical Parallel RBD Worker function with AArch64 NEON instruction set
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Parallel RBD Worker exploiting AArch64 NEON instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Parallel RBD system
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdParallelIdenticalWorkerNeon(struct rbdParallelData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* Align, if possible, to vector size */
+    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Parallel RBD at current time instant */
+            rbdParallelIdenticalStepS1d(data, time);
+            /* Increment current time instant */
+            time += S1D;
+        }
+    }
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelIdenticalStepV2dNeon(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Parallel RBD at current time instant */
+        rbdParallelIdenticalStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
  * rbdParallelGenericStepV2dNeon
  *
  * Generic Parallel RBD step function with AArch64 NEON 128bit
@@ -48,7 +151,7 @@
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdParallelGenericStepV2dNeon(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+simd") void rbdParallelGenericStepV2dNeon(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dTmp;
@@ -88,7 +191,7 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdParallelGenericStepV2dNeon(struct
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+simd") void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dU;

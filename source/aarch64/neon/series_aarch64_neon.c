@@ -28,6 +28,109 @@
 
 
 /**
+ * rbdSeriesGenericWorkerNeon
+ *
+ * Generic Series RBD Worker function with AArch64 NEON instruction set
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Series RBD Worker exploiting AArch64 NEON instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a generic Series RBD system
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdSeriesGenericWorkerNeon(struct rbdSeriesData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepV2dNeon(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesGenericStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdSeriesIdenticalWorkerNeon
+ *
+ * Identical Series RBD Worker function with AArch64 NEON instruction set
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Series RBD Worker exploiting AArch64 NEON instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Series RBD system
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdSeriesIdenticalWorkerNeon(struct rbdSeriesData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * V2D;
+
+    /* Align, if possible, to vector size */
+    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute reliability of Series RBD at current time instant */
+            rbdSeriesIdenticalStepS1d(data, time);
+            /* Increment current time instant */
+            time += S1D;
+        }
+    }
+    /* For each time instant to be processed (blocks of 2 time instants)... */
+    while ((time + V2D) <= data->numTimes) {
+        /* Prefetch for next iteration */
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesIdenticalStepV2dNeon(data, time);
+        /* Increment current time instant */
+        time += (data->numCores * V2D);
+    }
+    /* Is 1 time instant remaining? */
+    if (time < data->numTimes) {
+        /* Compute reliability of Series RBD at current time instant */
+        rbdSeriesIdenticalStepS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
  * rbdSeriesGenericStepV2dNeon
  *
  * Generic Series RBD step function with AArch64 NEON 128bit
@@ -48,7 +151,7 @@
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdSeriesGenericStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesGenericStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dTmp;
@@ -86,7 +189,7 @@ HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdSeriesGenericStepV2dNeon(struct r
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("arch=armv8-a") void rbdSeriesIdenticalStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesIdenticalStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dTmp;

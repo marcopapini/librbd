@@ -1,6 +1,6 @@
 /*
- *  Component: bridge_generic.c
- *  Bridge RBD management - Generic implementation
+ *  Component: bridge_noarch.c
+ *  Bridge RBD management - Platform-independent implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -20,7 +20,7 @@
  */
 
 
-#include "rbd_internal_generic.h"
+#include "../generic/rbd_internal_generic.h"
 
 #include "../bridge.h"
 
@@ -29,7 +29,7 @@
 /**
  * rbdBridgeGenericWorker
  *
- * Bridge RBD Worker function
+ * Generic Bridge RBD Worker function
  *
  * Input:
  *      void *arg
@@ -42,9 +42,8 @@
  *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Bridge RBD
+ *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Bridge RBD
  *
  * Return (void *):
  *  NULL
@@ -52,22 +51,11 @@
 HIDDEN void *rbdBridgeGenericWorker(void *arg)
 {
     struct rbdBridgeData *data;
-    unsigned int time;
 
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
 
-    /* For each time instant to be processed... */
-    while (time < data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
-        /* Increment current time instant */
-        time += data->numCores;
-    }
-
-    return NULL;
+    return rbdBridgeGenericWorkerNoarch(data);
 }
 
 /**
@@ -86,9 +74,8 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
  *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of Bridge RBD
+ *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a void *
+ *                      to be compliant with the SMP computation of the Bridge RBD
  *
  * Return (void *):
  *  NULL
@@ -96,10 +83,78 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
 HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
 {
     struct rbdBridgeData *data;
-    unsigned int time;
 
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
+
+    return rbdBridgeIdenticalWorkerNoarch(data);
+}
+#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
+
+/**
+ * rbdBridgeGenericWorkerNoarch
+ *
+ * Generic Bridge RBD Worker function with platform-independent instruction sets
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Bridge RBD Worker with platform-independent instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdBridgeGenericWorkerNoarch(struct rbdBridgeData *data)
+{
+    unsigned int time;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx;
+
+    /* For each time instant to be processed... */
+    while (time < data->numTimes) {
+        /* Compute reliability of Bridge RBD at current time instant */
+        rbdBridgeGenericStepS1d(data, time);
+        /* Increment current time instant */
+        time += data->numCores;
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdBridgeIdenticalWorkerNoarch
+ *
+ * Identical Bridge RBD Worker function with platform-independent instruction sets
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Bridge RBD Worker with platform-independent instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdBridgeIdenticalWorkerNoarch(struct rbdBridgeData *data)
+{
+    unsigned int time;
+
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx;
 
@@ -113,7 +168,6 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
 
     return NULL;
 }
-#endif /* defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0 */
 
 /**
  * rbdBridgeGenericStepS1d

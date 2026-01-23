@@ -45,6 +45,9 @@ void *rbdSeriesGenericWorker(void *arg);
 void *rbdSeriesIdenticalWorker(void *arg);
 
 /* Platform-generic functions */
+void *rbdSeriesGenericWorkerNoarch(struct rbdSeriesData *data);
+void *rbdSeriesIdenticalWorkerNoarch(struct rbdSeriesData *data);
+
 void rbdSeriesGenericStepS1d(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepS1d(struct rbdSeriesData *data, unsigned int time);
 

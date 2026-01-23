@@ -16,6 +16,7 @@ RM := rm -rf
 -include source/amd64/fma3/subdir.mk
 -include source/compiler/subdir.mk
 -include source/generic/subdir.mk
+-include source/noarch/subdir.mk
 -include source/os/subdir.mk
 -include source/x86/subdir.mk
 -include source/x86/sse2/subdir.mk
