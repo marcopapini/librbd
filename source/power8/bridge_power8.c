@@ -1,6 +1,6 @@
 /*
- *  Component: bridge_aarch64.c
- *  Bridge RBD management - AArch64 platform-specific implementation
+ *  Component: bridge_power8.c
+ *  Bridge RBD management - POWER8 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -22,16 +22,16 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0
-#include "rbd_internal_aarch64.h"
-#include "bridge_aarch64.h"
+#if defined(ARCH_POWER8) && CPU_ENABLE_SIMD != 0
+#include "rbd_internal_power8.h"
+#include "bridge_power8.h"
 #include "../bridge.h"
 
 
 /**
  * rbdBridgeGenericWorker
  *
- * Generic Bridge RBD Worker function with AArch64 platform-specific instruction sets
+ * Bridge RBD Worker function with POWER8 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -40,8 +40,8 @@
  *      None
  *
  * Description:
- *  This function implements the generic Bridge RBD Worker exploiting AArch64 platform-specific instruction sets.
- *  It is responsible to compute the reliabilities over a given batch of a generic Bridge RBD system
+ *  This function implements the generic Bridge RBD Worker exploiting POWER8 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a Bridge RBD system
  *
  * Parameters:
  *      arg: this parameter shall be the pointer to a Bridge RBD data. It is provided as a void *
@@ -57,17 +57,13 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
 
-    if (aarch64SveSupported()) {
-        return rbdBridgeGenericWorkerSve(data);
-    }
-
-    return rbdBridgeGenericWorkerNeon(data);
+    return rbdBridgeGenericWorkerVsx(data);
 }
 
 /**
  * rbdBridgeIdenticalWorker
  *
- * Identical Bridge RBD Worker function with AArch64 platform-specific instruction sets
+ * Identical Bridge RBD Worker function with POWER8 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -76,7 +72,7 @@ HIDDEN void *rbdBridgeGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical Bridge RBD Worker exploiting AArch64 platform-specific instruction sets.
+ *  This function implements the identical Bridge RBD Worker exploiting POWER8 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of an identical Bridge RBD system
  *
  * Parameters:
@@ -93,11 +89,7 @@ HIDDEN void *rbdBridgeIdenticalWorker(void *arg)
     /* Retrieve Bridge RBD data */
     data = (struct rbdBridgeData *)arg;
 
-    if (aarch64SveSupported()) {
-        return rbdBridgeIdenticalWorkerSve(data);
-    }
-
-    return rbdBridgeIdenticalWorkerNeon(data);
+    return rbdBridgeIdenticalWorkerVsx(data);
 }
 
-#endif /* defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0 */
+#endif /* defined(ARCH_POWER8) && CPU_ENABLE_SIMD != 0 */

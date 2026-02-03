@@ -36,6 +36,15 @@ void *rbdKooNIdenticalWorkerNeon(struct rbdKooNIdenticalData *data);
 void rbdKooNRecursionV2dNeon(struct rbdKooNGenericData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
+
+/* Platform-specific functions for AArch64 SVE instruction set */
+void *rbdKooNFillWorkerSve(struct rbdKooNFillData *data);
+void *rbdKooNGenericWorkerSve(struct rbdKooNGenericData *data);
+void *rbdKooNIdenticalWorkerSve(struct rbdKooNIdenticalData *data);
+
+void rbdKooNRecursionVNdSve(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNIdenticalSuccessStepVNdSve(struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNIdenticalFailStepVNdSve(struct rbdKooNIdenticalData *data, unsigned int time);
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 

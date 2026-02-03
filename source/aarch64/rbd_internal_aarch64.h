@@ -32,19 +32,26 @@
 #include <string.h>
 
 
+#define SVE_MAX_VECTOR_SIZE     256         /* AArch64 SVE supports vectors of 2048 bits (256 bytes) */
+
+
 struct rbdKooNRecursionData
 {
     unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
-    unsigned char buff[(UCHAR_MAX + 1) * sizeof(float64x2_t)];  /* Temporary buffer */
+    unsigned char buff[(UCHAR_MAX + 1) * SVE_MAX_VECTOR_SIZE];  /* Temporary buffer */
     double      *s1dR;                      /* Pointer to array of reliabilities - Scalar 1 double */
     float64x2_t *v2dR;                      /* Pointer to array of reliabilities - Vector 2 double */
 };
 
 
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dZeros;
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dOnes;
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dTwos;
-VARIABLE_TARGET("arch=armv8-a") extern const float64x2_t v2dMinusTwos;
+VARIABLE_TARGET("+simd") extern const float64x2_t v2dZeros;
+VARIABLE_TARGET("+simd") extern const float64x2_t v2dOnes;
+VARIABLE_TARGET("+simd") extern const float64x2_t v2dTwos;
+VARIABLE_TARGET("+simd") extern const float64x2_t v2dMinusTwos;
+
+
+float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);
+svfloat64_t capReliabilityVNdSve(svbool_t pg, svfloat64_t vNdR);
 
 
 /**
@@ -73,7 +80,50 @@ static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionDa
 }
 
 
-float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);
+/**
+ * aarch64SveSupported
+ *
+ * SVE instruction set supported by the AArch64 system
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function retrieves the availability of SVE instruction set
+ *
+ * Parameters:
+ *      None
+ *
+ * Return (unsigned int):
+ *  1 if SVE instruction set is available, 0 otherwise
+ */
+unsigned int aarch64SveSupported(void);
+
+/**
+ * retrieveAarch64CpuInfo
+ *
+ * Retrieve AArch64-specific CPU info (supported instruction sets)
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function retrieves the following information:
+ *  - If SVE instruction set is supported
+ *
+ * Parameters:
+ *      None
+ *
+ * Return:
+ *      None
+ */
+void retrieveAarch64CpuInfo(void);
 
 
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */

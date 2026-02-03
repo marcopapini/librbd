@@ -1,6 +1,6 @@
 /*
- *  Component: parallel_aarch64.c
- *  Parallel RBD management - AArch64 platform-specific implementation
+ *  Component: parallel_power8.c
+ *  Parallel RBD management - POWER8 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -22,16 +22,16 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0
-#include "rbd_internal_aarch64.h"
-#include "parallel_aarch64.h"
+#if defined(ARCH_POWER8) && CPU_ENABLE_SIMD != 0
+#include "rbd_internal_power8.h"
+#include "parallel_power8.h"
 #include "../parallel.h"
 
 
 /**
  * rbdParallelGenericWorker
  *
- * Generic Parallel RBD Worker function with AArch64 platform-specific instruction sets
+ * Parallel RBD Worker function with POWER8 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -40,7 +40,7 @@
  *      None
  *
  * Description:
- *  This function implements the generic Parallel RBD Worker exploiting AArch64 platform-specific instruction sets.
+ *  This function implements the generic Parallel RBD Worker exploiting POWER8 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of a Parallel RBD system
  *
  * Parameters:
@@ -57,17 +57,13 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
     /* Retrieve Parallel RBD data */
     data = (struct rbdParallelData *)arg;
 
-    if (aarch64SveSupported()) {
-        return rbdParallelGenericWorkerSve(data);
-    }
-
-    return rbdParallelGenericWorkerNeon(data);
+    return rbdParallelGenericWorkerVsx(data);
 }
 
 /**
  * rbdParallelIdenticalWorker
  *
- * Identical Parallel RBD Worker function with AArch64 platform-specific instruction sets
+ * Identical Parallel RBD Worker function with POWER8 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -76,7 +72,7 @@ HIDDEN void *rbdParallelGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical Parallel RBD Worker exploiting AArch64 platform-specific instruction sets.
+ *  This function implements the identical Parallel RBD Worker exploiting POWER8 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of an identical Parallel RBD system
  *
  * Parameters:
@@ -93,11 +89,7 @@ HIDDEN void *rbdParallelIdenticalWorker(void *arg)
     /* Retrieve Parallel RBD data */
     data = (struct rbdParallelData *)arg;
 
-    if (aarch64SveSupported()) {
-        return rbdParallelIdenticalWorkerSve(data);
-    }
-
-    return rbdParallelIdenticalWorkerNeon(data);
+    return rbdParallelIdenticalWorkerVsx(data);
 }
 
-#endif /* defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0 */
+#endif /* defined(POWER8) && CPU_ENABLE_SIMD != 0 */

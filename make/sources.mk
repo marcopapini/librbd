@@ -13,6 +13,7 @@ SUBDIRS := \
 source \
 source/aarch64 \
 source/aarch64/neon \
+source/aarch64/sve \
 source/amd64/avx \
 source/amd64/avx512f \
 source/amd64 \
@@ -21,6 +22,8 @@ source/compiler \
 source/generic \
 source/noarch \
 source/os \
+source/power8 \
+source/power8/vsx \
 source/x86 \
 source/x86/sse2 \
 

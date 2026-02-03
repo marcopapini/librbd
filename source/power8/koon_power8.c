@@ -1,6 +1,6 @@
 /*
- *  Component: koon_aarch64.c
- *  KooN (K-out-of-N) RBD management - AArch64 platform-specific implementation
+ *  Component: koon_power8.c
+ *  KooN (K-out-of-N) RBD management - POWER8 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -22,17 +22,16 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0
-#include "rbd_internal_aarch64.h"
-#include "koon_aarch64.h"
+#if defined(ARCH_POWER8) && CPU_ENABLE_SIMD != 0
+#include "rbd_internal_power8.h"
+#include "koon_power8.h"
 #include "../koon.h"
-
 
 
 /**
  * rbdKooNFillWorker
  *
- * Fill output Reliability with fixed value Worker function with AArch64 platform-specific instruction sets
+ * Fill output Reliability with fixed value Worker function with POWER8 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -41,7 +40,7 @@
  *      None
  *
  * Description:
- *  This function fills Reliability with fixed value for KooN Worker AArch64 platform-specific instruction sets.
+ *  This function fills Reliability with fixed value for KooN Worker POWER8 platform-specific instruction sets.
  *  It is responsible to fill a given batch of output Reliabilities with a given fixed value
  *
  * Parameters:
@@ -58,17 +57,13 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNFillData *)arg;
 
-    if (aarch64SveSupported()) {
-        return rbdKooNFillWorkerSve(data);
-    }
-
-    return rbdKooNFillWorkerNeon(data);
+    return rbdKooNFillWorkerVsx(data);
 }
 
 /**
  * rbdKooNGenericWorker
  *
- * Generic KooN RBD Worker function with AArch64 platform-specific instruction sets
+ * Generic KooN RBD Worker function with POWER8 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -77,8 +72,8 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker AArch64 platform-specific instruction sets.
- *  It is responsible to compute the reliabilities over a given batch of a generic KooN RBD system
+ *  This function implements the generic KooN RBD Worker exploiting POWER8 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
  *      arg: this parameter shall be the pointer to a generic KooN RBD data. It is provided as a void *
@@ -94,17 +89,13 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNGenericData *)arg;
 
-    if (aarch64SveSupported()) {
-        return rbdKooNGenericWorkerSve(data);
-    }
-
-    return rbdKooNGenericWorkerNeon(data);
+    return rbdKooNGenericWorkerVsx(data);
 }
 
 /**
  * rbdKooNIdenticalWorker
  *
- * Identical KooN RBD Worker function with AArch64 platform-specific instruction sets
+ * Identical KooN RBD Worker function with POWER8 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -113,7 +104,7 @@ HIDDEN void *rbdKooNGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD Worker AArch64 platform-specific instruction sets.
+ *  This function implements the identical KooN RBD Worker exploiting POWER8 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of an identical KooN RBD system
  *
  * Parameters:
@@ -130,11 +121,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
     /* Retrieve generic KooN RBD data */
     data = (struct rbdKooNIdenticalData *)arg;
 
-    if (aarch64SveSupported()) {
-        return rbdKooNIdenticalWorkerSve(data);
-    }
-
-    return rbdKooNIdenticalWorkerNeon(data);
+    return rbdKooNIdenticalWorkerVsx(data);
 }
 
-#endif /* defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0 */
+#endif /* defined(ARCH_POWER8) && CPU_ENABLE_SIMD != 0 */

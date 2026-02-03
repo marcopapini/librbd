@@ -34,6 +34,13 @@ void *rbdSeriesIdenticalWorkerNeon(struct rbdSeriesData *data);
 
 void rbdSeriesGenericStepV2dNeon(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV2dNeon(struct rbdSeriesData *data, unsigned int time);
+
+/* Platform-specific functions for AArch64 SVE instruction set */
+void *rbdSeriesGenericWorkerSve(struct rbdSeriesData *data);
+void *rbdSeriesIdenticalWorkerSve(struct rbdSeriesData *data);
+
+void rbdSeriesGenericStepVNdSve(struct rbdSeriesData *data, unsigned int time);
+void rbdSeriesIdenticalStepVNdSve(struct rbdSeriesData *data, unsigned int time);
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 

@@ -36,6 +36,12 @@
 #elif defined(__aarch64__) || defined(_M_ARM64)
 /* ARM aarch64 architecture */
 #define ARCH_AARCH64
+#elif defined(_ARCH_PWR8)  || defined(__POWER8_VECTOR__)
+/* IBM POWER8 architecture */
+#define ARCH_POWER8
+#elif defined(__riscv)     && (__riscv_xlen == 64)
+/* RISC-V 64bit architecture */
+#define ARCH_RISCV64
 #else
 /* Unknown architecture */
 #define ARCH_UNKNOWN

@@ -32,6 +32,9 @@
 #elif   defined(_MSC_VER)
 /* Visual Studio compiler */
 #define COMPILER_VS
+#elif   defined(__ibmxl__)
+/* IBM XL C compiler */
+#define COMPILER_XLC
 #else
 #error "Unknown/unsupported compiler"
 #endif
@@ -42,6 +45,8 @@
 #include "gcc.h"
 #elif   defined(COMPILER_VS)
 #include "vs.h"
+#elif   defined(COMPILER_XLC)
+#include "xlc.h"
 #endif
 
 typedef void* (*fpWorker)(void*);

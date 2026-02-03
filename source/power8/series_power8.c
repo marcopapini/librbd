@@ -1,6 +1,6 @@
 /*
- *  Component: series_aarch64.c
- *  Series RBD management - AArch64 platform-specific implementation
+ *  Component: series_power8.c
+ *  Series RBD management - POWER8 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
  *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
@@ -22,16 +22,16 @@
 
 #include "../generic/rbd_internal_generic.h"
 
-#if defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0
-#include "rbd_internal_aarch64.h"
-#include "series_aarch64.h"
+#if defined(ARCH_POWER8) && CPU_ENABLE_SIMD != 0
+#include "rbd_internal_power8.h"
+#include "series_power8.h"
 #include "../series.h"
 
 
 /**
  * rbdSeriesGenericWorker
  *
- * Generic Series RBD Worker function with AArch64 platform-specific instruction sets
+ * Generic Series RBD Worker function with POWER8 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -40,7 +40,7 @@
  *      None
  *
  * Description:
- *  This function implements the generic Series RBD Worker exploiting AArch64 platform-specific instruction sets.
+ *  This function implements the generic Series RBD Worker exploiting POWER8 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of a generic Series RBD system
  *
  * Parameters:
@@ -57,17 +57,13 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
 
-    if (aarch64SveSupported()) {
-        return rbdSeriesGenericWorkerSve(data);
-    }
-
-    return rbdSeriesGenericWorkerNeon(data);
+    return rbdSeriesGenericWorkerVsx(data);
 }
 
 /**
  * rbdSeriesIdenticalWorker
  *
- * Identical Series RBD Worker function with AArch64 platform-specific instruction sets
+ * Identical Series RBD Worker function with POWER8 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -76,7 +72,7 @@ HIDDEN void *rbdSeriesGenericWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the identical Series RBD Worker exploiting AArch64 platform-specific instruction sets.
+ *  This function implements the identical Series RBD Worker exploiting POWER8 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of an identical Series RBD system
  *
  * Parameters:
@@ -93,11 +89,7 @@ HIDDEN void *rbdSeriesIdenticalWorker(void *arg)
     /* Retrieve Series RBD data */
     data = (struct rbdSeriesData *)arg;
 
-    if (aarch64SveSupported()) {
-        return rbdSeriesIdenticalWorkerSve(data);
-    }
-
-    return rbdSeriesIdenticalWorkerNeon(data);
+    return rbdSeriesIdenticalWorkerVsx(data);
 }
 
-#endif /* defined(ARCH_AARCH64) && CPU_ENABLE_SIMD != 0 */
+#endif /* defined(ARCH_POWER8) && CPU_ENABLE_SIMD != 0 */

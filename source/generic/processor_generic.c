@@ -154,6 +154,8 @@ static void retrieveCpuInfo(void)
     retrieveAmd64CpuInfo();
 #elif defined(ARCH_X86)
     retrieveX86CpuInfo();
+#elif defined(ARCH_AARCH64)
+    retrieveAarch64CpuInfo();
 #endif
 #endif /* CPU_ENABLE_SIMD != 0 */
 }

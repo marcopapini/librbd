@@ -10,6 +10,7 @@ RM := rm -rf
 -include source/subdir.mk
 -include source/aarch64/subdir.mk
 -include source/aarch64/neon/subdir.mk
+-include source/aarch64/sve/subdir.mk
 -include source/amd64/subdir.mk
 -include source/amd64/avx/subdir.mk
 -include source/amd64/avx512f/subdir.mk
@@ -18,6 +19,8 @@ RM := rm -rf
 -include source/generic/subdir.mk
 -include source/noarch/subdir.mk
 -include source/os/subdir.mk
+-include source/power8/subdir.mk
+-include source/power8/vsx/subdir.mk
 -include source/x86/subdir.mk
 -include source/x86/sse2/subdir.mk
 ifneq ($(MAKECMDGOALS),clean)
