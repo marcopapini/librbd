@@ -64,13 +64,13 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNFillWorkerSve(struct rbdKooNFillData
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * cntd;
 
-    pg = svwhilelt_b64(time, data->numTimes);
-
     /* Define vector (Nd) with provided value */
     vNdR = svdup_f64(data->value);
 
     /* For each time instant (blocks of N time instants)... */
     while (time < data->numTimes) {
+        pg = svwhilelt_b64(time, data->numTimes);
+
         /* Prefetch for next iteration */
         prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
         /* Fill output Reliability array with fixed value */
@@ -389,7 +389,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(struct rbdKoo
 static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNRecursiveStepVNdSve(svbool_t pg, struct rbdKooNGenericData *data, unsigned int time, short n, short k)
 {
     short best;
-    double *s1dPtr; // TODO: questo va corretto
+    double *s1dPtr;
     svfloat64_t vNdR;
     svfloat64_t vNdRes;
     svfloat64_t vNdTmpRec;

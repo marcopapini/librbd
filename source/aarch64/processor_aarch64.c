@@ -99,9 +99,11 @@ HIDDEN unsigned int aarch64SveSupported(void)
 HIDDEN void retrieveAarch64CpuInfo(void)
 {
 #if defined(OS_MACOS)
+#if 0 /* Currently MacOS does not support SVE */
     int val;
     size_t len;
 #endif
+#endif  /* OS_MACOS */
 
     /**
      * Default processor info:
