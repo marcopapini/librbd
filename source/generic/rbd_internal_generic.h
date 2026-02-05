@@ -54,6 +54,8 @@
 #include "../aarch64/rbd_internal_aarch64.h"
 #elif defined(ARCH_POWER8)
 #include "../power8/rbd_internal_power8.h"
+#elif defined(ARCH_RISCV64)
+#include "../riscv64/rbd_internal_riscv64.h"
 #endif
 
 
