@@ -28,9 +28,6 @@
     <Filter Include="Header Files\x86">
       <UniqueIdentifier>{5189e944-0115-4f24-92fc-a96ac1044ef5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\os">
-      <UniqueIdentifier>{cc974b6f-1be1-498c-bf67-b119719fc26b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\aarch64">
       <UniqueIdentifier>{23c8e099-0a3e-47db-b839-00c094d93422}</UniqueIdentifier>
     </Filter>
@@ -61,8 +58,38 @@
     <Filter Include="Source Files\x86\sse2">
       <UniqueIdentifier>{7c286132-4ced-40ef-a448-aae62ca41b9f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\riscv64">
+      <UniqueIdentifier>{955fa4fe-ce47-4728-83d3-01dd3dad3d77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\power8">
+      <UniqueIdentifier>{8d067ce1-d197-46e3-9d09-45e68d0ff67d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\os">
+      <UniqueIdentifier>{1c4697bf-be66-45ed-860b-30a4c303b6c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\noarch">
+      <UniqueIdentifier>{0cca9877-2292-442e-b5dc-24c7190c6595}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\aarch64\sve">
+      <UniqueIdentifier>{cde30a9e-5ea9-4538-9595-6e99e5e99fa0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\riscv64">
+      <UniqueIdentifier>{8ca20c2d-525e-4534-90ec-793b949cf65b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\riscv64\rvv">
+      <UniqueIdentifier>{bd06fb21-b719-405b-97f5-4331c0cdfa4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\power8">
+      <UniqueIdentifier>{bfc9ef8b-42b6-4395-9f63-727597ae798e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\power8\vsx">
+      <UniqueIdentifier>{5210eefe-4583-49a3-8951-8a82fa1467c5}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Source Files\os">
-      <UniqueIdentifier>{2d9eb3ad-155c-404e-9912-30b1d6024243}</UniqueIdentifier>
+      <UniqueIdentifier>{1df42be6-25ea-4cd6-bfc7-bc3828cd671c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\noarch">
+      <UniqueIdentifier>{3e2d1036-e6c1-46b2-aae6-64da81c995de}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -120,9 +147,6 @@
     <ClInclude Include="..\..\source\generic\rbd_internal_generic.h">
       <Filter>Header Files\generic</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\os\os.h">
-      <Filter>Header Files\os</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\source\x86\bridge_x86.h">
       <Filter>Header Files\x86</Filter>
     </ClInclude>
@@ -152,6 +176,45 @@
     </ClInclude>
     <ClInclude Include="..\..\source\series.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\compiler\xlc.h">
+      <Filter>Header Files\compiler</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\noarch\rbd_internal_noarch.h">
+      <Filter>Header Files\noarch</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\os\os.h">
+      <Filter>Header Files\os</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\power8\bridge_power8.h">
+      <Filter>Header Files\power8</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\power8\koon_power8.h">
+      <Filter>Header Files\power8</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\power8\parallel_power8.h">
+      <Filter>Header Files\power8</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\power8\rbd_internal_power8.h">
+      <Filter>Header Files\power8</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\power8\series_power8.h">
+      <Filter>Header Files\power8</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\riscv64\bridge_riscv64.h">
+      <Filter>Header Files\riscv64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\riscv64\koon_riscv64.h">
+      <Filter>Header Files\riscv64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\riscv64\parallel_riscv64.h">
+      <Filter>Header Files\riscv64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\riscv64\rbd_internal_riscv64.h">
+      <Filter>Header Files\riscv64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\riscv64\series_riscv64.h">
+      <Filter>Header Files\riscv64</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -245,16 +308,7 @@
     <ClCompile Include="..\..\source\generic\binomial.c">
       <Filter>Source Files\generic</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\generic\bridge_generic.c">
-      <Filter>Source Files\generic</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\source\generic\combinations.c">
-      <Filter>Source Files\generic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\generic\koon_generic.c">
-      <Filter>Source Files\generic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\generic\parallel_generic.c">
       <Filter>Source Files\generic</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\generic\processor_generic.c">
@@ -262,21 +316,6 @@
     </ClCompile>
     <ClCompile Include="..\..\source\generic\rbd_internal_generic.c">
       <Filter>Source Files\generic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\generic\series_generic.c">
-      <Filter>Source Files\generic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\os\linux.c">
-      <Filter>Source Files\os</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\os\macos.c">
-      <Filter>Source Files\os</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\os\unknown_os.c">
-      <Filter>Source Files\os</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\source\os\windows.c">
-      <Filter>Source Files\os</Filter>
     </ClCompile>
     <ClCompile Include="..\..\source\x86\bridge_x86.c">
       <Filter>Source Files\x86</Filter>
@@ -319,6 +358,108 @@
     </ClCompile>
     <ClCompile Include="..\..\source\series.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\processor_aarch64.c">
+      <Filter>Source Files\aarch64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\sve\bridge_aarch64_sve.c">
+      <Filter>Source Files\aarch64\sve</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\sve\koon_aarch64_sve.c">
+      <Filter>Source Files\aarch64\sve</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\sve\parallel_aarch64_sve.c">
+      <Filter>Source Files\aarch64\sve</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\sve\series_aarch64_sve.c">
+      <Filter>Source Files\aarch64\sve</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\compiler\xlc.c">
+      <Filter>Source Files\compiler</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\noarch\bridge_noarch.c">
+      <Filter>Source Files\noarch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\noarch\koon_noarch.c">
+      <Filter>Source Files\noarch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\noarch\parallel_noarch.c">
+      <Filter>Source Files\noarch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\noarch\rbd_internal_noarch.c">
+      <Filter>Source Files\noarch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\noarch\series_noarch.c">
+      <Filter>Source Files\noarch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\os\linux.c">
+      <Filter>Source Files\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\os\macos.c">
+      <Filter>Source Files\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\os\unknown_os.c">
+      <Filter>Source Files\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\os\windows.c">
+      <Filter>Source Files\os</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\vsx\bridge_power8_vsx.c">
+      <Filter>Source Files\power8\vsx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\vsx\koon_power8_vsx.c">
+      <Filter>Source Files\power8\vsx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\vsx\parallel_power8_vsx.c">
+      <Filter>Source Files\power8\vsx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\vsx\series_power8_vsx.c">
+      <Filter>Source Files\power8\vsx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\bridge_power8.c">
+      <Filter>Source Files\power8</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\koon_power8.c">
+      <Filter>Source Files\power8</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\parallel_power8.c">
+      <Filter>Source Files\power8</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\rbd_internal_power8.c">
+      <Filter>Source Files\power8</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\series_power8.c">
+      <Filter>Source Files\power8</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\rvv\bridge_riscv64_rvv.c">
+      <Filter>Source Files\riscv64\rvv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\rvv\koon_riscv64_rvv.c">
+      <Filter>Source Files\riscv64\rvv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\rvv\parallel_riscv64_rvv.c">
+      <Filter>Source Files\riscv64\rvv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\rvv\series_riscv64_rvv.c">
+      <Filter>Source Files\riscv64\rvv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\bridge_riscv64.c">
+      <Filter>Source Files\riscv64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\koon_riscv64.c">
+      <Filter>Source Files\riscv64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\parallel_riscv64.c">
+      <Filter>Source Files\riscv64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\processor_riscv64.c">
+      <Filter>Source Files\riscv64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\rbd_internal_riscv64.c">
+      <Filter>Source Files\riscv64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\series_riscv64.c">
+      <Filter>Source Files\riscv64</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
