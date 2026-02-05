@@ -244,4 +244,3 @@ HIDDEN void rbdSeriesIdenticalStepS1d(struct rbdSeriesData *data, unsigned int t
     /* Cap the computed reliability and set it into output array */
     data->output[time] = capReliabilityS1d(s1dRes);
 }
-

@@ -246,6 +246,3 @@ HIDDEN void rbdParallelIdenticalStepS1d(struct rbdParallelData *data, unsigned i
     /* Cap the computed reliability and set it into output array */
     data->output[time] = capReliabilityS1d(s1dRes);
 }
-
-
-

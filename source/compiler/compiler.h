@@ -58,5 +58,4 @@ void waitThread(void *threadHandles, unsigned int threadIdx);
 #endif /* CPU_SMP != 0 */
 
 
-
 #endif /* COMPILER_H_ */

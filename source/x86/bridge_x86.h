@@ -26,6 +26,7 @@
 #include "../generic/rbd_internal_generic.h"
 #include "../bridge.h"
 
+
 #if (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for x86 SSE2 instruction set */
 void *rbdBridgeGenericWorkerSse2(struct rbdBridgeData *data);

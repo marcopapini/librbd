@@ -195,7 +195,6 @@ static int rbdSeriesInternal(double *reliabilities, double *output, unsigned cha
         for (idx = 0; idx < (numCores - 1); idx++) {
             waitThread(threadHandles, idx);
         }
-
         /* Free Thread ID array */
         free(threadHandles);
     }
