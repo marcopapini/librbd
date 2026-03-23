@@ -28,7 +28,9 @@
 #include "../../generic/combinations.h"
 
 
+#if !defined(COMPILER_VS)
 static svfloat64_t rbdKooNRecursiveStepVNdSve(svbool_t pg, struct rbdKooNGenericData *data, unsigned int time, short n, short k);
+#endif /* !defined(COMPILER_VS) */
 
 
 /**
@@ -54,30 +56,39 @@ static svfloat64_t rbdKooNRecursiveStepVNdSve(svbool_t pg, struct rbdKooNGeneric
  */
 HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNFillWorkerSve(struct rbdKooNFillData *data)
 {
+#if !defined(COMPILER_VS)
     svbool_t pg;
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long cntd;
+    unsigned int vectorSize;
+    unsigned int timeEnd;
     svfloat64_t vNdR;
 
-    cntd = svcntd();
+    /* Set CPU affinity */
+    setAArch64ThreadAffinitySve(data->batchIdx);
 
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivision(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * cntd;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimum(time + batchSize, data->numTimes);
 
     /* Define vector (Nd) with provided value */
     vNdR = svdup_f64(data->value);
 
     /* For each time instant (blocks of N time instants)... */
-    while (time < data->numTimes) {
-        pg = svwhilelt_b64(time, data->numTimes);
-
+    while (time < timeEnd) {
+        pg = svwhilelt_b64(time, timeEnd);
+        vectorSize = svcntp_b64(svptrue_b64(), pg);
         /* Prefetch for next iteration */
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
+        prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
         /* Fill output Reliability array with fixed value */
         svst1(pg, &data->output[time], vNdR);
         /* Increment current time instant */
-        time += (data->numCores * cntd);
+        time += vectorSize;
     }
+#endif /* !defined(COMPILER_VS) */
 
     return NULL;
 }
@@ -105,23 +116,36 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNFillWorkerSve(struct rbdKooNFillData
  */
 HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNGenericWorkerSve(struct rbdKooNGenericData *data)
 {
+#if !defined(COMPILER_VS)
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long cntd;
+    unsigned int vectorSize;
+    unsigned int timeEnd;
+    svbool_t pg;
 
-    cntd = svcntd();
+    /* Set CPU affinity */
+    setAArch64ThreadAffinitySve(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivision(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * cntd;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimum(time + batchSize, data->numTimes);
 
     /* For each time instant to be processed (blocks of N time instants)... */
-    while (time < data->numTimes) {
+    while (time < timeEnd) {
+        pg = svwhilelt_b64(time, timeEnd);
+        vectorSize = svcntp_b64(svptrue_b64(), pg);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * cntd));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + vectorSize);
+        prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionVNdSve(data, time);
+        rbdKooNRecursionVNdSve(pg, data, time);
         /* Increment current time instant */
-        time += (data->numCores * cntd);
+        time += vectorSize;
     }
+#endif /* !defined(COMPILER_VS) */
 
     return NULL;
 }
@@ -150,48 +174,65 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNGenericWorkerSve(struct rbdKooNGener
  */
 HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNIdenticalWorkerSve(struct rbdKooNIdenticalData *data)
 {
+#if !defined(COMPILER_VS)
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long cntd;
+    unsigned int vectorSize;
+    unsigned int timeEnd;
+    svbool_t pg;
 
-    cntd = svcntd();
+    /* Set CPU affinity */
+    setAArch64ThreadAffinitySve(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivision(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * cntd;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimum(time + batchSize, data->numTimes);
 
     /* If compute unreliability flag is not set... */
     if (data->bComputeUnreliability == 0) {
         /* For each time instant to be processed (blocks of N time instants)... */
-        while (time < data->numTimes) {
+        while (time < timeEnd) {
+            pg = svwhilelt_b64(time, timeEnd);
+            vectorSize = svcntp_b64(svptrue_b64(), pg);
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * cntd));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + vectorSize);
+            prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
             /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepVNdSve(data, time);
+            rbdKooNIdenticalSuccessStepVNdSve(pg, data, time);
             /* Increment current time instant */
-            time += (data->numCores * cntd);
+            time += vectorSize;
         }
     }
     else {
         /* For each time instant to be processed (blocks of N time instants)... */
-        while (time < data->numTimes) {
+        while (time < timeEnd) {
+            pg = svwhilelt_b64(time, timeEnd);
+            vectorSize = svcntp_b64(svptrue_b64(), pg);
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * cntd));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + vectorSize);
+            prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
             /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepVNdSve(data, time);
+            rbdKooNIdenticalFailStepVNdSve(pg, data, time);
             /* Increment current time instant */
-            time += (data->numCores * cntd);
+            time += vectorSize;
         }
     }
+#endif /* !defined(COMPILER_VS) */
 
     return NULL;
 }
 
+#if !defined(COMPILER_VS)
 /**
  * rbdKooNRecursionVNdSve
  *
  * Compute KooN RBD through Recursive method with AArch64 SVE
  *
  * Input:
+ *      svbool_t pg
  *      struct rbdKooNGenericData *data
  *      unsigned int time
  *
@@ -203,18 +244,16 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNIdenticalWorkerSve(struct rbdKooNIde
  *  exploiting AArch64 SVE
  *
  * Parameters:
+ *      pg: SVE Predicate for lane access
  *      data: Generic KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdKooNRecursionVNdSve(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+sve") void rbdKooNRecursionVNdSve(svbool_t pg, struct rbdKooNGenericData *data, unsigned int time)
 {
-    svbool_t pg;
     svfloat64_t vNdRes;
-
-    pg = svwhilelt_b64(time, data->numTimes);
 
     /* Recursively compute reliability of KooN RBD at current time instant */
     vNdRes = rbdKooNRecursiveStepVNdSve(pg, data, time, (short)data->numComponents, (short)data->minComponents);
@@ -228,6 +267,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNRecursionVNdSve(struct rbdKooNGeneric
  * Identical KooN RBD Step function from working components with AArch64 SVE
  *
  * Input:
+ *      svbool_t pg
  *      struct rbdKooNIdenticalData *data
  *      unsigned int time
  *
@@ -240,22 +280,20 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNRecursionVNdSve(struct rbdKooNGeneric
  *  taking into account the working components
  *
  * Parameters:
+ *      pg: SVE Predicate for lane access
  *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalSuccessStepVNdSve(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalSuccessStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time)
 {
-    svbool_t pg;
     svfloat64_t vNdR;
     svfloat64_t vNdTmp1, vNdTmp2;
     svfloat64_t vNdRes;
     int numWork, numFail;
     int ii, jj;
-
-    pg = svwhilelt_b64(time, data->numTimes);
 
     /* Retrieve reliability */
     vNdR = svld1(pg, &data->reliabilities[time]);
@@ -295,6 +333,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalSuccessStepVNdSve(struct rbd
  * Identical KooN RBD Step function from failed components with AArch64 SVE
  *
  * Input:
+ *      svbool_t pg
  *      struct rbdKooNIdenticalData *data
  *      unsigned int time
  *
@@ -307,22 +346,20 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalSuccessStepVNdSve(struct rbd
  *  taking into account the failed components
  *
  * Parameters:
+ *      pg: SVE Predicate for lane access
  *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time)
 {
-    svbool_t pg;
     svfloat64_t vNdU;
     svfloat64_t vNdTmp1, vNdTmp2;
     svfloat64_t vNdRes;
     int numWork, numFail;
     int ii, jj;
-
-    pg = svwhilelt_b64(time, data->numTimes);
 
     /* Compute unreliability */
     vNdTmp2 = svld1(pg, &data->reliabilities[time]);
@@ -356,6 +393,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(struct rbdKoo
     /* Cap the computed reliability and set it into output array */
     svst1(pg, &data->output[time], capReliabilityVNdSve(pg, vNdRes));
 }
+
 
 /**
  * rbdKooNRecursiveStepVNdSve
@@ -519,6 +557,7 @@ static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNRecursiveStepVNdSve(svbool_t p
     vNdRes = svmla_f64_x(pg, vNdRes, vNdTmp1, vNdTmpRec);
     return vNdRes;
 }
+#endif /* !defined(COMPILER_VS) */
 
 
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */

@@ -24,6 +24,8 @@ source/noarch \
 source/os \
 source/power8 \
 source/power8/vsx \
+source/riscv64 \
+source/riscv64/rvv \
 source/x86 \
 source/x86/sse2 \
 

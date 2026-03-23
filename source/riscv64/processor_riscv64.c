@@ -30,7 +30,7 @@
 #if defined(OS_LINUX)
 #include <signal.h>
 #include <setjmp.h>
-#endif  /* OS_LINUX */
+#endif /* defined(OS_LINUX) */
 
 
 struct riscv64Cpu
@@ -42,12 +42,12 @@ struct riscv64Cpu
 static struct riscv64Cpu riscv64Cpu;
 #if defined(OS_LINUX)
 static sigjmp_buf jmpbuf;
-#endif  /* OS_LINUX */
+#endif /* defined(OS_LINUX) */
 
 
 #if defined(OS_LINUX)
 static void sigill_handler(int signo);
-#endif  /* OS_LINUX */
+#endif /* defined(OS_LINUX) */
 
 
 /**
@@ -85,7 +85,7 @@ HIDDEN unsigned int riscv64RvvSupported(void)
  * Retrieve RISC-V 64bit-specific CPU info (supported instruction sets)
  *
  * Input:
- *      None
+ *      unsigned int numCores
  *
  * Output:
  *      None
@@ -95,17 +95,17 @@ HIDDEN unsigned int riscv64RvvSupported(void)
  *  - If RVV instruction set is supported
  *
  * Parameters:
- *      None
+ *      numCores: number of cores in SMP system
  *
- * Return:
- *      None
+ * Return (unsigned int):
+ *      Number of cores in SMP system
  */
-HIDDEN void retrieveRiscv64CpuInfo(void)
+HIDDEN unsigned int retrieveRiscv64CpuInfo(unsigned int numCores)
 {
 #if defined(OS_LINUX)
     struct sigaction sa_old, sa_new;
     unsigned long int vl;
-#endif  /* OS_LINUX */
+#endif /* defined(OS_LINUX) */
 
     /**
      * Default processor info:
@@ -132,12 +132,20 @@ HIDDEN void retrieveRiscv64CpuInfo(void)
 
         /* RVV is supported */
         riscv64Cpu.rvvSupported = 1;
-        return;
     }
 
     /* Restore sigaction for SIGILL */
     sigaction(SIGILL, &sa_old, NULL);
-#endif  /* OS_LINUX */
+#endif /* defined(OS_LINUX) */
+
+    /* Retrieve CPU sets for CPU affinity on RISC-V 64bit systems supporting RVV */
+    if (riscv64Cpu.rvvSupported) {
+        if (retrieveRiscv64CompatibleCpusetRvv(numCores) < 0) {
+            riscv64Cpu.rvvSupported = 0;
+        }
+    }
+
+    return numCores;
 }
 
 
@@ -167,6 +175,6 @@ static void sigill_handler(int signo)
     /* RVV test KO - Perform a signal long jump to restore context */
     siglongjmp(jmpbuf, 1);
 }
-#endif  /* OS_LINUX */
+#endif /* defined(OS_LINUX) */
 
 #endif /* defined(ARCH_RISCV64) && CPU_ENABLE_SIMD != 0 */

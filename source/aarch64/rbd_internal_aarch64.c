@@ -25,7 +25,9 @@
 
 #if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 #include "rbd_internal_aarch64.h"
+#if !defined(COMPILER_VS)
 #include <arm_acle.h>
+#endif /* !defined(COMPILER_VS) */
 
 
 VARIABLE_TARGET("+simd") const float64x2_t v2dZeros = {0.0, 0.0};
@@ -60,6 +62,7 @@ HIDDEN FUNCTION_TARGET("+simd") float64x2_t capReliabilityV2dNeon(float64x2_t v2
     return vminnmq_f64(vmaxnmq_f64(v2dZeros, v2dR), v2dOnes);
 }
 
+#if !defined(COMPILER_VS)
 /**
  * capReliabilityVNdSve
  *
@@ -87,6 +90,7 @@ HIDDEN FUNCTION_TARGET("+sve") svfloat64_t capReliabilityVNdSve(svbool_t pg, svf
     /* Cap computed reliability to accepted bounds [0, 1] */
     return svminnm_f64_x(pg, svmaxnm_f64_x(pg, vNdR, svdup_f64(0.0)), svdup_f64(1.0));
 }
+#endif /* !defined(COMPILER_VS) */
 
 
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */

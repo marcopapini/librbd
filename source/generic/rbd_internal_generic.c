@@ -120,4 +120,4 @@ HIDDEN int computeNumCores(int numTimes) {
     /* Return number of threads required */
     return numCores;
 }
-#endif /* CPU_SMP */
+#endif /* CPU_SMP != 0 */

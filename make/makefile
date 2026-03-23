@@ -21,6 +21,8 @@ RM := rm -rf
 -include source/os/subdir.mk
 -include source/power8/subdir.mk
 -include source/power8/vsx/subdir.mk
+-include source/riscv64/subdir.mk
+-include source/riscv64/rvv/subdir.mk
 -include source/x86/subdir.mk
 -include source/x86/sse2/subdir.mk
 ifneq ($(MAKECMDGOALS),clean)

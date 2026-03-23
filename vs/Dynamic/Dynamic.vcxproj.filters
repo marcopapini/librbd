@@ -91,6 +91,9 @@
     <Filter Include="Source Files\noarch">
       <UniqueIdentifier>{3e2d1036-e6c1-46b2-aae6-64da81c995de}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\riscv64\rvv">
+      <UniqueIdentifier>{f4eb2a93-e72c-441e-b2ab-5c3079e6f8b3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\source\aarch64\bridge_aarch64.h">
@@ -215,6 +218,9 @@
     </ClInclude>
     <ClInclude Include="..\..\source\riscv64\series_riscv64.h">
       <Filter>Header Files\riscv64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\riscv64\rvv\rbd_internal_riscv64_rvv.h">
+      <Filter>Header Files\riscv64\rvv</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -460,6 +466,12 @@
     </ClCompile>
     <ClCompile Include="..\..\source\riscv64\series_riscv64.c">
       <Filter>Source Files\riscv64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\sve\processor_aarch64_sve.c">
+      <Filter>Source Files\aarch64\sve</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\rvv\processor_riscv64_rvv.c">
+      <Filter>Source Files\riscv64\rvv</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

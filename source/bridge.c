@@ -135,7 +135,7 @@ static int rbdBridgeInternal(double *reliabilities, double *output, unsigned cha
     unsigned int idx;
 #else                                           /* Under single processor-single thread conditional compiling */
     struct rbdBridgeData data[1];
-#endif /* CPU_SMP */
+#endif
     int res;
 
     /* If N is different from RBD_BRIDGE_COMPONENTS return -1 */
@@ -165,7 +165,7 @@ static int rbdBridgeInternal(double *reliabilities, double *output, unsigned cha
         }
 
         /* For each available core... */
-        for (idx = 0; idx < (numCores - 1); ++idx) {
+        for (idx = 1; idx < numCores; ++idx) {
             /* Prepare Bridge RBD data structure */
             data[idx].batchIdx = idx;
             data[idx].numCores = numCores;
@@ -181,25 +181,25 @@ static int rbdBridgeInternal(double *reliabilities, double *output, unsigned cha
         }
 
         /* Prepare Bridge RBD data structure */
-        data[idx].batchIdx = idx;
-        data[idx].numCores = numCores;
-        data[idx].reliabilities = reliabilities;
-        data[idx].output = output;
-        data[idx].numComponents = numComponents;
-        data[idx].numTimes = numTimes;
+        data[0].batchIdx = 0;
+        data[0].numCores = numCores;
+        data[0].reliabilities = reliabilities;
+        data[0].output = output;
+        data[0].numComponents = numComponents;
+        data[0].numTimes = numTimes;
 
         /* Directly invoke the Bridge RBD Worker */
-        (void)(*fpWorker)(&data[idx]);
+        (void)(*fpWorker)(&data[0]);
 
         /* Wait for created threads completion */
-        for (idx = 0; idx < (numCores - 1); ++idx) {
+        for (idx = 1; idx < numCores; ++idx) {
             waitThread(threadHandles, idx);
         }
         /* Free Thread ID array */
         free(threadHandles);
     }
     else {
-#endif /* CPU_SMP */
+#endif /* CPU_SMP != 0 */
         /* Prepare Bridge RBD data structure */
         data[0].batchIdx = 0;
         data[0].numCores = 1;
@@ -214,7 +214,7 @@ static int rbdBridgeInternal(double *reliabilities, double *output, unsigned cha
         /* Free Bridge RBD data array */
         free(data);
     }
-#endif /* CPU_SMP */
+#endif /* CPU_SMP != 0 */
 
     return res;
 }

@@ -26,19 +26,30 @@
 #if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 
 
+#include "../compiler/compiler.h"
+#include "../os/os.h"
+
 #include <arm_neon.h>
+#if !defined(COMPILER_VS)
 #include <arm_sve.h>
+#endif /* !defined(COMPILER_VS) */
 #include <limits.h>
 #include <string.h>
 
 
+#if !defined(COMPILER_VS)
 #define SVE_MAX_VECTOR_SIZE     256         /* AArch64 SVE supports vectors of 2048 bits (256 bytes) */
+#endif /* !defined(COMPILER_VS) */
 
 
 struct rbdKooNRecursionData
 {
     unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
+#if !defined(COMPILER_VS)
     unsigned char buff[(UCHAR_MAX + 1) * SVE_MAX_VECTOR_SIZE];  /* Temporary buffer */
+#else
+    unsigned char buff[(UCHAR_MAX + 1) * sizeof(float64x2_t)];  /* Temporary buffer */
+#endif
     double      *s1dR;                      /* Pointer to array of reliabilities - Scalar 1 double */
     float64x2_t *v2dR;                      /* Pointer to array of reliabilities - Vector 2 double */
 };
@@ -51,7 +62,9 @@ VARIABLE_TARGET("+simd") extern const float64x2_t v2dMinusTwos;
 
 
 float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);
+#if !defined(COMPILER_VS)
 svfloat64_t capReliabilityVNdSve(svbool_t pg, svfloat64_t vNdR);
+#endif /* !defined(COMPILER_VS) */
 
 
 /**
@@ -108,7 +121,7 @@ unsigned int aarch64SveSupported(void);
  * Retrieve AArch64-specific CPU info (supported instruction sets)
  *
  * Input:
- *      None
+ *      unsigned int numCores
  *
  * Output:
  *      None
@@ -118,12 +131,59 @@ unsigned int aarch64SveSupported(void);
  *  - If SVE instruction set is supported
  *
  * Parameters:
+ *      numCores: number of cores in SMP system
+ *
+ * Return (unsigned int):
+ *      Number of cores in SMP system
+ */
+unsigned int retrieveAarch64CpuInfo(unsigned int numCores);
+
+/**
+ * setAArch64ThreadAffinitySve
+ *
+ * Set the CPU affinity for the current thread
+ *
+ * Input:
+ *      unsigned int coreId
+ *
+ * Output:
  *      None
  *
+ * Description:
+ *  This function sets the CPU affinity for the current thread to the set of cores compatible with
+ *  the requested one
+ *
+ * Parameters:
+ *      coreId: requested core identifier
+ * *
  * Return:
  *      None
  */
-void retrieveAarch64CpuInfo(void);
+void setAArch64ThreadAffinitySve(unsigned int coreId);
+
+
+/**
+ * retrieveAArch64CompatibleCpusetSve
+ *
+ * Retrieve all the CPU sets associated with the pool of available cores
+ *
+ * Input:
+ *      unsigned int numCores
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function retrieves, for each core in the pool of available cores, the CPU set
+ *  of compatible cores
+ *
+ * Parameters:
+ *      numCores: number of cores belonging to the core pool
+ *
+ * Return (int):
+ *      0 in case of success, -1 otherwise
+ */
+int retrieveAArch64CompatibleCpusetSve(unsigned int numCores);
 
 
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */

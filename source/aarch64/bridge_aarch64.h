@@ -39,8 +39,10 @@ void rbdBridgeIdenticalStepV2dNeon(struct rbdBridgeData *data, unsigned int time
 void *rbdBridgeGenericWorkerSve(struct rbdBridgeData *data);
 void *rbdBridgeIdenticalWorkerSve(struct rbdBridgeData *data);
 
-void rbdBridgeGenericStepVNdSve(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepVNdSve(struct rbdBridgeData *data, unsigned int time);
+#if !defined(COMPILER_VS)
+void rbdBridgeGenericStepVNdSve(svbool_t pg, struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeIdenticalStepVNdSve(svbool_t pg, struct rbdBridgeData *data, unsigned int time);
+#endif /* !defined(COMPILER_VS) */
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 

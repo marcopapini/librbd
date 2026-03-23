@@ -31,7 +31,7 @@
 #include <string.h>
 
 
-#if defined(ARC_X86)
+#if defined(ARCH_X86)
 struct rbdKooNRecursionData
 {
     unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
@@ -39,7 +39,7 @@ struct rbdKooNRecursionData
     double      *s1dR;                      /* Pointer to array of reliabilities - Scalar 1 double */
     __m128d     *v2dR;                      /* Pointer to array of reliabilities - Vector 2 double */
 };
-#endif  /* defined(ARC_X86) */
+#endif /* defined(ARC_X86) */
 
 
 VARIABLE_TARGET("sse2") extern const __m128d v2dZeros;
@@ -107,7 +107,7 @@ unsigned int x86Sse2Supported(void);
  * Retrieve x86-specific CPU info (supported instruction sets)
  *
  * Input:
- *      None
+ *      unsigned int numCores
  *
  * Output:
  *      None
@@ -117,12 +117,12 @@ unsigned int x86Sse2Supported(void);
  *  - If SSE2 instruction set is supported
  *
  * Parameters:
- *      None
+ *      numCores: number of cores in SMP system
  *
- * Return:
- *      None
+ * Return (unsigned int):
+ *      Number of cores in SMP system
  */
-void retrieveX86CpuInfo(void);
+unsigned int retrieveX86CpuInfo(unsigned int numCores);
 
 #endif /* defined(ARCH_X86) && (CPU_ENABLE_SIMD != 0) */
 

@@ -132,7 +132,7 @@ static void retrieveCpuInfo(void)
 {
 #if CPU_SMP != 0
     long numCores;
-#endif /* CPU_SMP */
+#endif /* CPU_SMP != 0 */
 
     /* By default assume that only one core is used */
     cpu.numCores = 1;
@@ -144,20 +144,24 @@ static void retrieveCpuInfo(void)
     if (numCores < 1) {
         numCores = 1;
     }
+    /* Limit the maximum number of threads to MAX_NUM_THREADS */
+    if (numCores > MAX_NUM_THREADS) {
+        numCores = MAX_NUM_THREADS;
+    }
 
     /* Store number of cores */
     cpu.numCores = (unsigned int)numCores;
-#endif /* CPU_SMP */
+#endif /* CPU_SMP != 0 */
 
 #if CPU_ENABLE_SIMD != 0
 #if defined(ARCH_AMD64)
-    retrieveAmd64CpuInfo();
+    retrieveAmd64CpuInfo(cpu.numCores);
 #elif defined(ARCH_X86)
-    retrieveX86CpuInfo();
+    retrieveX86CpuInfo(cpu.numCores);
 #elif defined(ARCH_AARCH64)
-    retrieveAarch64CpuInfo();
+    retrieveAarch64CpuInfo(cpu.numCores);
 #elif defined(ARCH_RISCV64)
-    retrieveRiscv64CpuInfo();
+    retrieveRiscv64CpuInfo(cpu.numCores);
 #endif
 #endif /* CPU_ENABLE_SIMD != 0 */
 }

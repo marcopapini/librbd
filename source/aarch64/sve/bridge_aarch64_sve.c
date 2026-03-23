@@ -50,23 +50,36 @@
  */
 HIDDEN FUNCTION_TARGET("+sve") void *rbdBridgeGenericWorkerSve(struct rbdBridgeData *data)
 {
+#if !defined(COMPILER_VS)
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long cntd;
+    unsigned int vectorSize;
+    unsigned int timeEnd;
+    svbool_t pg;
 
-    cntd = svcntd();
+    /* Set CPU affinity */
+    setAArch64ThreadAffinitySve(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivision(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * cntd;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimum(time + batchSize, data->numTimes);
 
     /* For each time instant to be processed (blocks of N time instants)... */
-    while (time < data->numTimes) {
+    while (time < timeEnd) {
+        pg = svwhilelt_b64(time, timeEnd);
+        vectorSize = svcntp_b64(svptrue_b64(), pg);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * cntd));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + vectorSize);
+        prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepVNdSve(data, time);
+        rbdBridgeGenericStepVNdSve(pg, data, time);
         /* Increment current time instant */
-        time += (data->numCores * cntd);
+        time += vectorSize;
     }
+#endif /* !defined(COMPILER_VS) */
 
     return NULL;
 }
@@ -94,33 +107,48 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdBridgeGenericWorkerSve(struct rbdBridgeD
  */
 HIDDEN FUNCTION_TARGET("+sve") void *rbdBridgeIdenticalWorkerSve(struct rbdBridgeData *data)
 {
+#if !defined(COMPILER_VS)
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long cntd;
+    unsigned int vectorSize;
+    unsigned int timeEnd;
+    svbool_t pg;
 
-    cntd = svcntd();
+    /* Set CPU affinity */
+    setAArch64ThreadAffinitySve(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivision(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * cntd;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimum(time + batchSize, data->numTimes);
 
     /* For each time instant to be processed (blocks of N time instants)... */
-    while (time < data->numTimes) {
+    while (time < timeEnd) {
+        pg = svwhilelt_b64(time, timeEnd);
+        vectorSize = svcntp_b64(svptrue_b64(), pg);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * cntd));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + vectorSize);
+        prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepVNdSve(data, time);
+        rbdBridgeIdenticalStepVNdSve(pg, data, time);
         /* Increment current time instant */
-        time += (data->numCores * cntd);
+        time += vectorSize;
     }
+#endif /* !defined(COMPILER_VS) */
 
     return NULL;
 }
 
+#if !defined(COMPILER_VS)
 /**
  * rbdBridgeGenericStepVNdSve
  *
  * Generic Bridge RBD step function with AArch64 SVE
  *
  * Input:
+ *      svbool_t pg
  *      struct rbdBridgeData *data
  *      unsigned int time
  *
@@ -133,17 +161,15 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdBridgeIdenticalWorkerSve(struct rbdBridg
  *  given their reliabilities
  *
  * Parameters:
+ *      pg: SVE Predicate for lane access
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeGenericStepVNdSve(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeGenericStepVNdSve(svbool_t pg, struct rbdBridgeData *data, unsigned int time)
 {
-    svbool_t pg;
     svfloat64_t vNdR1, vNdR2, vNdR3, vNdR4, vNdR5;
     svfloat64_t vNdTmp1, vNdTmp2;
     svfloat64_t vNdRes;
-
-    pg = svwhilelt_b64(time, data->numTimes);
 
     /* Load reliabilities */
     vNdR1 = svld1(pg, &data->reliabilities[(0 * data->numTimes) + time]);
@@ -187,6 +213,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeGenericStepVNdSve(struct rbdBridgeD
  * Identical Bridge RBD step function with AArch64 SVE
  *
  * Input:
+ *      svbool_t pg
  *      struct rbdBridgeData *data
  *      unsigned int time
  *
@@ -199,17 +226,16 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeGenericStepVNdSve(struct rbdBridgeD
  *  given their reliability
  *
  * Parameters:
+ *      pg: SVE Predicate for lane access
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeIdenticalStepVNdSve(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeIdenticalStepVNdSve(svbool_t pg, struct rbdBridgeData *data, unsigned int time)
 {
-    svbool_t pg;
     svfloat64_t vNdR, vNdU;
     svfloat64_t vNdTmp;
     svfloat64_t vNdRes;
-
-    pg = svwhilelt_b64(time, data->numTimes);
+    svfloat64_t vNdTwo;
 
     /* Load reliability */
     vNdR = svld1(pg, &data->reliabilities[time]);
@@ -218,8 +244,9 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeIdenticalStepVNdSve(struct rbdBridg
     vNdU = svsub_f64_x(pg, svdup_f64(1.0), vNdR);
 
     /* Compute reliability of Bridge block */
-    vNdRes = svmls_f64_x(pg, svdup_f64(2.0), vNdR, vNdR);
-    vNdTmp = svmla_f64_x(pg, svdup_f64(-2.0), vNdU, vNdU);
+    vNdTwo = svdup_f64(2.0);
+    vNdRes = svmls_f64_x(pg, vNdTwo, vNdR, vNdR);
+    vNdTmp = svnmls_f64_x(pg, vNdTwo, vNdU, vNdU);
     vNdRes = svmul_f64_x(pg, vNdRes, vNdR);
     vNdTmp = svmla_f64_x(pg, vNdRes, vNdTmp, vNdU);
     vNdTmp = svmla_f64_x(pg, svdup_f64(1.0), vNdTmp, vNdU);
@@ -228,6 +255,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeIdenticalStepVNdSve(struct rbdBridg
     /* Cap the computed reliability and set it into output array */
     svst1(pg, &data->output[time], capReliabilityVNdSve(pg, vNdRes));
 }
+#endif /* !defined(COMPILER_VS) */
 
 
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */

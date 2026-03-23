@@ -81,7 +81,7 @@ HIDDEN unsigned int aarch64SveSupported(void)
  * Retrieve AArch64-specific CPU info (supported instruction sets)
  *
  * Input:
- *      None
+ *      unsigned int numCores
  *
  * Output:
  *      None
@@ -91,19 +91,19 @@ HIDDEN unsigned int aarch64SveSupported(void)
  *  - If SVE instruction set is supported
  *
  * Parameters:
- *      None
+ *      numCores: number of cores in SMP system
  *
- * Return:
- *      None
+ * Return (unsigned int):
+ *      Number of cores in SMP system
  */
-HIDDEN void retrieveAarch64CpuInfo(void)
+HIDDEN unsigned int retrieveAarch64CpuInfo(unsigned int numCores)
 {
 #if defined(OS_MACOS)
 #if 0 /* Currently MacOS does not support SVE */
     int val;
     size_t len;
 #endif
-#endif  /* OS_MACOS */
+#endif /* OS_MACOS */
 
     /**
      * Default processor info:
@@ -118,9 +118,15 @@ HIDDEN void retrieveAarch64CpuInfo(void)
         }
     }
 #elif defined(OS_WINDOWS)
+#if 0 /* Currently Windows does not support SVE */
     if (IsProcessorFeaturePresent(PF_ARM_SVE_INSTRUCTIONS_AVAILABLE)) {
         aarch64Cpu.sveSupported = 1;
+#if CPU_SMP != 0
+        /* On Windows with SVE support, disable SMP */
+        numCores = 1;
+#endif /* CPU_SMP != 0 */
     }
+#endif
 #elif defined(OS_MACOS)
 #if 0 /* Currently MacOS does not support SVE */
     val = 0;
@@ -128,9 +134,22 @@ HIDDEN void retrieveAarch64CpuInfo(void)
     sysctlbyname("hw.optional.arm.FEAT_SVE", &val, &len, NULL, 0);
     if (val != 0) {
         aarch64Cpu.sveSupported = 1;
+#if CPU_SMP != 0
+        /* On MacOS with SVE support, disable SMP */
+        numCores = 1;
+#endif /* CPU_SMP != 0 */
     }
 #endif
 #endif
+
+    /* Retrieve CPU sets for CPU affinity on AArch64 systems supporting SVE */
+    if (aarch64Cpu.sveSupported) {
+        if (retrieveAArch64CompatibleCpusetSve(numCores) < 0) {
+            aarch64Cpu.sveSupported = 0;
+        }
+    }
+
+    return numCores;
 }
 
 #endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */

@@ -165,7 +165,7 @@ static int rbdSeriesInternal(double *reliabilities, double *output, unsigned cha
         }
 
         /* For each available core... */
-        for (idx = 0; idx < (numCores - 1); ++idx) {
+        for (idx = 1; idx < numCores; ++idx) {
             /* Prepare Series RBD data structure */
             data[idx].batchIdx = idx;
             data[idx].numCores = numCores;
@@ -181,18 +181,18 @@ static int rbdSeriesInternal(double *reliabilities, double *output, unsigned cha
         }
 
         /* Prepare Series RBD data structure */
-        data[idx].batchIdx = idx;
-        data[idx].numCores = numCores;
-        data[idx].reliabilities = reliabilities;
-        data[idx].output = output;
-        data[idx].numComponents = numComponents;
-        data[idx].numTimes = numTimes;
+        data[0].batchIdx = 0;
+        data[0].numCores = numCores;
+        data[0].reliabilities = reliabilities;
+        data[0].output = output;
+        data[0].numComponents = numComponents;
+        data[0].numTimes = numTimes;
 
         /* Directly invoke the Series RBD Worker */
-        (void)(*fpWorker)(&data[idx]);
+        (void)(*fpWorker)(&data[0]);
 
         /* Wait for created threads completion */
-        for (idx = 0; idx < (numCores - 1); idx++) {
+        for (idx = 1; idx < numCores; idx++) {
             waitThread(threadHandles, idx);
         }
         /* Free Thread ID array */

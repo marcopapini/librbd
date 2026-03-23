@@ -39,8 +39,10 @@ void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int 
 void *rbdParallelGenericWorkerSve(struct rbdParallelData *data);
 void *rbdParallelIdenticalWorkerSve(struct rbdParallelData *data);
 
-void rbdParallelGenericStepVNdSve(struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepVNdSve(struct rbdParallelData *data, unsigned int time);
+#if !defined(COMPILER_VS)
+void rbdParallelGenericStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time);
+void rbdParallelIdenticalStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time);
+#endif /* !defined(COMPILER_VS) */
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 

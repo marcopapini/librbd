@@ -1,17 +1,20 @@
 # Ignore .vs folder
 .vs/*
 
-# Ignore Dynamic/Win32 and Dynamic/x64 folders
+# Ignore Dynamic/Win32, Dynamic/x64 and Dynamic/ARM64 folders
 Dynamic/Win32/*
 Dynamic/x64/*
+Dynamic/ARM64/*
 
-# Ignore Static/Win32 and Static/x64 folders
+# Ignore Static/Win32, Static/x64 and Static/ARM64 folders
 Static/Win32/*
 Static/x64/*
+Static/ARM64/*
 
-# Ignore Test/Win32 and Test/x64 folders
+# Ignore Test/Win32, Test/x64 and Test/ARM64 folders
 Test/Win32/*
 Test/x64/*
+Test/ARM64/*
 
 # Ignore Win32 folder
 Win32/*
@@ -19,3 +22,5 @@ Win32/*
 # Ignore x64 folder
 x64/*
 
+# Ignore ARM64 folder
+ARM64/*

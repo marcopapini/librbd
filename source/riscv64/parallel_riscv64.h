@@ -32,8 +32,8 @@
 void *rbdParallelGenericWorkerRvv(struct rbdParallelData *data);
 void *rbdParallelIdenticalWorkerRvv(struct rbdParallelData *data);
 
-void rbdParallelGenericStepVNdRvv(struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepVNdRvv(struct rbdParallelData *data, unsigned int time);
+void rbdParallelGenericStepVNdRvv(struct rbdParallelData *data, unsigned int time, unsigned long int vl);
+void rbdParallelIdenticalStepVNdRvv(struct rbdParallelData *data, unsigned int time, unsigned long int vl);
 #endif /* defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0) */
 
 

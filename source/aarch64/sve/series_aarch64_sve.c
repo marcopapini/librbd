@@ -50,23 +50,36 @@
  */
 HIDDEN FUNCTION_TARGET("+sve") void *rbdSeriesGenericWorkerSve(struct rbdSeriesData *data)
 {
+#if !defined(COMPILER_VS)
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long cntd;
+    unsigned int vectorSize;
+    unsigned int timeEnd;
+    svbool_t pg;
 
-    cntd = svcntd();
+    /* Set CPU affinity */
+    setAArch64ThreadAffinitySve(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivision(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * cntd;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimum(time + batchSize, data->numTimes);
 
     /* For each time instant to be processed (blocks of N time instants)... */
-    while (time < data->numTimes) {
+    while (time < timeEnd) {
+        pg = svwhilelt_b64(time, timeEnd);
+        vectorSize = svcntp_b64(svptrue_b64(), pg);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * cntd));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + vectorSize);
+        prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepVNdSve(data, time);
+        rbdSeriesGenericStepVNdSve(pg, data, time);
         /* Increment current time instant */
-        time += (data->numCores * cntd);
+        time += vectorSize;
     }
+#endif /* !defined(COMPILER_VS) */
 
     return NULL;
 }
@@ -94,33 +107,48 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdSeriesGenericWorkerSve(struct rbdSeriesD
  */
 HIDDEN FUNCTION_TARGET("+sve") void *rbdSeriesIdenticalWorkerSve(struct rbdSeriesData *data)
 {
+#if !defined(COMPILER_VS)
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long cntd;
+    unsigned int vectorSize;
+    unsigned int timeEnd;
+    svbool_t pg;
 
-    cntd = svcntd();
+    /* Set CPU affinity */
+    setAArch64ThreadAffinitySve(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivision(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * cntd;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimum(time + batchSize, data->numTimes);
 
-    /* For each time instant to be processed (blocks of 2 time instants)... */
-    while (time < data->numTimes) {
+    /* For each time instant to be processed (blocks of N time instants)... */
+    while (time < timeEnd) {
+        pg = svwhilelt_b64(time, timeEnd);
+        vectorSize = svcntp_b64(svptrue_b64(), pg);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * cntd));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + vectorSize);
+        prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepVNdSve(data, time);
+        rbdSeriesIdenticalStepVNdSve(pg, data, time);
         /* Increment current time instant */
-        time += (data->numCores * cntd);
+        time += vectorSize;
     }
+#endif /* !defined(COMPILER_VS) */
 
     return NULL;
 }
 
+#if !defined(COMPILER_VS)
 /**
  * rbdSeriesGenericStepVNdSve
  *
  * Generic Series RBD step function with AArch64 SVE
  *
  * Input:
+ *      svbool_t pg
  *      struct rbdSeriesData *data
  *      unsigned int time
  *
@@ -133,17 +161,15 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdSeriesIdenticalWorkerSve(struct rbdSerie
  *  given their reliabilities
  *
  * Parameters:
+ *      pg: SVE Predicate for lane access
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdSeriesGenericStepVNdSve(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+sve") void rbdSeriesGenericStepVNdSve(svbool_t pg, struct rbdSeriesData *data, unsigned int time)
 {
-    svbool_t pg;
     unsigned char component;
     svfloat64_t vNdTmp;
     svfloat64_t vNdRes;
-
-    pg = svwhilelt_b64(time, data->numTimes);
 
     /* Compute reliability of Series RBD at current time instant */
     vNdRes = svld1(pg, &data->reliabilities[(0 * data->numTimes) + time]);
@@ -162,6 +188,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdSeriesGenericStepVNdSve(struct rbdSeriesD
  * Identical Series RBD step function with AArch64 SVE
  *
  * Input:
+ *      svbool_t pg
  *      struct rbdSeriesData *data
  *      unsigned int time
  *
@@ -174,17 +201,15 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdSeriesGenericStepVNdSve(struct rbdSeriesD
  *  given their reliability
  *
  * Parameters:
+ *      pg: SVE Predicate for lane access
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdSeriesIdenticalStepVNdSve(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+sve") void rbdSeriesIdenticalStepVNdSve(svbool_t pg, struct rbdSeriesData *data, unsigned int time)
 {
-    svbool_t pg;
     unsigned char component;
     svfloat64_t vNdTmp;
     svfloat64_t vNdRes;
-
-    pg = svwhilelt_b64(time, data->numTimes);
 
     /* Load reliability */
     vNdTmp = svld1(pg, &data->reliabilities[time]);
@@ -198,6 +223,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdSeriesIdenticalStepVNdSve(struct rbdSerie
     /* Cap the computed reliability and set it into output array */
     svst1(pg, &data->output[time], capReliabilityVNdSve(pg, vNdRes));
 }
+#endif /* !defined(COMPILER_VS) */
 
 
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */

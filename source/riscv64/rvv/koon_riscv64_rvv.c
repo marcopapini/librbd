@@ -23,91 +23,13 @@
 #include "../../generic/rbd_internal_generic.h"
 
 #if defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0)
+#include "rbd_internal_riscv64_rvv.h"
 #include "../rbd_internal_riscv64.h"
 #include "../koon_riscv64.h"
 #include "../../generic/combinations.h"
 
 
 static vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct rbdKooNGenericData *data, unsigned int time, short n, short k, unsigned long int vl);
-
-
-/**
- * minimumRvv
- *
- * Compute minimum between two numbers for RISC-V 64b RVV extension
- *
- * Input:
- *      int a
- *      int b
- *
- * Output:
- *      None
- *
- * Description:
- *  Computes the minimum between two numbers for RISC-V 64b RVV extension
- *
- * Parameters:
- *      a: first value for minimum computation
- *      b: second value for minimum computation
- *
- * Return (int):
- *  minimum value
- */
-static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int minimumRvv(int a, int b) {
-    return (a <= b) ? a : b;
-}
-
-/**
- * floorDivisionRvv
- *
- * Compute floor value of division for RISC-V 64b RVV extension
- *
- * Input:
- *      int dividend
- *      int divisor
- *
- * Output:
- *      None
- *
- * Description:
- *  Computes the floor value of the requested division for RISC-V 64b RVV extension
- *
- * Parameters:
- *      dividend: dividend of division
- *      divisor: divisor of division
- *
- * Return (int):
- *  Floor value of division
- */
-static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int floorDivisionRvv(int dividend, int divisor) {
-    return (dividend / divisor);
-}
-
-/**
- * ceilDivisionRvv
- *
- * Compute ceil value of division for RISC-V 64b RVV extension
- *
- * Input:
- *      int dividend
- *      int divisor
- *
- * Output:
- *      None
- *
- * Description:
- *  Computes the ceil value of the requested division for RISC-V 64b RVV extension
- *
- * Parameters:
- *      dividend: dividend of division
- *      divisor: divisor of division
- *
- * Return (int):
- *  Ceil value of division
- */
-static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int ceilDivisionRvv(int dividend, int divisor) {
-    return floorDivisionRvv(dividend + divisor - 1, divisor);
-}
 
 
 /**
@@ -129,32 +51,37 @@ static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int ceilDivisionRvv(int d
  *      data: Fill KooN RBD data structure
  *
  * Return (void *):
- *  NULL
+ *      NULL
  */
 HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNFillWorkerRvv(struct rbdKooNFillData *data)
 {
-    unsigned long int vl;
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long vlmax;
+    unsigned int timeEnd;
+    unsigned long int vl;
     vfloat64m1_t vNdR;
 
-    vlmax = __riscv_vsetvlmax_e64m1();
+    /* Set CPU affinity */
+    setRiscv64ThreadAffinityRvv(data->batchIdx);
 
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivisionRiscv64Rvv(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * vlmax;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimumRiscv64Rvv(time + batchSize, data->numTimes);
 
     /* For each time instant (blocks of N time instants)... */
-    while (time < data->numTimes) {
-        vl = __riscv_vsetvl_e64m1(data->numTimes - time);
+    while (time < timeEnd) {
+        vl = __riscv_vsetvl_e64m1(timeEnd - time);
         /* Define vector (Nd) with provided value */
         vNdR = __riscv_vfmv_v_f_f64m1(data->value, vl);
-
         /* Prefetch for next iteration */
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * vlmax));
+        prefetchWrite(data->output, 1, data->numTimes, time + vl);
         /* Fill output Reliability array with fixed value */
         __riscv_vse64_v_f64m1(&data->output[time], vNdR, vl);
         /* Increment current time instant */
-        time += (data->numCores * vlmax);
+        time += vl;
     }
 
     return NULL;
@@ -179,26 +106,35 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNFillWorkerRvv(struct rbdKooNFillD
  *      data: Generic KooN RBD data structure
  *
  * Return (void *):
- *  NULL
+ *      NULL
  */
 HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNGenericWorkerRvv(struct rbdKooNGenericData *data)
 {
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long int vlmax;
+    unsigned int timeEnd;
+    unsigned long int vl;
 
-    vlmax = __riscv_vsetvlmax_e64m1();
+    /* Set CPU affinity */
+    setRiscv64ThreadAffinityRvv(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivisionRiscv64Rvv(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * vlmax;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimumRiscv64Rvv(time + batchSize, data->numTimes);
 
     /* For each time instant to be processed (blocks of N time instants)... */
-    while (time < data->numTimes) {
+    while (time < timeEnd) {
+        vl = __riscv_vsetvl_e64m1(timeEnd - time);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * vlmax));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * vlmax));
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + vl);
+        prefetchWrite(data->output, 1, data->numTimes, time + vl);
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionVNdRvv(data, time);
+        rbdKooNRecursionVNdRvv(data, time, vl);
         /* Increment current time instant */
-        time += (data->numCores * vlmax);
+        time += vl;
     }
 
     return NULL;
@@ -224,40 +160,50 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNGenericWorkerRvv(struct rbdKooNGe
  *      data: Identical KooN RBD data structure
  *
  * Return (void *):
- *  NULL
+ *      NULL
  */
 HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNIdenticalWorkerRvv(struct rbdKooNIdenticalData *data)
 {
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long int vlmax;
+    unsigned int timeEnd;
+    unsigned long int vl;
 
-    vlmax = __riscv_vsetvlmax_e64m1();
+    /* Set CPU affinity */
+    setRiscv64ThreadAffinityRvv(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivisionRiscv64Rvv(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * vlmax;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimumRiscv64Rvv(time + batchSize, data->numTimes);
 
     /* If compute unreliability flag is not set... */
     if (data->bComputeUnreliability == 0) {
         /* For each time instant to be processed (blocks of N time instants)... */
-        while (time < data->numTimes) {
+        while (time < timeEnd) {
+            vl = __riscv_vsetvl_e64m1(timeEnd - time);
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * vlmax));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * vlmax));
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + vl);
+            prefetchWrite(data->output, 1, data->numTimes, time + vl);
             /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepVNdRvv(data, time);
+            rbdKooNIdenticalSuccessStepVNdRvv(data, time, vl);
             /* Increment current time instant */
-            time += (data->numCores * vlmax);
+            time += vl;
         }
     }
     else {
         /* For each time instant to be processed (blocks of N time instants)... */
-        while (time < data->numTimes) {
+        while (time < timeEnd) {
+            vl = __riscv_vsetvl_e64m1(timeEnd - time);
             /* Prefetch for next iteration */
-            prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * vlmax));
-            prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * vlmax));
+            prefetchRead(data->reliabilities, 1, data->numTimes, time + vl);
+            prefetchWrite(data->output, 1, data->numTimes, time + vl);
             /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepVNdRvv(data, time);
+            rbdKooNIdenticalFailStepVNdRvv(data, time, vl);
             /* Increment current time instant */
-            time += (data->numCores * vlmax);
+            time += vl;
         }
     }
 
@@ -272,6 +218,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNIdenticalWorkerRvv(struct rbdKooN
  * Input:
  *      struct rbdKooNGenericData *data
  *      unsigned int time
+ *      unsigned long int vl
  *
  * Output:
  *      None
@@ -283,16 +230,14 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNIdenticalWorkerRvv(struct rbdKooN
  * Parameters:
  *      data: Generic KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
+ *      vl: Vector Length
  *
  * Return:
- *  None
+ *      None
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNRecursionVNdRvv(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNRecursionVNdRvv(struct rbdKooNGenericData *data, unsigned int time, unsigned long int vl)
 {
-    unsigned long int vl;
     vfloat64m1_t vNdRes;
-
-    vl = __riscv_vsetvl_e64m1(data->numTimes - time);
 
     /* Recursively compute reliability of KooN RBD at current time instant */
     vNdRes = rbdKooNRecursiveStepVNdRvv(data, time, (short)data->numComponents, (short)data->minComponents, vl);
@@ -308,6 +253,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNRecursionVNdRvv(struct rbdKooNGene
  * Input:
  *      struct rbdKooNIdenticalData *data
  *      unsigned int time
+ *      unsigned long int vl
  *
  * Output:
  *      None
@@ -320,20 +266,18 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNRecursionVNdRvv(struct rbdKooNGene
  * Parameters:
  *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
+ *      vl: Vector Length
  *
  * Return:
- *  None
+ *      None
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalSuccessStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalSuccessStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time, unsigned long int vl)
 {
-    unsigned long int vl;
     vfloat64m1_t vNdR;
     vfloat64m1_t vNdTmp1, vNdTmp2;
     vfloat64m1_t vNdRes;
     int numWork, numFail;
     int ii, jj;
-
-    vl = __riscv_vsetvl_e64m1(data->numTimes - time);
 
     /* Retrieve reliability */
     vNdR = __riscv_vle64_v_f64m1(&data->reliabilities[time], vl);
@@ -375,6 +319,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalSuccessStepVNdRvv(struct 
  * Input:
  *      struct rbdKooNIdenticalData *data
  *      unsigned int time
+ *      unsigned long int vl
  *
  * Output:
  *      None
@@ -387,20 +332,18 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalSuccessStepVNdRvv(struct 
  * Parameters:
  *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
+ *      vl: Vector Length
  *
  * Return:
- *  None
+ *      None
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time, unsigned long int vl)
 {
-    unsigned long int vl;
     vfloat64m1_t vNdU;
     vfloat64m1_t vNdTmp1, vNdTmp2;
     vfloat64m1_t vNdRes;
     int numWork, numFail;
     int ii, jj;
-
-    vl = __riscv_vsetvl_e64m1(data->numTimes - time);
 
     /* Compute unreliability */
     vNdTmp2 = __riscv_vle64_v_f64m1(&data->reliabilities[time], vl);
@@ -441,11 +384,11 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbd
  * Recursive KooN RBD Step function with RISC-V 64bit RVV
  *
  * Input:
- *      unsigned long int vl
  *      struct rbdKooNGenericData *data
  *      unsigned int time
  *      short n
  *      short k
+ *      unsigned long int vl
  *
  * Output:
  *      None
@@ -461,8 +404,8 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbd
  *      k: minimum number of working components in KooN RBD
  *      vl: Vector Length
  *
- * Return (float64x2_t):
- *  Computed reliability
+ * Return (vfloat64m1_t):
+ *      Computed reliability
  */
 static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct rbdKooNGenericData *data, unsigned int time, short n, short k, unsigned long int vl)
 {
@@ -500,7 +443,7 @@ static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct
         return __riscv_vfrsub_vf_f64m1(vNdRes, 1.0, vl);
     }
 
-    best = (short)minimumRvv((int)(k-1), (int)(n-k));
+    best = (short)minimumRiscv64Rvv((int)(k-1), (int)(n-k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;
@@ -517,7 +460,7 @@ static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct
         vNdRes = __riscv_vfmul_vv_f64m1(vNdTmp1, vNdTmpRec, vl);
         vNdTmpRec = rbdKooNRecursiveStepVNdRvv(data, time, n, k, vl);
         vNdRes = __riscv_vfmacc_vv_f64m1(vNdRes, vNdTmp2, vNdTmpRec, vl);
-        for (idx = 1; idx < ceilDivisionRvv(best, 2); ++idx) {
+        for (idx = 1; idx < ceilDivisionRiscv64Rvv(best, 2); ++idx) {
             vNdTmp1 = __riscv_vfmv_v_f_f64m1(0.0, vl);
             vNdTmp2 = __riscv_vfmv_v_f_f64m1(0.0, vl);
             firstCombination((unsigned char)idx, data->recur.comb);

@@ -45,8 +45,8 @@
 
 #if (SSE2_ID != AVX_ID) || (SSE2_ID != FMA3_ID)
 #error "Wrong configuration of cpuid IDs"
-#endif
-#endif
+#endif /* (SSE2_ID != AVX_ID) || (SSE2_ID != FMA3_ID) */
+#endif /* defined(COMPILER_VS) */
 
 
 struct amd64Cpu
@@ -182,7 +182,7 @@ HIDDEN unsigned int amd64Avx512fSupported(void)
  * Retrieve amd64-specific CPU info (supported instruction sets)
  *
  * Input:
- *      None
+ *      unsigned int numCores
  *
  * Output:
  *      None
@@ -195,17 +195,17 @@ HIDDEN unsigned int amd64Avx512fSupported(void)
  *  - If AVX512F instruction set is supported
  *
  * Parameters:
- *      None
+ *      numCores: number of cores in SMP system
  *
- * Return:
- *      None
+ * Return (unsigned int):
+ *      Number of cores in SMP system
  */
-HIDDEN void retrieveAmd64CpuInfo(void)
+HIDDEN unsigned int retrieveAmd64CpuInfo(unsigned int numCores)
 {
 #if defined(COMPILER_VS)
     int cpuInfo[4];
     int nIds;
-#endif
+#endif /* defined(COMPILER_VS) */
 
     /**
      * Default processor info:
@@ -255,6 +255,8 @@ HIDDEN void retrieveAmd64CpuInfo(void)
         }
     }
 #endif
+
+    return numCores;
 }
 
 #endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */

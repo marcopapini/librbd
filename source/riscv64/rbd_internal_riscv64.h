@@ -26,6 +26,8 @@
 #if defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0)
 
 
+#include "../os/os.h"
+
 #include <riscv_vector.h>
 #include <limits.h>
 #include <string.h>
@@ -98,7 +100,7 @@ unsigned int riscv64RvvSupported(void);
  * Retrieve RISC-V 64bit-specific CPU info (supported instruction sets)
  *
  * Input:
- *      None
+ *      unsigned int numCores
  *
  * Output:
  *      None
@@ -108,12 +110,59 @@ unsigned int riscv64RvvSupported(void);
  *  - If RVV instruction set is supported
  *
  * Parameters:
+ *      numCores: number of cores in SMP system
+ *
+ * Return (unsigned int):
+ *      Number of cores in SMP system
+ */
+unsigned int retrieveRiscv64CpuInfo(unsigned int numCores);
+
+/**
+ * setRiscv64ThreadAffinityRvv
+ *
+ * Set the CPU affinity for the current thread
+ *
+ * Input:
+ *      unsigned int coreId
+ *
+ * Output:
  *      None
+ *
+ * Description:
+ *  This function sets the CPU affinity for the current thread to the set of cores compatible with
+ *  the requested one
+ *
+ * Parameters:
+ *      coreId: requested core identifier
  *
  * Return:
  *      None
  */
-void retrieveRiscv64CpuInfo(void);
+void setRiscv64ThreadAffinityRvv(unsigned int coreId);
+
+
+/**
+ * retrieveRiscv64CompatibleCpusetRvv
+ *
+ * Retrieve all the CPU sets associated with the pool of available cores
+ *
+ * Input:
+ *      unsigned int numCores
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function retrieves, for each core in the pool of available cores, the CPU set
+ *  of compatible cores
+ *
+ * Parameters:
+ *      numCores: number of cores belonging to the core pool
+ *
+ * Return (int):
+ *      0 in case of success, -1 otherwise
+ */
+int retrieveRiscv64CompatibleCpusetRvv(unsigned int numCores);
 
 
 #endif /* defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0) */

@@ -31,16 +31,19 @@
 #include "../compiler/compiler.h"
 #include "architecture.h"
 
+/*< Limit number of threads in SMP to 256 */
+#define MAX_NUM_THREADS                 256
+
 
 /*< If CPU_SMP flag has not been provided, disable SMP */
-#ifndef CPU_SMP
+#if !defined(CPU_SMP)
 #define CPU_SMP                         0
-#endif /* CPU_SMP */
+#endif /* !defined(CPU_SMP) */
 
 /*< If CPU_ENABLE_SIMD flag has not been provided, disable SIMD */
-#ifndef CPU_ENABLE_SIMD
+#if !defined(CPU_ENABLE_SIMD)
 #define CPU_ENABLE_SIMD                 0
-#endif /* CPU_ENABLE_SIMD */
+#endif /* !defined(CPU_ENABLE_SIMD) */
 
 
 /* Include architecture-independent RBD Internal header */
@@ -61,7 +64,7 @@
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
 #define MIN_BATCH_SIZE              (20000)     /* Minimum batch size in SMP RBD resolution */
-#endif /* CPU_SMP */
+#endif /* CPU_SMP != 0 */
 
 #if defined(ARCH_UNKNOWN) || (CPU_ENABLE_SIMD == 0)
 struct rbdKooNRecursionData
@@ -95,7 +98,7 @@ static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionDa
     alignAddr = ((unsigned long long)(&data->buff) + sizeof(double) - 1) & ~(sizeof(double) - 1);
     data->s1dR = (double *)alignAddr;
 }
-#endif
+#endif /* defined(ARCH_UNKNOWN) || (CPU_ENABLE_SIMD == 0) */
 
 
 /**
@@ -318,7 +321,7 @@ unsigned int getNumberOfCores(void);
  *  Batch size
  */
 int computeNumCores(int numTimes);
-#endif /* CPU_SMP */
+#endif /* CPU_SMP != 0 */
 
 
 #endif /* RBD_INTERNAL_GENERIC_H_ */

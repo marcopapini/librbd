@@ -48,11 +48,5 @@
  */
 HIDDEN double capReliabilityS1d(double s1dR) {
     /* Cap computed reliability to accepted bounds [0, 1] */
-    if ((isnan(s1dR) != 0) || (s1dR < 0.0)) {
-        return 0.0;
-    }
-    else if (s1dR > 1.0) {
-        return 1.0;
-    }
-    return s1dR;
+    return fmin(fmax(0.0, s1dR), 1.0);
 }

@@ -23,6 +23,7 @@
 #include "../../generic/rbd_internal_generic.h"
 
 #if defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0)
+#include "rbd_internal_riscv64_rvv.h"
 #include "../rbd_internal_riscv64.h"
 #include "../bridge_riscv64.h"
 
@@ -50,22 +51,31 @@
  */
 HIDDEN FUNCTION_TARGET("arch=+v") void *rbdBridgeGenericWorkerRvv(struct rbdBridgeData *data)
 {
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long int vlmax;
+    unsigned int timeEnd;
+    unsigned long int vl;
 
-    vlmax = __riscv_vsetvlmax_e64m1();
+    /* Set CPU affinity */
+    setRiscv64ThreadAffinityRvv(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivisionRiscv64Rvv(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * vlmax;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimumRiscv64Rvv(time + batchSize, data->numTimes);
 
     /* For each time instant to be processed (blocks of N time instants)... */
-    while (time < data->numTimes) {
+    while (time < timeEnd) {
+        vl = __riscv_vsetvl_e64m1(timeEnd - time);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * vlmax));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * vlmax));
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + vl);
+        prefetchWrite(data->output, 1, data->numTimes, time + vl);
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepVNdRvv(data, time);
+        rbdBridgeGenericStepVNdRvv(data, time, vl);
         /* Increment current time instant */
-        time += (data->numCores * vlmax);
+        time += vl;
     }
 
     return NULL;
@@ -94,22 +104,31 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdBridgeGenericWorkerRvv(struct rbdBrid
  */
 HIDDEN FUNCTION_TARGET("arch=+v") void *rbdBridgeIdenticalWorkerRvv(struct rbdBridgeData *data)
 {
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long int vlmax;
+    unsigned int timeEnd;
+    unsigned long int vl;
 
-    vlmax = __riscv_vsetvlmax_e64m1();
+    /* Set CPU affinity */
+    setRiscv64ThreadAffinityRvv(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivisionRiscv64Rvv(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * vlmax;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimumRiscv64Rvv(time + batchSize, data->numTimes);
 
     /* For each time instant to be processed (blocks of N time instants)... */
-    while (time < data->numTimes) {
+    while (time < timeEnd) {
+        vl = __riscv_vsetvl_e64m1(timeEnd - time);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * vlmax));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * vlmax));
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + vl);
+        prefetchWrite(data->output, 1, data->numTimes, time + vl);
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepVNdRvv(data, time);
+        rbdBridgeIdenticalStepVNdRvv(data, time, vl);
         /* Increment current time instant */
-        time += (data->numCores * vlmax);
+        time += vl;
     }
 
     return NULL;
@@ -123,6 +142,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdBridgeIdenticalWorkerRvv(struct rbdBr
  * Input:
  *      struct rbdBridgeData *data
  *      unsigned int time
+ *      unsigned long int vl
  *
  * Output:
  *      None
@@ -135,15 +155,13 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdBridgeIdenticalWorkerRvv(struct rbdBr
  * Parameters:
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
+ *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdBridgeGenericStepVNdRvv(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=+v") void rbdBridgeGenericStepVNdRvv(struct rbdBridgeData *data, unsigned int time, unsigned long int vl)
 {
-    unsigned long int vl;
     vfloat64m1_t vNdR1, vNdR2, vNdR3, vNdR4, vNdR5;
     vfloat64m1_t vNdTmp1, vNdTmp2;
     vfloat64m1_t vNdRes;
-
-    vl = __riscv_vsetvl_e64m1(data->numTimes - time);
 
     /* Load reliabilities */
     vNdR1 = __riscv_vle64_v_f64m1(&data->reliabilities[(0 * data->numTimes) + time], vl);
@@ -189,6 +207,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdBridgeGenericStepVNdRvv(struct rbdBrid
  * Input:
  *      struct rbdBridgeData *data
  *      unsigned int time
+ *      unsigned long int vl
  *
  * Output:
  *      None
@@ -201,16 +220,14 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdBridgeGenericStepVNdRvv(struct rbdBrid
  * Parameters:
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
+ *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdBridgeIdenticalStepVNdRvv(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=+v") void rbdBridgeIdenticalStepVNdRvv(struct rbdBridgeData *data, unsigned int time, unsigned long int vl)
 {
-    unsigned long int vl;
     vfloat64m1_t vNdR, vNdU;
     vfloat64m1_t vNdTmp;
     vfloat64m1_t vNdRes;
     vfloat64m1_t vNdTwo;
-
-    vl = __riscv_vsetvl_e64m1(data->numTimes - time);
 
     /* Load reliability */
     vNdR = __riscv_vle64_v_f64m1(&data->reliabilities[time], vl);

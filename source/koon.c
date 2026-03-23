@@ -107,7 +107,7 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
             }
 
             /* For each available core... */
-            for (idx = 0; idx < (numCores - 1); ++idx) {
+            for (idx = 1; idx < numCores; ++idx) {
                 /* Prepare fill Output data structure */
                 fillData[idx].batchIdx = idx;
                 fillData[idx].numCores = numCores;
@@ -122,16 +122,16 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
             }
 
             /* Prepare fill Output data structure */
-            fillData[idx].batchIdx = idx;
-            fillData[idx].numCores = numCores;
-            fillData[idx].output = output;
-            fillData[idx].numTimes = numTimes;
-            fillData[idx].value = 0.0;
+            fillData[0].batchIdx = 0;
+            fillData[0].numCores = numCores;
+            fillData[0].output = output;
+            fillData[0].numTimes = numTimes;
+            fillData[0].value = 0.0;
 
-            (void)rbdKooNFillWorker(&fillData[idx]);
+            (void)rbdKooNFillWorker(&fillData[0]);
 
             /* Wait for created threads completion */
-            for (idx = 0; idx < (numCores - 1); ++idx) {
+            for (idx = 1; idx < numCores; ++idx) {
                 waitThread(threadHandles, idx);
             }
             free(threadHandles);
@@ -173,7 +173,7 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
             }
 
             /* For each available core... */
-            for (idx = 0; idx < (numCores - 1); ++idx) {
+            for (idx = 1; idx < numCores; ++idx) {
                 /* Prepare fill Output data structure */
                 fillData[idx].batchIdx = idx;
                 fillData[idx].numCores = numCores;
@@ -188,16 +188,16 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
             }
 
             /* Prepare fill Output data structure */
-            fillData[idx].batchIdx = idx;
-            fillData[idx].numCores = numCores;
-            fillData[idx].output = output;
-            fillData[idx].numTimes = numTimes;
-            fillData[idx].value = 1.0;
+            fillData[0].batchIdx = 0;
+            fillData[0].numCores = numCores;
+            fillData[0].output = output;
+            fillData[0].numTimes = numTimes;
+            fillData[0].value = 1.0;
 
-            (void)rbdKooNFillWorker(&fillData[idx]);
+            (void)rbdKooNFillWorker(&fillData[0]);
 
             /* Wait for created threads completion */
-            for (idx = 0; idx < (numCores - 1); ++idx) {
+            for (idx = 1; idx < numCores; ++idx) {
                 waitThread(threadHandles, idx);
             }
             free(threadHandles);
@@ -238,7 +238,7 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
         }
 
         /* For each available core... */
-        for (idx = 0; idx < (numCores - 1); ++idx) {
+        for (idx = 1; idx < numCores; ++idx) {
             /* Prepare generic KooN RBD koonData structure */
             koonData[idx].batchIdx = idx;
             koonData[idx].numCores = numCores;
@@ -256,20 +256,20 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
         }
 
         /* Prepare generic KooN RBD koonData structure */
-        koonData[idx].batchIdx = idx;
-        koonData[idx].numCores = numCores;
-        koonData[idx].reliabilities = reliabilities;
-        koonData[idx].output = output;
-        koonData[idx].numComponents = numComponents;
-        koonData[idx].minComponents = minComponents;
-        koonData[idx].numTimes = numTimes;
-        initKooNRecursionData(&koonData[idx].recur);
+        koonData[0].batchIdx = 0;
+        koonData[0].numCores = numCores;
+        koonData[0].reliabilities = reliabilities;
+        koonData[0].output = output;
+        koonData[0].numComponents = numComponents;
+        koonData[0].minComponents = minComponents;
+        koonData[0].numTimes = numTimes;
+        initKooNRecursionData(&koonData[0].recur);
 
         /* Directly invoke the KooN RBD Worker */
-        (void)rbdKooNGenericWorker(&koonData[idx]);
+        (void)rbdKooNGenericWorker(&koonData[0]);
 
         /* Wait for created threads completion */
-        for(idx = 0; idx < (numCores - 1); ++idx) {
+        for(idx = 1; idx < numCores; ++idx) {
             waitThread(threadHandles, idx);
         }
         /* Free Thread ID array */
@@ -382,7 +382,7 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
             }
 
             /* For each available core... */
-            for (idx = 0; idx < (numCores - 1); ++idx) {
+            for (idx = 1; idx < numCores; ++idx) {
                 /* Prepare fill Output data structure */
                 fillData[idx].batchIdx = idx;
                 fillData[idx].numCores = numCores;
@@ -397,16 +397,16 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
             }
 
             /* Prepare fill Output data structure */
-            fillData[idx].batchIdx = idx;
-            fillData[idx].numCores = numCores;
-            fillData[idx].output = output;
-            fillData[idx].numTimes = numTimes;
-            fillData[idx].value = 0.0;
+            fillData[0].batchIdx = 0;
+            fillData[0].numCores = numCores;
+            fillData[0].output = output;
+            fillData[0].numTimes = numTimes;
+            fillData[0].value = 0.0;
 
-            (void)rbdKooNFillWorker(&fillData[idx]);
+            (void)rbdKooNFillWorker(&fillData[0]);
 
             /* Wait for created threads completion */
-            for (idx = 0; idx < (numCores - 1); ++idx) {
+            for (idx = 1; idx < numCores; ++idx) {
                 waitThread(threadHandles, idx);
             }
             free(threadHandles);
@@ -448,7 +448,7 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
             }
 
             /* For each available core... */
-            for (idx = 0; idx < (numCores - 1); ++idx) {
+            for (idx = 1; idx < numCores; ++idx) {
                 /* Prepare fill Output data structure */
                 fillData[idx].batchIdx = idx;
                 fillData[idx].numCores = numCores;
@@ -463,16 +463,16 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
             }
 
             /* Prepare fill Output data structure */
-            fillData[idx].batchIdx = idx;
-            fillData[idx].numCores = numCores;
-            fillData[idx].output = output;
-            fillData[idx].numTimes = numTimes;
-            fillData[idx].value = 1.0;
+            fillData[0].batchIdx = 0;
+            fillData[0].numCores = numCores;
+            fillData[0].output = output;
+            fillData[0].numTimes = numTimes;
+            fillData[0].value = 1.0;
 
-            (void)rbdKooNFillWorker(&fillData[idx]);
+            (void)rbdKooNFillWorker(&fillData[0]);
 
             /* Wait for created threads completion */
-            for (idx = 0; idx < (numCores - 1); ++idx) {
+            for (idx = 1; idx < numCores; ++idx) {
                 waitThread(threadHandles, idx);
             }
             free(threadHandles);
@@ -537,7 +537,7 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
         }
 
         /* For each available core... */
-        for (idx = 0; idx < (numCores - 1); ++idx) {
+        for (idx = 1; idx < numCores; ++idx) {
             /* Prepare identical KooN RBD data structure */
             koonData[idx].batchIdx = idx;
             koonData[idx].numCores = numCores;
@@ -556,21 +556,21 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
         }
 
         /* Prepare identical KooN RBD data structure */
-        koonData[idx].batchIdx = idx;
-        koonData[idx].numCores = numCores;
-        koonData[idx].reliabilities = reliabilities;
-        koonData[idx].output = output;
-        koonData[idx].numComponents = numComponents;
-        koonData[idx].minComponents = minComponents;
-        koonData[idx].bComputeUnreliability = bComputeUnreliability;
-        koonData[idx].numTimes = numTimes;
-        koonData[idx].nCi = &nCi[0];
+        koonData[0].batchIdx = 0;
+        koonData[0].numCores = numCores;
+        koonData[0].reliabilities = reliabilities;
+        koonData[0].output = output;
+        koonData[0].numComponents = numComponents;
+        koonData[0].minComponents = minComponents;
+        koonData[0].bComputeUnreliability = bComputeUnreliability;
+        koonData[0].numTimes = numTimes;
+        koonData[0].nCi = &nCi[0];
 
         /* Directly invoke the identical KooN RBD Worker */
-        (void)rbdKooNIdenticalWorker(&koonData[idx]);
+        (void)rbdKooNIdenticalWorker(&koonData[0]);
 
         /* Wait for created threads completion */
-        for (idx = 0; idx < (numCores - 1); ++idx) {
+        for (idx = 1; idx < numCores; ++idx) {
             waitThread(threadHandles, idx);
         }
         /* Free Thread ID array */

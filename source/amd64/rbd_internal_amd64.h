@@ -177,7 +177,7 @@ unsigned int amd64Avx512fSupported(void);
  * Retrieve amd64-specific CPU info (supported instruction sets)
  *
  * Input:
- *      None
+ *      unsigned int numCores
  *
  * Output:
  *      None
@@ -190,12 +190,12 @@ unsigned int amd64Avx512fSupported(void);
  *  - If AVX512F instruction set is supported
  *
  * Parameters:
- *      None
+ *      numCores: number of cores in SMP system
  *
- * Return:
- *      None
+ * Return (unsigned int):
+ *      Number of cores in SMP system
  */
-void retrieveAmd64CpuInfo(void);
+unsigned int retrieveAmd64CpuInfo(unsigned int numCores);
 
 
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */

@@ -79,7 +79,7 @@ HIDDEN unsigned int x86Sse2Supported(void)
  * Retrieve x86-specific CPU info (supported instruction sets)
  *
  * Input:
- *      None
+ *      unsigned int numCores
  *
  * Output:
  *      None
@@ -89,12 +89,12 @@ HIDDEN unsigned int x86Sse2Supported(void)
  *  - If SSE2 instruction set is supported
  *
  * Parameters:
- *      None
+ *      numCores: number of cores in SMP system
  *
- * Return:
- *      None
+ * Return (unsigned int):
+ *      Number of cores in SMP system
  */
-HIDDEN void retrieveX86CpuInfo(void)
+HIDDEN unsigned int retrieveX86CpuInfo(unsigned int numCores)
 {
 #if defined(COMPILER_VS)
     int cpuInfo[4];
@@ -124,6 +124,8 @@ HIDDEN void retrieveX86CpuInfo(void)
         x86Cpu.sse2Supported = 1;
     }
 #endif
+
+    return numCores;
 }
 
 #endif /* defined(ARCH_X86) && CPU_ENABLE_SIMD != 0 */

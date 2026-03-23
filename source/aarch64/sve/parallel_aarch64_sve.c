@@ -50,23 +50,36 @@
  */
 HIDDEN FUNCTION_TARGET("+sve") void *rbdParallelGenericWorkerSve(struct rbdParallelData *data)
 {
+#if !defined(COMPILER_VS)
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long cntd;
+    unsigned int vectorSize;
+    unsigned int timeEnd;
+    svbool_t pg;
 
-    cntd = svcntd();
+    /* Set CPU affinity */
+    setAArch64ThreadAffinitySve(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivision(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * cntd;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimum(time + batchSize, data->numTimes);
 
     /* For each time instant to be processed (blocks of N time instants)... */
-    while (time < data->numTimes) {
+    while (time < timeEnd) {
+        pg = svwhilelt_b64(time, timeEnd);
+        vectorSize = svcntp_b64(svptrue_b64(), pg);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * cntd));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + vectorSize);
+        prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepVNdSve(data, time);
+        rbdParallelGenericStepVNdSve(pg, data, time);
         /* Increment current time instant */
-        time += (data->numCores * cntd);
+        time += vectorSize;
     }
+#endif /* !defined(COMPILER_VS) */
 
     return NULL;
 }
@@ -94,33 +107,48 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdParallelGenericWorkerSve(struct rbdParal
  */
 HIDDEN FUNCTION_TARGET("+sve") void *rbdParallelIdenticalWorkerSve(struct rbdParallelData *data)
 {
+#if !defined(COMPILER_VS)
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long cntd;
+    unsigned int vectorSize;
+    unsigned int timeEnd;
+    svbool_t pg;
 
-    cntd = svcntd();
+    /* Set CPU affinity */
+    setAArch64ThreadAffinitySve(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivision(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * cntd;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimum(time + batchSize, data->numTimes);
 
     /* For each time instant to be processed (blocks of N time instants)... */
-    while (time < data->numTimes) {
+    while (time < timeEnd) {
+        pg = svwhilelt_b64(time, timeEnd);
+        vectorSize = svcntp_b64(svptrue_b64(), pg);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * cntd));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * cntd));
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + vectorSize);
+        prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelIdenticalStepVNdSve(data, time);
+        rbdParallelIdenticalStepVNdSve(pg, data, time);
         /* Increment current time instant */
-        time += (data->numCores * cntd);
+        time += vectorSize;
     }
+#endif /* !defined(COMPILER_VS) */
 
     return NULL;
 }
 
+#if !defined(COMPILER_VS)
 /**
  * rbdParallelGenericStepVNdSve
  *
  * Generic Parallel RBD step function with AArch64 SVE
  *
  * Input:
+ *      svbool_t pg
  *      struct rbdParallelData *data
  *      unsigned int time
  *
@@ -133,17 +161,15 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdParallelIdenticalWorkerSve(struct rbdPar
  *  given their reliabilities
  *
  * Parameters:
+ *      pg: SVE Predicate for lane access
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdParallelGenericStepVNdSve(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+sve") void rbdParallelGenericStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time)
 {
-    svbool_t pg;
     unsigned char component;
     svfloat64_t vNdTmp;
     svfloat64_t vNdRes;
-
-    pg = svwhilelt_b64(time, data->numTimes);
 
     /* Compute reliability of Parallel RBD at current time instant */
     vNdRes = svld1(pg, &data->reliabilities[(0 * data->numTimes) + time]);
@@ -164,6 +190,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdParallelGenericStepVNdSve(struct rbdParal
  * Identical Parallel RBD step function with AArch64 SVE
  *
  * Input:
+ *      svbool_t pg
  *      struct rbdParallelData *data
  *      unsigned int time
  *
@@ -176,17 +203,15 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdParallelGenericStepVNdSve(struct rbdParal
  *  given their reliability
  *
  * Parameters:
+ *      pg: SVE Predicate for lane access
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdParallelIdenticalStepVNdSve(struct rbdParallelData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+sve") void rbdParallelIdenticalStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time)
 {
-    svbool_t pg;
     unsigned char component;
     svfloat64_t vNdU;
     svfloat64_t vNdRes;
-
-    pg = svwhilelt_b64(time, data->numTimes);
 
     /* Load unreliability */
     vNdU = svld1(pg, &data->reliabilities[time]);
@@ -202,6 +227,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdParallelIdenticalStepVNdSve(struct rbdPar
     /* Cap the computed reliability and set it into output array */
     svst1(pg, &data->output[time], capReliabilityVNdSve(pg, vNdRes));
 }
+#endif /* !defined(COMPILER_VS) */
 
 
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */

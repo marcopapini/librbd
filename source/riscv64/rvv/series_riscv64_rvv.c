@@ -25,6 +25,7 @@
 #include <sys/types.h>
 
 #if defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0)
+#include "rbd_internal_riscv64_rvv.h"
 #include "../rbd_internal_riscv64.h"
 #include "../series_riscv64.h"
 
@@ -52,22 +53,31 @@
  */
 HIDDEN FUNCTION_TARGET("arch=+v") void *rbdSeriesGenericWorkerRvv(struct rbdSeriesData *data)
 {
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long int vlmax;
+    unsigned int timeEnd;
+    unsigned long int vl;
 
-    vlmax = __riscv_vsetvlmax_e64m1();
+    /* Set CPU affinity */
+    setRiscv64ThreadAffinityRvv(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivisionRiscv64Rvv(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * vlmax;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimumRiscv64Rvv(time + batchSize, data->numTimes);
 
     /* For each time instant to be processed (blocks of N time instants)... */
-    while (time < data->numTimes) {
+    while (time < timeEnd) {
+        vl = __riscv_vsetvl_e64m1(timeEnd - time);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * vlmax));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * vlmax));
+        prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + vl);
+        prefetchWrite(data->output, 1, data->numTimes, time + vl);
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepVNdRvv(data, time);
+        rbdSeriesGenericStepVNdRvv(data, time, vl);
         /* Increment current time instant */
-        time += (data->numCores * vlmax);
+        time += vl;
     }
 
     return NULL;
@@ -96,22 +106,31 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdSeriesGenericWorkerRvv(struct rbdSeri
  */
 HIDDEN FUNCTION_TARGET("arch=+v") void *rbdSeriesIdenticalWorkerRvv(struct rbdSeriesData *data)
 {
+    unsigned int batchSize;
     unsigned int time;
-    unsigned long int vlmax;
+    unsigned int timeEnd;
+    unsigned long int vl;
 
-    vlmax = __riscv_vsetvlmax_e64m1();
+    /* Set CPU affinity */
+    setRiscv64ThreadAffinityRvv(data->batchIdx);
+
+    /* Retrieve size of data batch to be processed by worker */
+    batchSize = ceilDivisionRiscv64Rvv(data->numTimes, data->numCores);
     /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * vlmax;
+    time = batchSize * data->batchIdx;
+    /* Compute last time instant (excluded) to be processed by worker */
+    timeEnd = minimumRiscv64Rvv(time + batchSize, data->numTimes);
 
-    /* For each time instant to be processed (blocks of 2 time instants)... */
-    while (time < data->numTimes) {
+    /* For each time instant to be processed (blocks of N time instants)... */
+    while (time < timeEnd) {
+        vl = __riscv_vsetvl_e64m1(timeEnd - time);
         /* Prefetch for next iteration */
-        prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * vlmax));
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * vlmax));
+        prefetchRead(data->reliabilities, 1, data->numTimes, time + vl);
+        prefetchWrite(data->output, 1, data->numTimes, time + vl);
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepVNdRvv(data, time);
+        rbdSeriesIdenticalStepVNdRvv(data, time, vl);
         /* Increment current time instant */
-        time += (data->numCores * vlmax);
+        time += vl;
     }
 
     return NULL;
@@ -125,6 +144,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdSeriesIdenticalWorkerRvv(struct rbdSe
  * Input:
  *      struct rbdSeriesData *data
  *      unsigned int time
+ *      unsigned long int vl
  *
  * Output:
  *      None
@@ -137,15 +157,13 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdSeriesIdenticalWorkerRvv(struct rbdSe
  * Parameters:
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
+ *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdSeriesGenericStepVNdRvv(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=+v") void rbdSeriesGenericStepVNdRvv(struct rbdSeriesData *data, unsigned int time, unsigned long int vl)
 {
-    unsigned long int vl;
     unsigned char component;
     vfloat64m1_t vNdTmp;
     vfloat64m1_t vNdRes;
-
-    vl = __riscv_vsetvl_e64m1(data->numTimes - time);
 
     /* Compute reliability of Series RBD at current time instant */
     vNdRes = __riscv_vle64_v_f64m1(&data->reliabilities[(0 * data->numTimes) + time], vl);
@@ -166,6 +184,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdSeriesGenericStepVNdRvv(struct rbdSeri
  * Input:
  *      struct rbdSeriesData *data
  *      unsigned int time
+ *      unsigned long int vl
  *
  * Output:
  *      None
@@ -178,15 +197,13 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdSeriesGenericStepVNdRvv(struct rbdSeri
  * Parameters:
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
+ *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdSeriesIdenticalStepVNdRvv(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("arch=+v") void rbdSeriesIdenticalStepVNdRvv(struct rbdSeriesData *data, unsigned int time, unsigned long int vl)
 {
-    unsigned long int vl;
     unsigned char component;
     vfloat64m1_t vNdTmp;
     vfloat64m1_t vNdRes;
-
-    vl = __riscv_vsetvl_e64m1(data->numTimes - time);
 
     /* Load reliability */
     vNdTmp = __riscv_vle64_v_f64m1(&data->reliabilities[time], vl);

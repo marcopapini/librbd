@@ -42,9 +42,11 @@ void *rbdKooNFillWorkerSve(struct rbdKooNFillData *data);
 void *rbdKooNGenericWorkerSve(struct rbdKooNGenericData *data);
 void *rbdKooNIdenticalWorkerSve(struct rbdKooNIdenticalData *data);
 
-void rbdKooNRecursionVNdSve(struct rbdKooNGenericData *data, unsigned int time);
-void rbdKooNIdenticalSuccessStepVNdSve(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNIdenticalFailStepVNdSve(struct rbdKooNIdenticalData *data, unsigned int time);
+#if !defined(COMPILER_VS)
+void rbdKooNRecursionVNdSve(svbool_t pg, struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNIdenticalSuccessStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time);
+#endif /* !defined(COMPILER_VS) */
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 
