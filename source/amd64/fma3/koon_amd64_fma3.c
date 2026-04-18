@@ -29,32 +29,33 @@
 #include "../../generic/combinations.h"
 
 
-static __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
-static __m128d rbdKooNRecursiveStepV2dFma3(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
+static __m256d rbdKooNGenericShannonStepV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
+static __m128d rbdKooNGenericShannonStepV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
 
 
 /**
- * rbdKooNGenericWorkerFma3
+ * rbdKooNGenericShannonWorkerFma3
  *
- * Generic KooN RBD Worker function with amd64 FMA3 instruction set
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition with amd64 FMA3 instruction set
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker exploiting amd64 FMA3 instruction set.
+ *  This function implements the generic KooN RBD Worker exploiting Shannon Decomposition using
+ *  amd64 FMA3 instruction set.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNGenericWorkerFma3(struct rbdKooNGenericData *data)
+HIDDEN void *rbdKooNGenericShannonWorkerFma3(struct rbdKooNGenericShannonData *data)
 {
     unsigned int time;
 
@@ -67,21 +68,21 @@ HIDDEN void *rbdKooNGenericWorkerFma3(struct rbdKooNGenericData *data)
         prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
         prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionV4dFma3(data, time);
+        rbdKooNGenericShannonV4dFma3(data, time);
         /* Increment current time instant */
         time += (data->numCores * V4D);
     }
     /* Are (at least) 2 time instants remaining? */
     if ((time + V2D) <= data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionV2dFma3(data, time);
+        rbdKooNGenericShannonV2dFma3(data, time);
         /* Increment current time instant */
         time += V2D;
     }
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionS1d(data, time);
+        rbdKooNGenericShannonS1d(data, time);
     }
 
     return NULL;
@@ -200,34 +201,34 @@ HIDDEN void *rbdKooNIdenticalWorkerFma3(struct rbdKooNIdenticalData *data)
 }
 
 /**
- * rbdKooNRecursionV4dFma3
+ * rbdKooNGenericShannonV4dFma3
  *
- * Compute KooN RBD though Recursive method with amd64 FMA3 256bit
+ * Compute KooN RBD through Shannon Decomposition method with amd64 FMA3 256bit
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function computes the reliability of KooN RBD system through recursion
+ *  This function computes the reliability of KooN RBD system through Shannon Decomposition
  *  exploiting amd64 FMA3 256bit
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV4dFma3(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     __m256d v4dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v4dRes = rbdKooNRecursiveStepV4dFma3(data, time, (short)data->numComponents, (short)data->minComponents);
+    v4dRes = rbdKooNGenericShannonStepV4dFma3(data, time, (short)data->numComponents, (short)data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
@@ -297,34 +298,34 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma3(struct rbd
 }
 
 /**
- * rbdKooNRecursionV2dFma3
+ * rbdKooNGenericShannonV2dFma3
  *
- * Compute KooN RBD though Recursive method with amd64 FMA3 128bit
+ * Compute KooN RBD through Shannon Decomposition method with amd64 FMA3 128bit
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function computes the reliability of KooN RBD system through recursion
+ *  This function computes the reliability of KooN RBD system through Shannon Decomposition
  *  exploiting amd64 FMA3 128bit
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNRecursionV2dFma3(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     __m128d v2dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v2dRes = rbdKooNRecursiveStepV2dFma3(data, time, (short)data->numComponents, (short)data->minComponents);
+    v2dRes = rbdKooNGenericShannonStepV2dFma3(data, time, (short)data->numComponents, (short)data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
@@ -394,12 +395,12 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma3(struct rbd
 }
 
 /**
- * rbdKooNRecursiveStepV4dFma3
+ * rbdKooNGenericShannonStepV4dFma3
  *
- * Recursive KooN RBD Step function with amd64 FMA3 256bit
+ * Recursive KooN RBD Shannon Decomposition function with amd64 FMA3 256bit
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *      short n
  *      short k
@@ -408,11 +409,12 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma3(struct rbd
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting amd64 FMA3 256bit.
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method
+ *  exploiting amd64 FMA3 256bit.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
@@ -420,7 +422,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma3(struct rbd
  * Return (__m256d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("fma") __m256d rbdKooNGenericShannonStepV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
 {
     short best;
     __m256d *v4dR;
@@ -464,9 +466,9 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooN
             v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dR[idx]);
             v4dTmp2 = _mm256_fnmadd_pd(v4dTmp2, v4dR[idx], v4dTmp2);
         }
-        v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k-best);
+        v4dTmpRec = rbdKooNGenericShannonStepV4dFma3(data, time, n, k-best);
         v4dRes = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
-        v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k);
+        v4dTmpRec = rbdKooNGenericShannonStepV4dFma3(data, time, n, k);
         v4dRes = _mm256_fmadd_pd(v4dTmp2, v4dTmpRec, v4dRes);
         for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
             v4dTmp1 = v4dZeros;
@@ -498,9 +500,9 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooN
                 v4dTmp2 = _mm256_add_pd(v4dTmp2, v4dStepTmp2);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k-best+idx);
+            v4dTmpRec = rbdKooNGenericShannonStepV4dFma3(data, time, n, k-best+idx);
             v4dRes = _mm256_fmadd_pd(v4dTmp1, v4dTmpRec, v4dRes);
-            v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k-idx);
+            v4dTmpRec = rbdKooNGenericShannonStepV4dFma3(data, time, n, k-idx);
             v4dRes = _mm256_fmadd_pd(v4dTmp2, v4dTmpRec, v4dRes);
         }
         if ((best & 1) == 0) {
@@ -528,7 +530,7 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooN
                 v4dTmp1 = _mm256_add_pd(v4dTmp1, v4dStepTmp1);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k-best+idx);
+            v4dTmpRec = rbdKooNGenericShannonStepV4dFma3(data, time, n, k-best+idx);
             v4dRes = _mm256_fmadd_pd(v4dTmp1, v4dTmpRec, v4dRes);
         }
 
@@ -537,21 +539,21 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooN
 
     /* Recursively compute the Reliability */
     v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k-1);
+    v4dTmpRec = rbdKooNGenericShannonStepV4dFma3(data, time, n, k-1);
     v4dRes = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
     v4dTmp1 = _mm256_sub_pd(v4dOnes, v4dTmp1);
-    v4dTmpRec = rbdKooNRecursiveStepV4dFma3(data, time, n, k);
+    v4dTmpRec = rbdKooNGenericShannonStepV4dFma3(data, time, n, k);
     v4dRes = _mm256_fmadd_pd(v4dTmp1, v4dTmpRec, v4dRes);
     return v4dRes;
 }
 
 /**
- * rbdKooNRecursiveStepV2dFma3
+ * rbdKooNGenericShannonStepV2dFma3
  *
- * Recursive KooN RBD Step function with amd64 FMA3 128bit
+ * Recursive KooN RBD Shannon Decomposition function with amd64 FMA3 128bit
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *      short n
  *      short k
@@ -560,11 +562,12 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooN
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting amd64 FMA3 128bit.
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method
+ *  exploiting amd64 FMA3 128bit.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
@@ -572,7 +575,7 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNRecursiveStepV4dFma3(struct rbdKooN
  * Return (__m128d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma3(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("fma") __m128d rbdKooNGenericShannonStepV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
 {
     short best;
     __m128d *v2dR;
@@ -616,9 +619,9 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma3(struct rbdKooN
             v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dR[idx]);
             v2dTmp2 = _mm_fnmadd_pd(v2dTmp2, v2dR[idx], v2dTmp2);
         }
-        v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k-best);
+        v2dTmpRec = rbdKooNGenericShannonStepV2dFma3(data, time, n, k-best);
         v2dRes = _mm_mul_pd(v2dTmp1, v2dTmpRec);
-        v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k);
+        v2dTmpRec = rbdKooNGenericShannonStepV2dFma3(data, time, n, k);
         v2dRes = _mm_fmadd_pd(v2dTmp2, v2dTmpRec, v2dRes);
         for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
             v2dTmp1 = v2dZeros;
@@ -650,9 +653,9 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma3(struct rbdKooN
                 v2dTmp2 = _mm_add_pd(v2dTmp2, v2dStepTmp2);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k-best+idx);
+            v2dTmpRec = rbdKooNGenericShannonStepV2dFma3(data, time, n, k-best+idx);
             v2dRes = _mm_fmadd_pd(v2dTmp1, v2dTmpRec, v2dRes);
-            v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k-idx);
+            v2dTmpRec = rbdKooNGenericShannonStepV2dFma3(data, time, n, k-idx);
             v2dRes = _mm_fmadd_pd(v2dTmp2, v2dTmpRec, v2dRes);
         }
         if ((best & 1) == 0) {
@@ -680,7 +683,7 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma3(struct rbdKooN
                 v2dTmp1 = _mm_add_pd(v2dTmp1, v2dStepTmp1);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k-best+idx);
+            v2dTmpRec = rbdKooNGenericShannonStepV2dFma3(data, time, n, k-best+idx);
             v2dRes = _mm_fmadd_pd(v2dTmp1, v2dTmpRec, v2dRes);
         }
 
@@ -689,10 +692,10 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNRecursiveStepV2dFma3(struct rbdKooN
 
     /* Recursively compute the Reliability */
     v2dTmp1 = _mm_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k-1);
+    v2dTmpRec = rbdKooNGenericShannonStepV2dFma3(data, time, n, k-1);
     v2dRes = _mm_mul_pd(v2dTmp1, v2dTmpRec);
     v2dTmp1 = _mm_sub_pd(v2dOnes, v2dTmp1);
-    v2dTmpRec = rbdKooNRecursiveStepV2dFma3(data, time, n, k);
+    v2dTmpRec = rbdKooNGenericShannonStepV2dFma3(data, time, n, k);
     v2dRes = _mm_fmadd_pd(v2dTmp1, v2dTmpRec, v2dRes);
     return v2dRes;
 }

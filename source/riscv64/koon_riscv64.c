@@ -66,9 +66,10 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
 }
 
 /**
- * rbdKooNGenericWorker
+ * rbdKooNGenericShannonWorker
  *
- * Generic KooN RBD Worker function with RISC-V 64bit platform-specific instruction sets
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition with
+ * RISC-V 64bit platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -77,28 +78,30 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker RISC-V 64bit platform-specific instruction sets.
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method
+ *  exploiting RISC-V 64bit platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of a generic KooN RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a generic KooN RBD data. It is provided as a void *
- *                      to be compliant with the SMP computation of the Generic KooN RBD
+ *      arg: this parameter shall be the pointer to a generic KooN for Shannon Decomposition RBD data.
+ *                      It is provided as a void * to be compliant with the SMP computation of the
+ *                      Generic KooN for Shannon Decomposition RBD
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNGenericWorker(void *arg)
+HIDDEN void *rbdKooNGenericShannonWorker(void *arg)
 {
-    struct rbdKooNGenericData *data;
+    struct rbdKooNGenericShannonData *data;
 
     /* Retrieve generic KooN RBD data */
-    data = (struct rbdKooNGenericData *)arg;
+    data = (struct rbdKooNGenericShannonData *)arg;
 
     if (riscv64RvvSupported()) {
-        return rbdKooNGenericWorkerRvv(data);
+        return rbdKooNGenericShannonWorkerRvv(data);
     }
 
-    return rbdKooNGenericWorkerNoarch(data);
+    return rbdKooNGenericShannonWorkerNoarch(data);
 }
 
 /**

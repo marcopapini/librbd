@@ -30,6 +30,22 @@
 #if defined(OS_LINUX)
 #include <signal.h>
 #include <setjmp.h>
+#include <unistd.h>
+#include <sys/auxv.h>
+#include <sys/syscall.h>
+
+#if defined(__has_include)
+#if __has_include(<asm/hwprobe.h>)
+#include <asm/hwprobe.h>
+#endif
+#endif /* defined(__has_include) */
+#endif /* defined(OS_LINUX) */
+
+
+#if defined(OS_LINUX)
+#if defined(__NR_riscv_hwprobe) && defined(RISCV_HWPROBE_KEY_IMA_EXT_0) && defined(RISCV_HWPROBE_IMA_V)
+#define RISCV64_RVV_LINUX_USE_HWPROBE
+#endif
 #endif /* defined(OS_LINUX) */
 
 
@@ -37,6 +53,15 @@ struct riscv64Cpu
 {
     unsigned int rvvSupported;      /* RISC-V 64bit RVV instruction set supported */
 };
+
+#if defined(OS_LINUX)
+#if defined(RISCV64_RVV_LINUX_USE_HWPROBE)
+struct rbd_riscv_hwprobe {
+    int64_t key;                    /* RISC-V 64bit: Key for HWPROBE */
+    uint64_t value;                 /* RISC-V 64bit: Value for HWPROBE */
+};
+#endif /* defined(RISCV64_RVV_LINUX_USE_HWPROBE) */
+#endif /* defined(OS_LINUX) */
 
 
 static struct riscv64Cpu riscv64Cpu;
@@ -105,6 +130,12 @@ HIDDEN unsigned int retrieveRiscv64CpuInfo(unsigned int numCores)
 #if defined(OS_LINUX)
     struct sigaction sa_old, sa_new;
     unsigned long int vl;
+    unsigned long hwcap;
+    int rvv_found;
+#if defined(RISCV64_RVV_LINUX_USE_HWPROBE)
+    long ret;
+    struct rbd_riscv_hwprobe probe = { .key = RISCV_HWPROBE_KEY_IMA_EXT_0, .value = 0 };
+#endif /* defined(RISCV64_RVV_LINUX_USE_HWPROBE) */
 #endif /* defined(OS_LINUX) */
 
     /**
@@ -114,28 +145,49 @@ HIDDEN unsigned int retrieveRiscv64CpuInfo(unsigned int numCores)
     riscv64Cpu.rvvSupported = 0;
 
 #if defined(OS_LINUX)
-    /* Initialize new sigaction */
-    sa_new.sa_handler = sigill_handler;
-    sigemptyset(&sa_new.sa_mask);
-    sa_new.sa_flags = 0;
+    rvv_found = -1;
 
-    /* Update sigaction for SIGILL */
-    sigaction(SIGILL, &sa_new, &sa_old);
+#if defined(RISCV64_RVV_LINUX_USE_HWPROBE)
+    /* Perform syscall to probe HW */
+    ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, NULL, 0);
+    if (ret == 0) {
+        rvv_found = (probe.value & RISCV_HWPROBE_IMA_V) ? 1 : 0;
+    }
+#endif /* defined(RISCV64_RVV_LINUX_USE_HWPROBE) */
 
-    if (sigsetjmp(jmpbuf, 1) == 0) {
-        /* Try a harmless RVV instruction */
-        vl = __riscv_vsetvl_e8m1(1);
-        (void)vl;
+    if (rvv_found == -1) {
+        /* Get Hardware Capabilities */
+        hwcap = getauxval(AT_HWCAP);
+        if (hwcap != 0) {
+            /* Check 21st bit */
+            rvv_found = (hwcap & (1UL << ('V' - 'A'))) ? 1 : 0;
+        }
+    }
+
+    if (rvv_found == -1) {
+        /* Initialize new sigaction */
+        sa_new.sa_handler = sigill_handler;
+        sigemptyset(&sa_new.sa_mask);
+        sa_new.sa_flags = 0;
+
+        /* Update sigaction for SIGILL */
+        sigaction(SIGILL, &sa_new, &sa_old);
+
+        if (sigsetjmp(jmpbuf, 1) == 0) {
+            /* Try a harmless RVV instruction */
+            vl = __riscv_vsetvl_e8m1(1);
+            (void)vl;
+
+            /* Restore sigaction for SIGILL */
+            sigaction(SIGILL, &sa_old, NULL);
+
+            /* RVV is supported */
+            riscv64Cpu.rvvSupported = 1;
+        }
 
         /* Restore sigaction for SIGILL */
         sigaction(SIGILL, &sa_old, NULL);
-
-        /* RVV is supported */
-        riscv64Cpu.rvvSupported = 1;
     }
-
-    /* Restore sigaction for SIGILL */
-    sigaction(SIGILL, &sa_old, NULL);
 #endif /* defined(OS_LINUX) */
 
     /* Retrieve CPU sets for CPU affinity on RISC-V 64bit systems supporting RVV */

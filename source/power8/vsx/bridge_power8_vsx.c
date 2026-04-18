@@ -177,13 +177,13 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeGenericStepV2dVsx(struct rbdBridgeDa
     /* Compute reliability of Bridge block */
     v2dTmp1 = vec_add(v2dR1, v2dR3);
     v2dTmp2 = vec_add(v2dR2, v2dR4);
-    v2dTmp1 = vec_nmadd(v2dR1, v2dR3, v2dTmp1);
-    v2dTmp2 = vec_nmadd(v2dR2, v2dR4, v2dTmp2);
+    v2dTmp1 = vec_nmsub(v2dR1, v2dR3, v2dTmp1);
+    v2dTmp2 = vec_nmsub(v2dR2, v2dR4, v2dTmp2);
     v2dRes = vec_mul(v2dTmp1, v2dTmp2);
     /* At this point v2dRes vector contains VAL1 value */
     v2dTmp1 = vec_mul(v2dR3, v2dR4);
     v2dTmp2 = vec_mul(v2dR1, v2dR2);
-    v2dTmp1 = vec_nmadd(v2dTmp1, v2dTmp2, v2dTmp1);
+    v2dTmp1 = vec_nmsub(v2dTmp1, v2dTmp2, v2dTmp1);
     v2dTmp1 = vec_add(v2dTmp1, v2dTmp2);
     /* At this point v2dTmp1 vector contains VAL2 value */
     v2dRes = vec_sub(v2dRes, v2dTmp1);
@@ -227,7 +227,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeIdenticalStepV2dVsx(struct rbdBridge
     v2dU = vec_sub(v2dOnes, v2dR);
 
     /* Compute reliability of Bridge block */
-    v2dRes = vec_nmadd(v2dR, v2dR, v2dTwos);
+    v2dRes = vec_nmsub(v2dR, v2dR, v2dTwos);
     v2dTmp = vec_msub(v2dU, v2dU, v2dTwos);
     v2dRes = vec_mul(v2dRes, v2dR);
     v2dTmp = vec_madd(v2dTmp, v2dU, v2dRes);

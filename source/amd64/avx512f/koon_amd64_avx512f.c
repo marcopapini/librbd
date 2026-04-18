@@ -29,7 +29,7 @@
 #include "../../generic/combinations.h"
 
 
-static __m512d rbdKooNRecursiveStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
+static __m512d rbdKooNGenericShannonStepV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
 
 
 /**
@@ -60,22 +60,17 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNFillWorkerAvx512f(struct rbdKooNF
     __m256d m256d;
     __m128d m128d;
 
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V8D;
-
     /* Define vector (8d, 4d and 2d) with provided value */
     m512d = _mm512_set1_pd(data->value);
     m256d = _mm256_set1_pd(data->value);
     m128d = _mm_set1_pd(data->value);
 
     /* For each time instant (blocks of 8 time instants)... */
-    while ((time + V8D) <= data->numTimes) {
+    for (time = 0; (time + V8D) <= data->numTimes; time += V8D) {
         /* Prefetch for next iteration */
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
+        prefetchWrite(data->output, 1, data->numTimes, time + V8D);
         /* Fill output Reliability array with fixed value */
         _mm512_storeu_pd(&data->output[time], m512d);
-        /* Increment current time instant */
-        time += (data->numCores * V8D);
     }
     /* Are (at least) 4 time instants remaining? */
     if ((time + V4D) <= data->numTimes) {
@@ -101,27 +96,28 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNFillWorkerAvx512f(struct rbdKooNF
 }
 
 /**
- * rbdKooNGenericWorkerAvx512f
+ * rbdKooNGenericWorkerShannonAvx512f
  *
- * Generic KooN RBD Worker function with amd64 AVX512F instruction set
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition with amd64 AVX512F instruction set
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker exploiting amd64 AVX512F instruction set.
+ *  This function implements the generic KooN RBD Worker exploiting Shannon Decomposition using
+ *  amd64 AVX512F instruction set.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNGenericWorkerAvx512f(struct rbdKooNGenericData *data)
+HIDDEN void *rbdKooNGenericWorkerShannonAvx512f(struct rbdKooNGenericShannonData *data)
 {
     unsigned int time;
 
@@ -134,28 +130,28 @@ HIDDEN void *rbdKooNGenericWorkerAvx512f(struct rbdKooNGenericData *data)
         prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V8D));
         prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionV8dAvx512f(data, time);
+        rbdKooNGenericShannonV8dAvx512f(data, time);
         /* Increment current time instant */
         time += (data->numCores * V8D);
     }
     /* Are (at least) 4 time instants remaining? */
     if ((time + V4D) <= data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionV4dFma3(data, time);
+        rbdKooNGenericShannonV4dFma3(data, time);
         /* Increment current time instant */
         time += V4D;
     }
     /* Are (at least) 2 time instants remaining? */
     if ((time + V2D) <= data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionV2dFma3(data, time);
+        rbdKooNGenericShannonV2dFma3(data, time);
         /* Increment current time instant */
         time += V2D;
     }
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionS1d(data, time);
+        rbdKooNGenericShannonS1d(data, time);
     }
 
     return NULL;
@@ -300,34 +296,34 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data)
 }
 
 /**
- * rbdKooNRecursionV8dAvx512f
+ * rbdKooNGenericShannonV8dAvx512f
  *
- * Compute KooN RBD though Recursive method with amd64 AVX512F 512bit
+ * Compute KooN RBD through Shannon Decomposition method with amd64 AVX512F 512bit
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function computes the reliability of KooN RBD system through recursion
+ *  This function computes the reliability of KooN RBD system through Shannon Decomposition
  *  exploiting amd64 AVX512F 512bit
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNRecursionV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericShannonV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     __m512d v8dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v8dRes = rbdKooNRecursiveStepV8dAvx512f(data, time, (short)data->numComponents, (short)data->minComponents);
+    v8dRes = rbdKooNGenericShannonStepV8dAvx512f(data, time, (short)data->numComponents, (short)data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
 }
@@ -463,12 +459,12 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct
 }
 
 /**
- * rbdKooNRecursiveStepV8dAvx512f
+ * rbdKooNGenericShannonStepV8dAvx512f
  *
- * Recursive KooN RBD Step function with amd64 AVX512F 512bit
+ * Recursive KooN RBD Shannon Decomposition function with amd64 AVX512F 512bit
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *      short n
  *      short k
@@ -477,11 +473,12 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting amd64 AVX512F 512bit.
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method
+ *  exploiting amd64 AVX512F 512bit.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
@@ -489,7 +486,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct
  * Return (__m512d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("avx512f") __m512d rbdKooNGenericShannonStepV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
 {
     short best;
     __m512d *v8dR;
@@ -533,9 +530,9 @@ static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct 
             v8dTmp1 = _mm512_mul_pd(v8dTmp1, v8dR[idx]);
             v8dTmp2 = _mm512_fnmadd_pd(v8dTmp2, v8dR[idx], v8dTmp2);
         }
-        v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k-best);
+        v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k-best);
         v8dRes = _mm512_mul_pd(v8dTmp1, v8dTmpRec);
-        v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k);
+        v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k);
         v8dRes = _mm512_fmadd_pd(v8dTmp2, v8dTmpRec, v8dRes);
         for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
             v8dTmp1 = v8dZeros;
@@ -567,9 +564,9 @@ static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct 
                 v8dTmp2 = _mm512_add_pd(v8dTmp2, v8dStepTmp2);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k-best+idx);
+            v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k-best+idx);
             v8dRes = _mm512_fmadd_pd(v8dTmp1, v8dTmpRec, v8dRes);
-            v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k-idx);
+            v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k-idx);
             v8dRes = _mm512_fmadd_pd(v8dTmp2, v8dTmpRec, v8dRes);
         }
         if ((best & 1) == 0) {
@@ -597,7 +594,7 @@ static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct 
                 v8dTmp1 = _mm512_add_pd(v8dTmp1, v8dStepTmp1);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k-best+idx);
+            v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k-best+idx);
             v8dRes = _mm512_fmadd_pd(v8dTmp1, v8dTmpRec, v8dRes);
         }
 
@@ -606,10 +603,10 @@ static FUNCTION_TARGET("avx512f") __m512d rbdKooNRecursiveStepV8dAvx512f(struct 
 
     /* Recursively compute the Reliability */
     v8dTmp1 = _mm512_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k-1);
+    v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k-1);
     v8dRes = _mm512_mul_pd(v8dTmp1, v8dTmpRec);
     v8dTmp1 = _mm512_sub_pd(v8dOnes, v8dTmp1);
-    v8dTmpRec = rbdKooNRecursiveStepV8dAvx512f(data, time, n, k);
+    v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k);
     v8dRes = _mm512_fmadd_pd(v8dTmp1, v8dTmpRec, v8dRes);
     return v8dRes;
 }

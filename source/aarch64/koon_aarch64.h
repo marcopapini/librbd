@@ -30,20 +30,20 @@
 #if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for AArch64 NEON instruction set */
 void *rbdKooNFillWorkerNeon(struct rbdKooNFillData *data);
-void *rbdKooNGenericWorkerNeon(struct rbdKooNGenericData *data);
+void *rbdKooNGenericShannonWorkerNeon(struct rbdKooNGenericShannonData *data);
 void *rbdKooNIdenticalWorkerNeon(struct rbdKooNIdenticalData *data);
 
-void rbdKooNRecursionV2dNeon(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericShannonV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
 
 /* Platform-specific functions for AArch64 SVE instruction set */
 void *rbdKooNFillWorkerSve(struct rbdKooNFillData *data);
-void *rbdKooNGenericWorkerSve(struct rbdKooNGenericData *data);
+void *rbdKooNGenericShannonWorkerSve(struct rbdKooNGenericShannonData *data);
 void *rbdKooNIdenticalWorkerSve(struct rbdKooNIdenticalData *data);
 
 #if !defined(COMPILER_VS)
-void rbdKooNRecursionVNdSve(svbool_t pg, struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericShannonVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time);
 #endif /* !defined(COMPILER_VS) */

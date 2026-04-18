@@ -29,7 +29,7 @@
 #include "../../generic/combinations.h"
 
 
-static __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
+static __m256d rbdKooNGenericShannonStepV4dAvx(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
 
 
 /**
@@ -59,21 +59,16 @@ HIDDEN FUNCTION_TARGET("avx") void *rbdKooNFillWorkerAvx(struct rbdKooNFillData 
     __m256d m256d;
     __m128d m128d;
 
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V4D;
-
     /* Define vectors (4d and 2d) with provided value */
     m256d = _mm256_set1_pd(data->value);
     m128d = _mm_set1_pd(data->value);
 
     /* For each time instant (blocks of 4 time instants)... */
-    while ((time + V4D) <= data->numTimes) {
+    for (time = 0; (time + V4D) <= data->numTimes; time += V4D) {
         /* Prefetch for next iteration */
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
+        prefetchWrite(data->output, 1, data->numTimes, time + V4D);
         /* Fill output Reliability array with fixed value */
         _mm256_storeu_pd(&data->output[time], m256d);
-        /* Increment current time instant */
-        time += (data->numCores * V4D);
     }
     /* Are (at least) 2 time instants remaining? */
     if ((time + V2D) <= data->numTimes) {
@@ -92,27 +87,28 @@ HIDDEN FUNCTION_TARGET("avx") void *rbdKooNFillWorkerAvx(struct rbdKooNFillData 
 }
 
 /**
- * rbdKooNGenericWorkerAvx
+ * rbdKooNGenericShannonWorkerAvx
  *
- * Generic KooN RBD Worker function with amd64 AVX instruction set
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition with amd64 AVX instruction set
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker exploiting amd64 AVX instruction set.
+ *  This function implements the generic KooN RBD Worker exploiting Shannon Decomposition using
+ *  amd64 AVX instruction set.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNGenericWorkerAvx(struct rbdKooNGenericData *data)
+HIDDEN void *rbdKooNGenericShannonWorkerAvx(struct rbdKooNGenericShannonData *data)
 {
     unsigned int time;
 
@@ -125,21 +121,21 @@ HIDDEN void *rbdKooNGenericWorkerAvx(struct rbdKooNGenericData *data)
         prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V4D));
         prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionV4dAvx(data, time);
+        rbdKooNGenericShannonV4dAvx(data, time);
         /* Increment current time instant */
         time += (data->numCores * V4D);
     }
     /* Are (at least) 2 time instants remaining? */
     if ((time + V2D) <= data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionV2dSse2(data, time);
+        rbdKooNGenericShannonV2dSse2(data, time);
         /* Increment current time instant */
         time += V2D;
     }
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionS1d(data, time);
+        rbdKooNGenericShannonS1d(data, time);
     }
 
     return NULL;
@@ -258,34 +254,34 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data)
 }
 
 /**
- * rbdKooNRecursionV4dAvx
+ * rbdKooNGenericShannonV4dAvx
  *
- * Compute KooN RBD though Recursive method with amd64 AVX 256bit
+ * Compute KooN RBD through Shannon Decomposition method with amd64 AVX 256bit
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function computes the reliability of KooN RBD system through recursion
+ *  This function computes the reliability of KooN RBD system through Shannon Decomposition
  *  exploiting amd64 AVX 256bit
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdKooNRecursionV4dAvx(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNGenericShannonV4dAvx(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     __m256d v4dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v4dRes = rbdKooNRecursiveStepV4dAvx(data, time, (short)data->numComponents, (short)data->minComponents);
+    v4dRes = rbdKooNGenericShannonStepV4dAvx(data, time, (short)data->numComponents, (short)data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
@@ -422,12 +418,12 @@ HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooN
 }
 
 /**
- * rbdKooNRecursiveStepV4dAvx
+ * rbdKooNGenericShannonStepV4dAvx
  *
- * Recursive KooN RBD Step function with amd64 AVX 256bit
+ * Recursive KooN RBD Shannon Decomposition function with amd64 AVX 256bit
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *      short n
  *      short k
@@ -436,11 +432,12 @@ HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooN
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting amd64 AVX 256bit.
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method
+ *  exploiting amd64 AVX 256bit.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
@@ -448,7 +445,7 @@ HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooN
  * Return (__m256d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("avx") __m256d rbdKooNGenericShannonStepV4dAvx(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
 {
     short best;
     __m256d *v4dR;
@@ -495,9 +492,9 @@ static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNG
             v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dR[idx]);
             v4dTmp2 = _mm256_mul_pd(v4dTmp2, v4dU);
         }
-        v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k-best);
+        v4dTmpRec = rbdKooNGenericShannonStepV4dAvx(data, time, n, k-best);
         v4dRes = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
-        v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k);
+        v4dTmpRec = rbdKooNGenericShannonStepV4dAvx(data, time, n, k);
         v4dTmp2 = _mm256_mul_pd(v4dTmp2, v4dTmpRec);
         v4dRes = _mm256_add_pd(v4dRes, v4dTmp2);
         for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
@@ -532,10 +529,10 @@ static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNG
                 v4dTmp2 = _mm256_add_pd(v4dTmp2, v4dStepTmp2);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k-best+idx);
+            v4dTmpRec = rbdKooNGenericShannonStepV4dAvx(data, time, n, k-best+idx);
             v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
             v4dRes = _mm256_add_pd(v4dRes, v4dTmp1);
-            v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k-idx);
+            v4dTmpRec = rbdKooNGenericShannonStepV4dAvx(data, time, n, k-idx);
             v4dTmp2 = _mm256_mul_pd(v4dTmp2, v4dTmpRec);
             v4dRes = _mm256_add_pd(v4dRes, v4dTmp2);
         }
@@ -565,7 +562,7 @@ static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNG
                 v4dTmp1 = _mm256_add_pd(v4dTmp1, v4dStepTmp1);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k-best+idx);
+            v4dTmpRec = rbdKooNGenericShannonStepV4dAvx(data, time, n, k-best+idx);
             v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
             v4dRes = _mm256_add_pd(v4dRes, v4dTmp1);
         }
@@ -575,10 +572,10 @@ static FUNCTION_TARGET("avx") __m256d rbdKooNRecursiveStepV4dAvx(struct rbdKooNG
 
     /* Recursively compute the Reliability */
     v4dTmp1 = _mm256_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k-1);
+    v4dTmpRec = rbdKooNGenericShannonStepV4dAvx(data, time, n, k-1);
     v4dRes = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
     v4dTmp1 = _mm256_sub_pd(v4dOnes, v4dTmp1);
-    v4dTmpRec = rbdKooNRecursiveStepV4dAvx(data, time, n, k);
+    v4dTmpRec = rbdKooNGenericShannonStepV4dAvx(data, time, n, k);
     v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
     v4dRes = _mm256_add_pd(v4dRes, v4dTmp1);
     return v4dRes;

@@ -30,10 +30,10 @@
 #if (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for x86 SSE2 instruction set */
 void *rbdKooNFillWorkerSse2(struct rbdKooNFillData *data);
-void *rbdKooNGenericWorkerSse2(struct rbdKooNGenericData *data);
+void *rbdKooNGenericShannonWorkerSse2(struct rbdKooNGenericShannonData *data);
 void *rbdKooNIdenticalWorkerSse2(struct rbdKooNIdenticalData *data);
 
-void rbdKooNRecursionV2dSse2(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericShannonV2dSse2(struct rbdKooNGenericShannonData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
 #endif /* (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0) */

@@ -33,7 +33,7 @@
 #include "../x86/rbd_internal_x86.h"
 
 
-struct rbdKooNRecursionData
+struct rbdKooNGenericShannonRecursionData
 {
     unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
     unsigned char buff[(UCHAR_MAX + 1) * sizeof(__m512d)];      /* Temporary buffer */
@@ -65,7 +65,7 @@ FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR);
  *      None
  *
  * Output:
- *      struct rbdKooNRecursionData *data
+ *      struct rbdKooNGenericShannonRecursionData *data
  *
  * Description:
  *  This function initializes the provided RBD KooN Recursive Data
@@ -73,9 +73,9 @@ FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR);
  * Parameters:
  *      data: RBD KooN Recursive Data to be initialized
  */
-static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionData *data) {
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data) {
     unsigned long long alignAddr;
-    memset(data, 0, sizeof(struct rbdKooNRecursionData));
+    memset(data, 0, sizeof(struct rbdKooNGenericShannonRecursionData));
     alignAddr = ((unsigned long long)(&data->buff) + sizeof(__m512d) - 1) & ~(sizeof(__m512d) - 1);
     data->s1dR = (double *)alignAddr;
     data->v2dR = (__m128d *)alignAddr;

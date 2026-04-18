@@ -29,7 +29,7 @@
 #include "../../generic/combinations.h"
 
 
-static vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct rbdKooNGenericData *data, unsigned int time, short n, short k, unsigned long int vl);
+static vfloat64m1_t rbdKooNGenericShannonStepVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k, unsigned long int vl);
 
 
 /**
@@ -55,25 +55,15 @@ static vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct rbdKooNGenericData *data, 
  */
 HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNFillWorkerRvv(struct rbdKooNFillData *data)
 {
-    unsigned int batchSize;
     unsigned int time;
-    unsigned int timeEnd;
     unsigned long int vl;
     vfloat64m1_t vNdR;
 
-    /* Set CPU affinity */
-    setRiscv64ThreadAffinityRvv(data->batchIdx);
-
-    /* Retrieve size of data batch to be processed by worker */
-    batchSize = ceilDivisionRiscv64Rvv(data->numTimes, data->numCores);
-    /* Retrieve first time instant to be processed by worker */
-    time = batchSize * data->batchIdx;
-    /* Compute last time instant (excluded) to be processed by worker */
-    timeEnd = minimumRiscv64Rvv(time + batchSize, data->numTimes);
-
+    /* Set first time instant to be processed */
+    time = 0;
     /* For each time instant (blocks of N time instants)... */
-    while (time < timeEnd) {
-        vl = __riscv_vsetvl_e64m1(timeEnd - time);
+    while (time < data->numTimes) {
+        vl = __riscv_vsetvl_e64m1(data->numTimes - time);
         /* Define vector (Nd) with provided value */
         vNdR = __riscv_vfmv_v_f_f64m1(data->value, vl);
         /* Prefetch for next iteration */
@@ -88,27 +78,28 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNFillWorkerRvv(struct rbdKooNFillD
 }
 
 /**
- * rbdKooNGenericWorkerRvv
+ * rbdKooNGenericShannonWorkerRvv
  *
- * Generic KooN RBD Worker function with RISC-V 64bit 64bit RVV instruction set
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition with RISC-V 64bit 64bit RVV instruction set
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker exploiting RISC-V 64bit 64bit RVV instruction set.
+ *  This function implements the generic KooN RBD Worker exploiting Shannon Decomposition using
+ *  RISC-V 64bit 64bit RVV instruction set.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *
  * Return (void *):
  *      NULL
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNGenericWorkerRvv(struct rbdKooNGenericData *data)
+HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNGenericShannonWorkerRvv(struct rbdKooNGenericShannonData *data)
 {
     unsigned int batchSize;
     unsigned int time;
@@ -132,7 +123,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNGenericWorkerRvv(struct rbdKooNGe
         prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + vl);
         prefetchWrite(data->output, 1, data->numTimes, time + vl);
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionVNdRvv(data, time, vl);
+        rbdKooNGenericShannonVNdRvv(data, time, vl);
         /* Increment current time instant */
         time += vl;
     }
@@ -211,12 +202,12 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNIdenticalWorkerRvv(struct rbdKooN
 }
 
 /**
- * rbdKooNRecursionVNdRvv
+ * rbdKooNGenericShannonVNdRvv
  *
- * Compute KooN RBD through Recursive method with RISC-V 64bit RVV
+ * Compute KooN RBD through Shannon Decomposition method with with RISC-V 64bit RVV
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *      unsigned long int vl
  *
@@ -224,23 +215,23 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNIdenticalWorkerRvv(struct rbdKooN
  *      None
  *
  * Description:
- *  This function computes the reliability of KooN RBD system through recursion
+ *  This function computes the reliability of KooN RBD system through Shannon Decomposition
  *  exploiting RISC-V 64bit RVV
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      vl: Vector Length
  *
  * Return:
  *      None
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNRecursionVNdRvv(struct rbdKooNGenericData *data, unsigned int time, unsigned long int vl)
+HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNGenericShannonVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned long int vl)
 {
     vfloat64m1_t vNdRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    vNdRes = rbdKooNRecursiveStepVNdRvv(data, time, (short)data->numComponents, (short)data->minComponents, vl);
+    vNdRes = rbdKooNGenericShannonStepVNdRvv(data, time, (short)data->numComponents, (short)data->minComponents, vl);
     /* Cap the computed reliability and set it into output array */
     __riscv_vse64_v_f64m1(&data->output[time], capReliabilityVNdRvv(vNdRes, vl), vl);
 }
@@ -379,12 +370,12 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbd
 }
 
 /**
- * rbdKooNRecursiveStepVNdRvv
+ * rbdKooNGenericShannonStepVNdRvv
  *
- * Recursive KooN RBD Step function with RISC-V 64bit RVV
+ * Recursive KooN RBD Shannon Decomposition function with RISC-V 64bit RVV
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *      short n
  *      short k
@@ -394,11 +385,12 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbd
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting RISC-V 64bit RVV.
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method
+ *  exploiting RISC-V 64bit RVV.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
@@ -407,7 +399,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbd
  * Return (vfloat64m1_t):
  *      Computed reliability
  */
-static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct rbdKooNGenericData *data, unsigned int time, short n, short k, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNGenericShannonStepVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k, unsigned long int vl)
 {
     short best;
     double *s1dPtr;
@@ -456,9 +448,9 @@ static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct
             vNdTmp2 = __riscv_vfnmsac_vv_f64m1(vNdTmp2, vNdR, vNdTmp2, vl);
             __riscv_vse64_v_f64m1(&s1dPtr[idx * vlmax], vNdR, vl);
         }
-        vNdTmpRec = rbdKooNRecursiveStepVNdRvv(data, time, n, k-best, vl);
+        vNdTmpRec = rbdKooNGenericShannonStepVNdRvv(data, time, n, k-best, vl);
         vNdRes = __riscv_vfmul_vv_f64m1(vNdTmp1, vNdTmpRec, vl);
-        vNdTmpRec = rbdKooNRecursiveStepVNdRvv(data, time, n, k, vl);
+        vNdTmpRec = rbdKooNGenericShannonStepVNdRvv(data, time, n, k, vl);
         vNdRes = __riscv_vfmacc_vv_f64m1(vNdRes, vNdTmp2, vNdTmpRec, vl);
         for (idx = 1; idx < ceilDivisionRiscv64Rvv(best, 2); ++idx) {
             vNdTmp1 = __riscv_vfmv_v_f_f64m1(0.0, vl);
@@ -492,9 +484,9 @@ static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct
                 vNdTmp2 = __riscv_vfadd_vv_f64m1(vNdTmp2, vNdStepTmp2, vl);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            vNdTmpRec = rbdKooNRecursiveStepVNdRvv(data, time, n, k-best+idx, vl);
+            vNdTmpRec = rbdKooNGenericShannonStepVNdRvv(data, time, n, k-best+idx, vl);
             vNdRes = __riscv_vfmacc_vv_f64m1(vNdRes, vNdTmp1, vNdTmpRec, vl);
-            vNdTmpRec = rbdKooNRecursiveStepVNdRvv(data, time, n, k-idx, vl);
+            vNdTmpRec = rbdKooNGenericShannonStepVNdRvv(data, time, n, k-idx, vl);
             vNdRes = __riscv_vfmacc_vv_f64m1(vNdRes, vNdTmp2, vNdTmpRec, vl);
         }
         if ((best & 1) == 0) {
@@ -524,7 +516,7 @@ static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct
                 vNdTmp1 = __riscv_vfadd_vv_f64m1(vNdTmp1, vNdStepTmp1, vl);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            vNdTmpRec = rbdKooNRecursiveStepVNdRvv(data, time, n, k-best+idx, vl);
+            vNdTmpRec = rbdKooNGenericShannonStepVNdRvv(data, time, n, k-best+idx, vl);
             vNdRes = __riscv_vfmacc_vv_f64m1(vNdRes, vNdTmp1, vNdTmpRec, vl);
         }
 
@@ -533,10 +525,10 @@ static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNRecursiveStepVNdRvv(struct
 
     /* Recursively compute the Reliability */
     vNdTmp1 = __riscv_vle64_v_f64m1(&data->reliabilities[(--n * data->numTimes) + time], vl);
-    vNdTmpRec = rbdKooNRecursiveStepVNdRvv(data, time, n, k-1, vl);
+    vNdTmpRec = rbdKooNGenericShannonStepVNdRvv(data, time, n, k-1, vl);
     vNdRes = __riscv_vfmul_vv_f64m1(vNdTmp1, vNdTmpRec, vl);
     vNdTmp1 = __riscv_vfrsub_vf_f64m1(vNdTmp1, 1.0, vl);
-    vNdTmpRec = rbdKooNRecursiveStepVNdRvv(data, time, n, k, vl);
+    vNdTmpRec = rbdKooNGenericShannonStepVNdRvv(data, time, n, k, vl);
     vNdRes = __riscv_vfmacc_vv_f64m1(vNdRes, vNdTmp1, vNdTmpRec, vl);
     return vNdRes;
 }

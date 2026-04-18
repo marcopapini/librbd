@@ -29,7 +29,7 @@
 
 
 #if !defined(COMPILER_VS)
-static svfloat64_t rbdKooNRecursiveStepVNdSve(svbool_t pg, struct rbdKooNGenericData *data, unsigned int time, short n, short k);
+static svfloat64_t rbdKooNGenericShannonStepVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
 #endif /* !defined(COMPILER_VS) */
 
 
@@ -58,28 +58,18 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNFillWorkerSve(struct rbdKooNFillData
 {
 #if !defined(COMPILER_VS)
     svbool_t pg;
-    unsigned int batchSize;
     unsigned int time;
     unsigned int vectorSize;
-    unsigned int timeEnd;
     svfloat64_t vNdR;
-
-    /* Set CPU affinity */
-    setAArch64ThreadAffinitySve(data->batchIdx);
-
-    /* Retrieve size of data batch to be processed by worker */
-    batchSize = ceilDivision(data->numTimes, data->numCores);
-    /* Retrieve first time instant to be processed by worker */
-    time = batchSize * data->batchIdx;
-    /* Compute last time instant (excluded) to be processed by worker */
-    timeEnd = minimum(time + batchSize, data->numTimes);
 
     /* Define vector (Nd) with provided value */
     vNdR = svdup_f64(data->value);
 
+    /* Set first time instant to be processed */
+    time = 0;
     /* For each time instant (blocks of N time instants)... */
-    while (time < timeEnd) {
-        pg = svwhilelt_b64(time, timeEnd);
+    while (time < data->numTimes) {
+        pg = svwhilelt_b64(time, data->numTimes);
         vectorSize = svcntp_b64(svptrue_b64(), pg);
         /* Prefetch for next iteration */
         prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
@@ -94,27 +84,28 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNFillWorkerSve(struct rbdKooNFillData
 }
 
 /**
- * rbdKooNGenericWorkerSve
+ * rbdKooNGenericShannonWorkerSve
  *
- * Generic KooN RBD Worker function with AArch64 SVE instruction set
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition with AArch64 SVE instruction set
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker exploiting AArch64 SVE instruction set.
+ *  This function implements the generic KooN RBD Worker exploiting Shannon Decomposition using
+ *  AArch64 SVE instruction set.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNGenericWorkerSve(struct rbdKooNGenericData *data)
+HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNGenericShannonWorkerSve(struct rbdKooNGenericShannonData *data)
 {
 #if !defined(COMPILER_VS)
     unsigned int batchSize;
@@ -141,7 +132,7 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNGenericWorkerSve(struct rbdKooNGener
         prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + vectorSize);
         prefetchWrite(data->output, 1, data->numTimes, time + vectorSize);
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionVNdSve(pg, data, time);
+        rbdKooNGenericShannonVNdSve(pg, data, time);
         /* Increment current time instant */
         time += vectorSize;
     }
@@ -227,36 +218,36 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNIdenticalWorkerSve(struct rbdKooNIde
 
 #if !defined(COMPILER_VS)
 /**
- * rbdKooNRecursionVNdSve
+ * rbdKooNGenericShannonVNdSve
  *
- * Compute KooN RBD through Recursive method with AArch64 SVE
+ * Compute KooN RBD through Shannon Decomposition method with AArch64 SVE
  *
  * Input:
  *      svbool_t pg
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function computes the reliability of KooN RBD system through recursion
+ *  This function computes the reliability of KooN RBD system through Shannon Decomposition
  *  exploiting AArch64 SVE
  *
  * Parameters:
  *      pg: SVE Predicate for lane access
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdKooNRecursionVNdSve(svbool_t pg, struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("+sve") void rbdKooNGenericShannonVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     svfloat64_t vNdRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    vNdRes = rbdKooNRecursiveStepVNdSve(pg, data, time, (short)data->numComponents, (short)data->minComponents);
+    vNdRes = rbdKooNGenericShannonStepVNdSve(pg, data, time, (short)data->numComponents, (short)data->minComponents);
     /* Cap the computed reliability and set it into output array */
     svst1(pg, &data->output[time], capReliabilityVNdSve(pg, vNdRes));
 }
@@ -396,13 +387,13 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, 
 
 
 /**
- * rbdKooNRecursiveStepVNdSve
+ * rbdKooNGenericShannonStepVNdSve
  *
- * Recursive KooN RBD Step function with AArch64 SVE
+ * Recursive KooN RBD Shannon Decomposition function with AArch64 SVE
  *
  * Input:
  *      svbool_t pg
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *      short n
  *      short k
@@ -411,12 +402,13 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, 
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting AArch64 SVE.
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method
+ *  exploiting AArch64 SVE.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
  *      pg: SVE Predicate for lane access
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
@@ -424,7 +416,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, 
  * Return (float64x2_t):
  *  Computed reliability
  */
-static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNRecursiveStepVNdSve(svbool_t pg, struct rbdKooNGenericData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNGenericShannonStepVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
 {
     short best;
     double *s1dPtr;
@@ -473,9 +465,9 @@ static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNRecursiveStepVNdSve(svbool_t p
             vNdTmp2 = svmls_f64_x(pg, vNdTmp2, vNdR, vNdTmp2);
             svst1(pg, &s1dPtr[idx * cntd], vNdR);
         }
-        vNdTmpRec = rbdKooNRecursiveStepVNdSve(pg, data, time, n, k-best);
+        vNdTmpRec = rbdKooNGenericShannonStepVNdSve(pg, data, time, n, k-best);
         vNdRes = svmul_f64_x(pg, vNdTmp1, vNdTmpRec);
-        vNdTmpRec = rbdKooNRecursiveStepVNdSve(pg, data, time, n, k);
+        vNdTmpRec = rbdKooNGenericShannonStepVNdSve(pg, data, time, n, k);
         vNdRes = svmla_f64_x(pg, vNdRes, vNdTmp2, vNdTmpRec);
         for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
             vNdTmp1 = svdup_f64(0.0);
@@ -509,9 +501,9 @@ static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNRecursiveStepVNdSve(svbool_t p
                 vNdTmp2 = svadd_f64_x(pg, vNdTmp2, vNdStepTmp2);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            vNdTmpRec = rbdKooNRecursiveStepVNdSve(pg, data, time, n, k-best+idx);
+            vNdTmpRec = rbdKooNGenericShannonStepVNdSve(pg, data, time, n, k-best+idx);
             vNdRes = svmla_f64_x(pg, vNdRes, vNdTmp1, vNdTmpRec);
-            vNdTmpRec = rbdKooNRecursiveStepVNdSve(pg, data, time, n, k-idx);
+            vNdTmpRec = rbdKooNGenericShannonStepVNdSve(pg, data, time, n, k-idx);
             vNdRes = svmla_f64_x(pg, vNdRes, vNdTmp2, vNdTmpRec);
         }
         if ((best & 1) == 0) {
@@ -541,7 +533,7 @@ static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNRecursiveStepVNdSve(svbool_t p
                 vNdTmp1 = svadd_f64_x(pg, vNdTmp1, vNdStepTmp1);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            vNdTmpRec = rbdKooNRecursiveStepVNdSve(pg, data, time, n, k-best+idx);
+            vNdTmpRec = rbdKooNGenericShannonStepVNdSve(pg, data, time, n, k-best+idx);
             vNdRes = svmla_f64_x(pg, vNdRes, vNdTmp1, vNdTmpRec);
         }
 
@@ -550,10 +542,10 @@ static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNRecursiveStepVNdSve(svbool_t p
 
     /* Recursively compute the Reliability */
     vNdTmp1 = svld1(pg, &data->reliabilities[(--n * data->numTimes) + time]);
-    vNdTmpRec = rbdKooNRecursiveStepVNdSve(pg, data, time, n, k-1);
+    vNdTmpRec = rbdKooNGenericShannonStepVNdSve(pg, data, time, n, k-1);
     vNdRes = svmul_f64_x(pg, vNdTmp1, vNdTmpRec);
     vNdTmp1 = svsub_f64_x(pg, svdup_f64(1.0), vNdTmp1);
-    vNdTmpRec = rbdKooNRecursiveStepVNdSve(pg, data, time, n, k);
+    vNdTmpRec = rbdKooNGenericShannonStepVNdSve(pg, data, time, n, k);
     vNdRes = svmla_f64_x(pg, vNdRes, vNdTmp1, vNdTmpRec);
     return vNdRes;
 }

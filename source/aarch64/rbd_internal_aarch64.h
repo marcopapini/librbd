@@ -42,7 +42,7 @@
 #endif /* !defined(COMPILER_VS) */
 
 
-struct rbdKooNRecursionData
+struct rbdKooNGenericShannonRecursionData
 {
     unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
 #if !defined(COMPILER_VS)
@@ -76,7 +76,7 @@ svfloat64_t capReliabilityVNdSve(svbool_t pg, svfloat64_t vNdR);
  *      None
  *
  * Output:
- *      struct rbdKooNRecursionData *data
+ *      struct rbdKooNGenericShannonRecursionData *data
  *
  * Description:
  *  This function initializes the provided RBD KooN Recursive Data
@@ -84,9 +84,9 @@ svfloat64_t capReliabilityVNdSve(svbool_t pg, svfloat64_t vNdR);
  * Parameters:
  *      data: RBD KooN Recursive Data to be initialized
  */
-static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionData *data) {
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data) {
     unsigned long long alignAddr;
-    memset(data, 0, sizeof(struct rbdKooNRecursionData));
+    memset(data, 0, sizeof(struct rbdKooNGenericShannonRecursionData));
     alignAddr = ((unsigned long long)(&data->buff) + sizeof(float64x2_t) - 1) & ~(sizeof(float64x2_t) - 1);
     data->s1dR = (double *)alignAddr;
     data->v2dR = (float64x2_t *)alignAddr;

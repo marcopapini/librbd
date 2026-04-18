@@ -38,7 +38,7 @@ typedef vector double double64x2;
 #endif
 
 
-struct rbdKooNRecursionData
+struct rbdKooNGenericShannonRecursionData
 {
     unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
     unsigned char buff[(UCHAR_MAX + 1) * sizeof(double64x2)];  /* Temporary buffer */
@@ -61,7 +61,7 @@ VARIABLE_TARGET("vsx") extern const double64x2 v2dTwos;
  *      None
  *
  * Output:
- *      struct rbdKooNRecursionData *data
+ *      struct rbdKooNGenericShannonRecursionData *data
  *
  * Description:
  *  This function initializes the provided RBD KooN Recursive Data
@@ -69,9 +69,9 @@ VARIABLE_TARGET("vsx") extern const double64x2 v2dTwos;
  * Parameters:
  *      data: RBD KooN Recursive Data to be initialized
  */
-static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionData *data) {
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data) {
     unsigned long long alignAddr;
-    memset(data, 0, sizeof(struct rbdKooNRecursionData));
+    memset(data, 0, sizeof(struct rbdKooNGenericShannonRecursionData));
     alignAddr = ((unsigned long long)(&data->buff) + sizeof(double64x2) - 1) & ~(sizeof(double64x2) - 1);
     data->s1dR = (double *)alignAddr;
     data->v2dR = (double64x2 *)alignAddr;

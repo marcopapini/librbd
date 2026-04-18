@@ -22,8 +22,12 @@
 
 #include "generic/rbd_internal_generic.h"
 
+#include "generic/bdddata.h"
 #include "generic/binomial.h"
 #include "koon.h"
+
+
+static int rbdKooNGenericShannon(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes);
 
 
 /**
@@ -60,17 +64,31 @@
  */
 EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes)
 {
-    int res;
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-    struct rbdKooNGenericData *koonData;
-    struct rbdKooNFillData *fillData;
-    void *threadHandles;
-    unsigned int idx;
-    unsigned int numCores;
-#else                                           /* Under single processor-single thread conditional compiling */
-    struct rbdKooNGenericData koonData[1];
-    struct rbdKooNFillData fillData[1];
-#endif /* CPU_SMP */
+    struct rbdKooNFillData fillData;
+
+    /* If K is greater than N fill output array with all zeroes and return 0 */
+    if (minComponents > numComponents) {
+        /* Prepare fill Output data structure */
+        fillData.output = output;
+        fillData.numTimes = numTimes;
+        fillData.value = 0.0;
+
+        (void)rbdKooNFillWorker(&fillData);
+
+        return 1;
+    }
+
+    /* If K is 0 fill output array with all ones and return 0 */
+    if (minComponents == 0) {
+        /* Prepare fill Output data structure */
+        fillData.output = output;
+        fillData.numTimes = numTimes;
+        fillData.value = 1.0;
+
+        (void)rbdKooNFillWorker(&fillData);
+
+        return 1;
+    }
 
     /* If K is 1 then it is a Parallel block */
     if (minComponents == 1) {
@@ -82,221 +100,7 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
         return rbdSeriesGeneric(reliabilities, output, numComponents, numTimes);
     }
 
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-    /* Compute the number of used cores given the number of times */
-    numCores = computeNumCores(numTimes);
-#endif /* CPU_SMP */
-
-    res = 0;
-
-    /* If K is greater than N fill output array with all zeroes and return 0 */
-    if (minComponents > numComponents) {
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-        /* Allocate fill KooN data array, return -1 in case of allocation failure */
-        fillData = (struct rbdKooNFillData *)malloc(sizeof(struct rbdKooNFillData) * numCores);
-        if (fillData == NULL) {
-            return -1;
-        }
-
-        if (numCores > 1) {
-            /* Allocate Thread ID array, return -1 in case of allocation failure */
-            threadHandles = allocateThreadHandles(numCores - 1);
-            if (threadHandles == NULL) {
-                free(fillData);
-                return -1;
-            }
-
-            /* For each available core... */
-            for (idx = 1; idx < numCores; ++idx) {
-                /* Prepare fill Output data structure */
-                fillData[idx].batchIdx = idx;
-                fillData[idx].numCores = numCores;
-                fillData[idx].output = output;
-                fillData[idx].numTimes = numTimes;
-                fillData[idx].value = 0.0;
-
-                /* Create the fill output data Worker thread */
-                if (createThread(threadHandles, idx, &rbdKooNFillWorker, &fillData[idx]) < 0) {
-                    res = -1;
-                }
-            }
-
-            /* Prepare fill Output data structure */
-            fillData[0].batchIdx = 0;
-            fillData[0].numCores = numCores;
-            fillData[0].output = output;
-            fillData[0].numTimes = numTimes;
-            fillData[0].value = 0.0;
-
-            (void)rbdKooNFillWorker(&fillData[0]);
-
-            /* Wait for created threads completion */
-            for (idx = 1; idx < numCores; ++idx) {
-                waitThread(threadHandles, idx);
-            }
-            free(threadHandles);
-        }
-        else {
-#endif /* CPU_SMP */
-            /* Prepare fill Output data structure */
-            fillData[0].batchIdx = 0;
-            fillData[0].numCores = 1;
-            fillData[0].output = output;
-            fillData[0].numTimes = numTimes;
-            fillData[0].value = 0.0;
-
-            (void)rbdKooNFillWorker(&fillData[0]);
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-        }
-
-        free(fillData);
-#endif /* CPU_SMP */
-
-        return res;
-    }
-
-    /* If K is 0 fill output array with all ones and return 0 */
-    if (minComponents == 0) {
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-        /* Allocate fill KooN data array, return -1 in case of allocation failure */
-        fillData = (struct rbdKooNFillData *)malloc(sizeof(struct rbdKooNFillData) * numCores);
-        if (fillData == NULL) {
-            return -1;
-        }
-
-        if (numCores > 1) {
-            /* Allocate Thread ID array, return -1 in case of allocation failure */
-            threadHandles = allocateThreadHandles(numCores - 1);
-            if (threadHandles == NULL) {
-                free(fillData);
-                return -1;
-            }
-
-            /* For each available core... */
-            for (idx = 1; idx < numCores; ++idx) {
-                /* Prepare fill Output data structure */
-                fillData[idx].batchIdx = idx;
-                fillData[idx].numCores = numCores;
-                fillData[idx].output = output;
-                fillData[idx].numTimes = numTimes;
-                fillData[idx].value = 1.0;
-
-                /* Create the fill output data Worker thread */
-                if (createThread(threadHandles, idx, &rbdKooNFillWorker, &fillData[idx]) < 0) {
-                    res = -1;
-                }
-            }
-
-            /* Prepare fill Output data structure */
-            fillData[0].batchIdx = 0;
-            fillData[0].numCores = numCores;
-            fillData[0].output = output;
-            fillData[0].numTimes = numTimes;
-            fillData[0].value = 1.0;
-
-            (void)rbdKooNFillWorker(&fillData[0]);
-
-            /* Wait for created threads completion */
-            for (idx = 1; idx < numCores; ++idx) {
-                waitThread(threadHandles, idx);
-            }
-            free(threadHandles);
-        }
-        else {
-#endif /* CPU_SMP */
-            /* Prepare fill Output data structure */
-            fillData[0].batchIdx = 0;
-            fillData[0].numCores = 1;
-            fillData[0].output = output;
-            fillData[0].numTimes = numTimes;
-            fillData[0].value = 1.0;
-
-            (void)rbdKooNFillWorker(&fillData[0]);
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-        }
-
-        free(fillData);
-#endif /* CPU_SMP */
-
-        return res;
-    }
-
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-    /* Allocate generic KooN RBD data array, return -1 in case of allocation failure */
-    koonData = (struct rbdKooNGenericData *)malloc(sizeof(struct rbdKooNGenericData) * numCores);
-    if (koonData == NULL) {
-        return -1;
-    }
-
-    /* Is number of used cores greater than 1? */
-    if (numCores > 1) {
-        /* Allocate Thread ID array, return -1 in case of allocation failure */
-        threadHandles = allocateThreadHandles(numCores - 1);
-        if (threadHandles == NULL) {
-            free(koonData);
-            return -1;
-        }
-
-        /* For each available core... */
-        for (idx = 1; idx < numCores; ++idx) {
-            /* Prepare generic KooN RBD koonData structure */
-            koonData[idx].batchIdx = idx;
-            koonData[idx].numCores = numCores;
-            koonData[idx].reliabilities = reliabilities;
-            koonData[idx].output = output;
-            koonData[idx].numComponents = numComponents;
-            koonData[idx].minComponents = minComponents;
-            koonData[idx].numTimes = numTimes;
-            initKooNRecursionData(&koonData[idx].recur);
-
-            /* Create the generic KooN RBD Worker thread */
-            if (createThread(threadHandles, idx, &rbdKooNGenericWorker, &koonData[idx]) < 0) {
-                res = -1;
-            }
-        }
-
-        /* Prepare generic KooN RBD koonData structure */
-        koonData[0].batchIdx = 0;
-        koonData[0].numCores = numCores;
-        koonData[0].reliabilities = reliabilities;
-        koonData[0].output = output;
-        koonData[0].numComponents = numComponents;
-        koonData[0].minComponents = minComponents;
-        koonData[0].numTimes = numTimes;
-        initKooNRecursionData(&koonData[0].recur);
-
-        /* Directly invoke the KooN RBD Worker */
-        (void)rbdKooNGenericWorker(&koonData[0]);
-
-        /* Wait for created threads completion */
-        for(idx = 1; idx < numCores; ++idx) {
-            waitThread(threadHandles, idx);
-        }
-        /* Free Thread ID array */
-        free(threadHandles);
-    }
-    else {
-#endif /* CPU_SMP */
-        /* Prepare generic KooN RBD koonData structure */
-        koonData[0].batchIdx = 0;
-        koonData[0].numCores = 1;
-        koonData[0].reliabilities = reliabilities;
-        koonData[0].output = output;
-        koonData[0].numComponents = numComponents;
-        koonData[0].minComponents = minComponents;
-        koonData[0].numTimes = numTimes;
-        initKooNRecursionData(&koonData[0].recur);
-
-        /* Directly invoke the KooN RBD Worker */
-        (void)rbdKooNGenericWorker(&koonData[0]);
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-    }
-
-    /* Free generic KooN RBD koonData array */
-    free(koonData);
-#endif /* CPU_SMP */
-
-    return res;
+    return rbdKooNGenericShannon(reliabilities, output, numComponents, minComponents, numTimes);
 }
 
 /**
@@ -337,14 +141,13 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
     unsigned long long nCi[SCHAR_MAX];
     unsigned char minFaultyComponents;
     unsigned char bComputeUnreliability;
+    struct rbdKooNFillData fillData;
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
     struct rbdKooNIdenticalData *koonData;
-    struct rbdKooNFillData *fillData;
     void *threadHandles;
     unsigned int numCores;
 #else                                           /* Under single processor-single thread conditional compiling */
     struct rbdKooNIdenticalData koonData[1];
-    struct rbdKooNFillData fillData[1];
 #endif /* CPU_SMP */
 
     /* If K is 1 then it is a Parallel block */
@@ -366,132 +169,24 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
 
     /* If K is greater than N fill output array with all zeroes and return 0 */
     if (minComponents > numComponents) {
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-        /* Allocate fill KooN data array, return -1 in case of allocation failure */
-        fillData = (struct rbdKooNFillData *)malloc(sizeof(struct rbdKooNFillData) * numCores);
-        if(fillData == NULL) {
-            return -1;
-        }
+        /* Prepare fill Output data structure */
+        fillData.output = output;
+        fillData.numTimes = numTimes;
+        fillData.value = 0.0;
 
-        if (numCores > 1) {
-            /* Allocate Thread ID array, return -1 in case of allocation failure */
-            threadHandles = allocateThreadHandles(numCores - 1);
-            if (threadHandles == NULL) {
-                free(fillData);
-                return -1;
-            }
-
-            /* For each available core... */
-            for (idx = 1; idx < numCores; ++idx) {
-                /* Prepare fill Output data structure */
-                fillData[idx].batchIdx = idx;
-                fillData[idx].numCores = numCores;
-                fillData[idx].output = output;
-                fillData[idx].numTimes = numTimes;
-                fillData[idx].value = 0.0;
-
-                /* Create the fill output data Worker thread */
-                if (createThread(threadHandles, idx, &rbdKooNFillWorker, &fillData[idx]) < 0) {
-                    res = -1;
-                }
-            }
-
-            /* Prepare fill Output data structure */
-            fillData[0].batchIdx = 0;
-            fillData[0].numCores = numCores;
-            fillData[0].output = output;
-            fillData[0].numTimes = numTimes;
-            fillData[0].value = 0.0;
-
-            (void)rbdKooNFillWorker(&fillData[0]);
-
-            /* Wait for created threads completion */
-            for (idx = 1; idx < numCores; ++idx) {
-                waitThread(threadHandles, idx);
-            }
-            free(threadHandles);
-        }
-        else {
-#endif /* CPU_SMP */
-            /* Prepare fill Output data structure */
-            fillData[0].batchIdx = 0;
-            fillData[0].numCores = 1;
-            fillData[0].output = output;
-            fillData[0].numTimes = numTimes;
-            fillData[0].value = 0.0;
-
-            (void)rbdKooNFillWorker(&fillData[0]);
-#if CPU_SMP != 0
-        }
-
-        free(fillData);
-#endif /* CPU_SMP */
+        (void)rbdKooNFillWorker(&fillData);
 
         return res;
     }
 
     /* If K is 0 fill output array with all ones and return 0 */
     if (minComponents == 0) {
-#if CPU_SMP != 0                                /* Under SMP conditional compiling */
-        /* Allocate fill KooN data array, return -1 in case of allocation failure */
-        fillData = (struct rbdKooNFillData *)malloc(sizeof(struct rbdKooNFillData) * numCores);
-        if(fillData == NULL) {
-            return -1;
-        }
+        /* Prepare fill Output data structure */
+        fillData.output = output;
+        fillData.numTimes = numTimes;
+        fillData.value = 1.0;
 
-        if (numCores > 1) {
-            /* Allocate Thread ID array, return -1 in case of allocation failure */
-            threadHandles = allocateThreadHandles(numCores - 1);
-            if (threadHandles == NULL) {
-                free(fillData);
-                return -1;
-            }
-
-            /* For each available core... */
-            for (idx = 1; idx < numCores; ++idx) {
-                /* Prepare fill Output data structure */
-                fillData[idx].batchIdx = idx;
-                fillData[idx].numCores = numCores;
-                fillData[idx].output = output;
-                fillData[idx].numTimes = numTimes;
-                fillData[idx].value = 1.0;
-
-                /* Create the fill output data Worker thread */
-                if (createThread(threadHandles, idx, &rbdKooNFillWorker, &fillData[idx]) < 0) {
-                    res = -1;
-                }
-            }
-
-            /* Prepare fill Output data structure */
-            fillData[0].batchIdx = 0;
-            fillData[0].numCores = numCores;
-            fillData[0].output = output;
-            fillData[0].numTimes = numTimes;
-            fillData[0].value = 1.0;
-
-            (void)rbdKooNFillWorker(&fillData[0]);
-
-            /* Wait for created threads completion */
-            for (idx = 1; idx < numCores; ++idx) {
-                waitThread(threadHandles, idx);
-            }
-            free(threadHandles);
-        }
-        else {
-#endif /* CPU_SMP */
-            /* Prepare fill Output data structure */
-            fillData[0].batchIdx = 0;
-            fillData[0].numCores = 1;
-            fillData[0].output = output;
-            fillData[0].numTimes = numTimes;
-            fillData[0].value = 1.0;
-
-            (void)rbdKooNFillWorker(&fillData[0]);
-#if CPU_SMP != 0
-        }
-
-        free(fillData);
-#endif /* CPU_SMP */
+        (void)rbdKooNFillWorker(&fillData);
 
         return res;
     }
@@ -595,6 +290,137 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
     }
 
     /* Free identical KooN RBD data array */
+    free(koonData);
+#endif /* CPU_SMP */
+
+    return res;
+}
+
+
+/**
+ * rbdKooNGenericShannon
+ *
+ * Compute reliability of a generic KooN (K-out-of-N) RBD system using Shannon Decomposition
+ *
+ * Input:
+ *      double *reliabilities
+ *      unsigned char numComponents
+ *      unsigned char minComponents
+ *      unsigned int numTimes
+ *
+ * Output:
+ *      double *output
+ *
+ * Description:
+ *  This function computes the reliabilities over time of a generic KooN (K-out-of-N) RBD system,
+ *  i.e. a system for which the components are not identical, through the application of
+ *  Shannon Decomposition
+ *
+ * Parameters:
+ *      reliabilities: this matrix contains the input reliabilities of all components
+ *                      at the provided time instants. The matrix shall be provided as
+ *                      a NxT one, where N is the number of components of KooN RBD
+ *                      system and T is the number of time instants
+ *      output: this array contains the reliabilities of KooN RBD system computed at
+ *                      the provided time instants
+ *      numComponents: number of components in KooN RBD system (N)
+ *      minComponents: minimum number of components required by KooN RBD system (K)
+ *      numTimes: number of time instants over which KooN RBD shall be computed (T)
+ *
+ * Return (int):
+ *  0 in case of successful computation, < 0 otherwise
+ */
+static int rbdKooNGenericShannon(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes)
+{
+    int res;
+#if CPU_SMP != 0                                /* Under SMP conditional compiling */
+    struct rbdKooNGenericShannonData *koonData;
+    void *threadHandles;
+    unsigned int idx;
+    unsigned int numCores;
+#else                                           /* Under single processor-single thread conditional compiling */
+    struct rbdKooNGenericShannonData koonData[1];
+#endif /* CPU_SMP */
+
+#if CPU_SMP != 0                                /* Under SMP conditional compiling */
+    /* Compute the number of used cores given the number of times */
+    numCores = computeNumCores(numTimes);
+#endif /* CPU_SMP */
+
+    res = 0;
+
+#if CPU_SMP != 0                                /* Under SMP conditional compiling */
+    /* Allocate generic KooN RBD data array for Shannon Decomposition, return -1 in case of allocation failure */
+    koonData = (struct rbdKooNGenericShannonData *)malloc(sizeof(struct rbdKooNGenericShannonData) * numCores);
+    if (koonData == NULL) {
+        return -1;
+    }
+
+    /* Is number of used cores greater than 1? */
+    if (numCores > 1) {
+        /* Allocate Thread ID array, return -1 in case of allocation failure */
+        threadHandles = allocateThreadHandles(numCores - 1);
+        if (threadHandles == NULL) {
+            free(koonData);
+            return -1;
+        }
+
+        /* For each available core... */
+        for (idx = 1; idx < numCores; ++idx) {
+            /* Prepare generic KooN RBD koonData structure */
+            koonData[idx].batchIdx = idx;
+            koonData[idx].numCores = numCores;
+            koonData[idx].reliabilities = reliabilities;
+            koonData[idx].output = output;
+            koonData[idx].numComponents = numComponents;
+            koonData[idx].minComponents = minComponents;
+            koonData[idx].numTimes = numTimes;
+            initKooNRecursionData(&koonData[idx].recur);
+
+            /* Create the generic KooN RBD Worker thread */
+            if (createThread(threadHandles, idx, &rbdKooNGenericShannonWorker, &koonData[idx]) < 0) {
+                res = -1;
+            }
+        }
+
+        /* Prepare generic KooN RBD koonData structure */
+        koonData[0].batchIdx = 0;
+        koonData[0].numCores = numCores;
+        koonData[0].reliabilities = reliabilities;
+        koonData[0].output = output;
+        koonData[0].numComponents = numComponents;
+        koonData[0].minComponents = minComponents;
+        koonData[0].numTimes = numTimes;
+        initKooNRecursionData(&koonData[0].recur);
+
+        /* Directly invoke the KooN RBD Worker */
+        (void)rbdKooNGenericShannonWorker(&koonData[0]);
+
+        /* Wait for created threads completion */
+        for(idx = 1; idx < numCores; ++idx) {
+            waitThread(threadHandles, idx);
+        }
+        /* Free Thread ID array */
+        free(threadHandles);
+    }
+    else {
+#endif /* CPU_SMP */
+        /* Prepare generic KooN RBD koonData structure */
+        koonData[0].batchIdx = 0;
+        koonData[0].numCores = 1;
+        koonData[0].reliabilities = reliabilities;
+        koonData[0].output = output;
+        koonData[0].numComponents = numComponents;
+        koonData[0].minComponents = minComponents;
+        koonData[0].numTimes = numTimes;
+        initKooNRecursionData(&koonData[0].recur);
+
+        /* Directly invoke the KooN RBD Worker */
+        (void)rbdKooNGenericShannonWorker(&koonData[0]);
+#if CPU_SMP != 0                                /* Under SMP conditional compiling */
+    }
+
+    /* Free generic KooN RBD koonData array */
     free(koonData);
 #endif /* CPU_SMP */
 

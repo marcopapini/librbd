@@ -67,7 +67,7 @@
 #endif /* CPU_SMP != 0 */
 
 #if defined(ARCH_UNKNOWN) || (CPU_ENABLE_SIMD == 0)
-struct rbdKooNRecursionData
+struct rbdKooNGenericShannonRecursionData
 {
     unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
     unsigned char buff[(UCHAR_MAX + 1) * S1D * sizeof(double)];     /* Temporary buffer */
@@ -84,7 +84,7 @@ struct rbdKooNRecursionData
  *      None
  *
  * Output:
- *      struct rbdKooNRecursionData *data
+ *      struct rbdKooNGenericShannonRecursionData *data
  *
  * Description:
  *  This function initializes the provided RBD KooN Recursive Data
@@ -92,9 +92,9 @@ struct rbdKooNRecursionData
  * Parameters:
  *      data: RBD KooN Recursive Data to be initialized
  */
-static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionData *data) {
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data) {
     unsigned long long alignAddr;
-    memset(data, 0, sizeof(struct rbdKooNRecursionData));
+    memset(data, 0, sizeof(struct rbdKooNGenericShannonRecursionData));
     alignAddr = ((unsigned long long)(&data->buff) + sizeof(double) - 1) & ~(sizeof(double) - 1);
     data->s1dR = (double *)alignAddr;
 }
@@ -154,6 +154,32 @@ static inline ALWAYS_INLINE int minimum(int a, int b) {
 }
 
 /**
+ * u32min
+ *
+ * Compute minimum between two numbers
+ *
+ * Input:
+ *      unsigned int a
+ *      unsigned int b
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  Computes the minimum value of 32-bit unsigned integers
+ *
+ * Parameters:
+ *      a: first unsigned integer
+ *      b: second unsigned integer
+ *
+ * Return (int):
+ *  minimum value
+ */
+static inline unsigned int u32min(unsigned int a, unsigned int b) {
+    return (a <= b) ? a : b;
+}
+
+/**
  * floorDivision
  *
  * Compute floor value of division
@@ -203,6 +229,39 @@ static inline ALWAYS_INLINE int floorDivision(int dividend, int divisor) {
  */
 static inline ALWAYS_INLINE int ceilDivision(int dividend, int divisor) {
     return floorDivision(dividend + divisor - 1, divisor);
+}
+
+/**
+ * nextPow2
+ *
+ * Compute the next power of 2
+ *
+ * Input:
+ *      unsigned int n
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function computes the next power of 2 of the given number
+ *
+ * Parameters:
+ *      n: number to compute the next power of 2
+ *
+ * Return (unsigned int):
+ *  next power of 2 of n
+ */
+static inline unsigned int nextPow2(unsigned int n) {
+    if (n == 0) {
+        return 1;
+    }
+    n--;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+    return n + 1;
 }
 
 /**

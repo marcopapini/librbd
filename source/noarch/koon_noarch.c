@@ -29,7 +29,7 @@
 #include <limits.h>
 
 
-static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
+static double rbdKooNGenericShannonStepS1d(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
 
 
 #if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
@@ -66,9 +66,9 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
 }
 
 /**
- * rbdKooNGenericWorker
+ * rbdKooNGenericShannonWorker
  *
- * Generic KooN RBD Worker function
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition
  *
  * Input:
  *      void *arg
@@ -77,24 +77,25 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker.
+ *  This function implements the generic KooN RBD Worker exploiting Shannon Decomposition.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a generic KooN RBD data. It is provided as a void *
- *                      to be compliant with the SMP computation of the Generic KooN RBD
+ *      arg: this parameter shall be the pointer to a generic KooN for Shannon Decomposition RBD data.
+ *                      It is provided as a void * to be compliant with the SMP computation of the
+ *                      Generic KooN for Shannon Decomposition RBD
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNGenericWorker(void *arg)
+HIDDEN void *rbdKooNGenericShannonWorker(void *arg)
 {
-    struct rbdKooNGenericData *data;
+    struct rbdKooNGenericShannonData *data;
 
     /* Retrieve generic KooN RBD data */
-    data = (struct rbdKooNGenericData *)arg;
+    data = (struct rbdKooNGenericShannonData *)arg;
 
-    return rbdKooNGenericWorkerNoarch(data);
+    return rbdKooNGenericShannonWorkerNoarch(data);
 }
 
 /**
@@ -155,41 +156,38 @@ HIDDEN void *rbdKooNFillWorkerNoarch(struct rbdKooNFillData *data)
 {
     unsigned int time;
 
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx;
-
     /* For each time instant... */
-    while (time < data->numTimes) {
+    for (time = 0; time < data->numTimes; ++time) {
         /* Fill output Reliability array with fixed value */
-        data->output[time] = data->value;
-        time += data->numCores;
+        data->output[time++] = data->value;
     }
 
     return NULL;
 }
 
 /**
- * rbdKooNGenericWorkerNoarch
+ * rbdKooNGenericShannonWorkerNoarch
  *
- * Generic KooN RBD Worker function with platform-independent instruction sets
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition with platform-independent instruction sets
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker with platform-independent instruction sets.
+ *  This function implements the generic KooN RBD Worker exploiting Shannon Decomposition using
+ *  platform-independent instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of a generic KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNGenericWorkerNoarch(struct rbdKooNGenericData *data)
+HIDDEN void *rbdKooNGenericShannonWorkerNoarch(struct rbdKooNGenericShannonData *data)
 {
     unsigned int time;
 
@@ -199,7 +197,7 @@ HIDDEN void *rbdKooNGenericWorkerNoarch(struct rbdKooNGenericData *data)
     /* For each time instant to be processed... */
     while (time < data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionS1d(data, time);
+        rbdKooNGenericShannonS1d(data, time);
         /* Increment current time instant */
         time += data->numCores;
     }
@@ -260,33 +258,33 @@ HIDDEN void *rbdKooNIdenticalWorkerNoarch(struct rbdKooNIdenticalData *data)
 }
 
 /**
- * rbdKooNRecursionS1d
+ * rbdKooNGenericShannonS1d
  *
- * Compute KooN RBD though Recursive method
+ * Compute KooN RBD through Shannon Decomposition method
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function computes the reliability of KooN RBD system through recursion
+ *  This function computes the reliability of KooN RBD system through Shannon Decomposition
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN void rbdKooNRecursionS1d(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN void rbdKooNGenericShannonS1d(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     double s1dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    s1dRes = rbdKooNRecursiveStepS1d(data, time, (short)data->numComponents, (short)data->minComponents);
+    s1dRes = rbdKooNGenericShannonStepS1d(data, time, (short)data->numComponents, (short)data->minComponents);
     /* Cap the computed reliability and set it into output array */
     data->output[time] = capReliabilityS1d(s1dRes);
 }
@@ -423,12 +421,12 @@ HIDDEN void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsig
 
 
 /**
- * rbdKooNRecursiveStepS1d
+ * rbdKooNGenericShannonStepS1d
  *
- * Recursive KooN RBD Step function
+ * Recursive KooN RBD Shannon Decomposition function
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *      short n
  *      short k
@@ -437,11 +435,11 @@ HIDDEN void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsig
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function.
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
@@ -449,7 +447,7 @@ HIDDEN void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsig
  * Return (double):
  *  Computed reliability
  */
-static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
+static double rbdKooNGenericShannonStepS1d(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
 {
     short best;
     double *s1dR;
@@ -490,8 +488,8 @@ static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned 
             s1dTmp1 *= s1dR[idx];
             s1dTmp2 *= (1.0 - s1dR[idx]);
         }
-        s1dRes = s1dTmp1 * rbdKooNRecursiveStepS1d(data, time, n, k-best);
-        s1dRes += s1dTmp2 * rbdKooNRecursiveStepS1d(data, time, n, k);
+        s1dRes = s1dTmp1 * rbdKooNGenericShannonStepS1d(data, time, n, k-best);
+        s1dRes += s1dTmp2 * rbdKooNGenericShannonStepS1d(data, time, n, k);
         for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
             s1dTmp1 = 0.0;
             s1dTmp2 = 0.0;
@@ -522,8 +520,8 @@ static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned 
                 s1dTmp2 += s1dStepTmp2;
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            s1dRes += s1dTmp1 * rbdKooNRecursiveStepS1d(data, time, n, k-best+idx);
-            s1dRes += s1dTmp2 * rbdKooNRecursiveStepS1d(data, time, n, k-idx);
+            s1dRes += s1dTmp1 * rbdKooNGenericShannonStepS1d(data, time, n, k-best+idx);
+            s1dRes += s1dTmp2 * rbdKooNGenericShannonStepS1d(data, time, n, k-idx);
         }
         if ((best & 1) == 0) {
             idx = best / 2;
@@ -550,7 +548,7 @@ static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned 
                 s1dTmp1 += s1dStepTmp1;
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            s1dRes += s1dTmp1 * rbdKooNRecursiveStepS1d(data, time, n, k-best+idx);
+            s1dRes += s1dTmp1 * rbdKooNGenericShannonStepS1d(data, time, n, k-best+idx);
         }
 
         return s1dRes;
@@ -558,7 +556,7 @@ static double rbdKooNRecursiveStepS1d(struct rbdKooNGenericData *data, unsigned 
 
     /* Recursively compute the Reliability */
     s1dTmp1 = data->reliabilities[(--n * data->numTimes) + time];
-    s1dRes = s1dTmp1 * rbdKooNRecursiveStepS1d(data, time, n, k-1);
-    s1dRes += (1.0 - s1dTmp1) * rbdKooNRecursiveStepS1d(data, time, n, k);
+    s1dRes = s1dTmp1 * rbdKooNGenericShannonStepS1d(data, time, n, k-1);
+    s1dRes += (1.0 - s1dTmp1) * rbdKooNGenericShannonStepS1d(data, time, n, k);
     return s1dRes;
 }

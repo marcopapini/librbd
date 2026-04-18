@@ -36,7 +36,7 @@
 #define RVV_MAX_VECTOR_SIZE     8192        /* RISC-V 64bit RVV supports vectors of 65536 bits (8192 bytes) */
 
 
-struct rbdKooNRecursionData
+struct rbdKooNGenericShannonRecursionData
 {
     unsigned char comb[SCHAR_MAX + 1];      /* Array for the computation of KooN combinations */
     unsigned char buff[(UCHAR_MAX + 1) * RVV_MAX_VECTOR_SIZE];  /* Temporary buffer */
@@ -56,7 +56,7 @@ vfloat64m1_t capReliabilityVNdRvv(vfloat64m1_t vR, unsigned long int vl);
  *      None
  *
  * Output:
- *      struct rbdKooNRecursionData *data
+ *      struct rbdKooNGenericShannonRecursionData *data
  *
  * Description:
  *  This function initializes the provided RBD KooN Recursive Data
@@ -64,9 +64,9 @@ vfloat64m1_t capReliabilityVNdRvv(vfloat64m1_t vR, unsigned long int vl);
  * Parameters:
  *      data: RBD KooN Recursive Data to be initialized
  */
-static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNRecursionData *data) {
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data) {
     unsigned long long alignAddr;
-    memset(data, 0, sizeof(struct rbdKooNRecursionData));
+    memset(data, 0, sizeof(struct rbdKooNGenericShannonRecursionData));
     alignAddr = ((unsigned long long)(&data->buff) + sizeof(double) - 1) & ~(sizeof(double) - 1);
     data->s1dR = (double *)alignAddr;
 }

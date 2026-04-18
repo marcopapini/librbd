@@ -162,7 +162,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdParallelGenericStepV2dVsx(struct rbdParall
     v2dRes = vec_sub(v2dOnes, v2dRes);
     for (component = 1; component < data->numComponents; ++component) {
         v2dTmp = vectorLoad(&data->reliabilities[(component * data->numTimes) + time]);
-        v2dRes = vec_nmadd(v2dRes, v2dTmp, v2dRes);
+        v2dRes = vec_nmsub(v2dRes, v2dTmp, v2dRes);
     }
     v2dRes = vec_sub(v2dOnes, v2dRes);
 

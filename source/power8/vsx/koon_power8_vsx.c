@@ -28,7 +28,7 @@
 #include "../../generic/combinations.h"
 
 
-static double64x2 rbdKooNRecursiveStepV2dVsx(struct rbdKooNGenericData *data, unsigned int time, short n, short k);
+static double64x2 rbdKooNGenericShannonStepV2dVsx(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
 
 
 /**
@@ -57,19 +57,15 @@ HIDDEN FUNCTION_TARGET("vsx") void *rbdKooNFillWorkerVsx(struct rbdKooNFillData 
     unsigned int time;
     double64x2 m128d;
 
-    /* Retrieve first time instant to be processed by worker */
-    time = data->batchIdx * V2D;
     /* Define vector (2d) with provided value */
     m128d = vec_splats(data->value);
 
     /* For each time instant (blocks of 2 time instants)... */
-    while ((time + V2D) <= data->numTimes) {
+    for (time = 0; (time + V2D) <= data->numTimes; time += V2D) {
         /* Prefetch for next iteration */
-        prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
+        prefetchWrite(data->output, 1, data->numTimes, time + V2D);
         /* Fill output Reliability array with fixed value */
         vectorStore(&data->output[time], m128d);
-        /* Increment current time instant */
-        time += (data->numCores * V2D);
     }
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
@@ -81,27 +77,28 @@ HIDDEN FUNCTION_TARGET("vsx") void *rbdKooNFillWorkerVsx(struct rbdKooNFillData 
 }
 
 /**
- * rbdKooNGenericWorkerVsx
+ * rbdKooNGenericShannonWorkerVsx
  *
- * Generic KooN RBD Worker function with POWER8 VSX instruction set
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition with POWER8 VSX instruction set
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *
  * Output:
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker exploiting POWER8 VSX instruction set.
+ *  This function implements the generic KooN RBD Worker exploiting Shannon Decomposition using
+ *  POWER8 VSX instruction set.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
- *      data: Generic KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNGenericWorkerVsx(struct rbdKooNGenericData *data)
+HIDDEN void *rbdKooNGenericShannonWorkerVsx(struct rbdKooNGenericShannonData *data)
 {
     unsigned int time;
 
@@ -114,14 +111,14 @@ HIDDEN void *rbdKooNGenericWorkerVsx(struct rbdKooNGenericData *data)
         prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V2D));
         prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V2D));
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionV2dVsx(data, time);
+        rbdKooNGenericShannonV2dVsx(data, time);
         /* Increment current time instant */
         time += (data->numCores * V2D);
     }
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNRecursionS1d(data, time);
+        rbdKooNGenericShannonS1d(data, time);
     }
 
     return NULL;
@@ -214,34 +211,34 @@ HIDDEN void *rbdKooNIdenticalWorkerVsx(struct rbdKooNIdenticalData *data)
 }
 
 /**
- * rbdKooNRecursionV2dVsx
+ * rbdKooNGenericShannonV2dVsx
  *
- * Compute KooN RBD though Recursive method with POWER8 VSX 128bit
+ * Compute KooN RBD through Shannon Decomposition method with POWER8 VSX 128bit
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *
  * Output:
  *      None
  *
  * Description:
- *  This function computes the reliability of KooN RBD system through recursion
+ *  This function computes the reliability of KooN RBD system through Shannon Decomposition
  *  exploiting POWER8 VSX 128bit
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdKooNRecursionV2dVsx(struct rbdKooNGenericData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("vsx") void rbdKooNGenericShannonV2dVsx(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     double64x2 v2dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v2dRes = rbdKooNRecursiveStepV2dVsx(data, time, (short)data->numComponents, (short)data->minComponents);
+    v2dRes = rbdKooNGenericShannonStepV2dVsx(data, time, (short)data->numComponents, (short)data->minComponents);
     /* Cap the computed reliability and set it into output array */
     vectorStore(&data->output[time], capReliabilityV2dVsx(v2dRes));
 }
@@ -283,7 +280,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdKooNIdenticalSuccessStepV2dVsx(struct rbdK
     /* Initialize reliability to 0 */
     v2dRes = v2dZeros;
     /* Compute product between reliability and unreliability */
-    v2dTmp2 = vec_nmadd(v2dR, v2dR, v2dR);
+    v2dTmp2 = vec_nmsub(v2dR, v2dR, v2dR);
 
     /* For each iteration... */
     for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
@@ -377,12 +374,12 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdKooNIdenticalFailStepV2dVsx(struct rbdKooN
 }
 
 /**
- * rbdKooNRecursiveStepV2dVsx
+ * rbdKooNGenericShannonStepV2dVsx
  *
- * Recursive KooN RBD Step function with POWER8 VSX 128bit
+ * Recursive KooN RBD Shannon Decomposition function with POWER8 VSX 128bit
  *
  * Input:
- *      struct rbdKooNGenericData *data
+ *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *      short n
  *      short k
@@ -391,11 +388,12 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdKooNIdenticalFailStepV2dVsx(struct rbdKooN
  *      None
  *
  * Description:
- *  This function implements the recursive KooN RBD function exploiting POWER8 VSX 128bit.
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method
+ *  exploiting POWER8 VSX 128bit.
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
- *      data: KooN RBD data structure
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
@@ -403,7 +401,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdKooNIdenticalFailStepV2dVsx(struct rbdKooN
  * Return (vector double):
  *  Computed reliability
  */
-static FUNCTION_TARGET("vsx") double64x2 rbdKooNRecursiveStepV2dVsx(struct rbdKooNGenericData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("vsx") double64x2 rbdKooNGenericShannonStepV2dVsx(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
 {
     short best;
     double64x2 *v2dR;
@@ -430,7 +428,7 @@ static FUNCTION_TARGET("vsx") double64x2 rbdKooNRecursiveStepV2dVsx(struct rbdKo
         v2dRes = v2dOnes;
         while (n > 0) {
             v2dTmp1 = vectorLoad(&data->reliabilities[(--n * data->numTimes) + time]);
-            v2dRes = vec_nmadd(v2dRes, v2dTmp1, v2dRes);
+            v2dRes = vec_nmsub(v2dRes, v2dTmp1, v2dRes);
         }
         return vec_sub(v2dOnes, v2dRes);
     }
@@ -445,11 +443,11 @@ static FUNCTION_TARGET("vsx") double64x2 rbdKooNRecursiveStepV2dVsx(struct rbdKo
         for (idx = 0; idx < best; idx++) {
             v2dR[idx] = vectorLoad(&data->reliabilities[(--n * data->numTimes) + time]);
             v2dTmp1 = vec_mul(v2dTmp1, v2dR[idx]);
-            v2dTmp2 = vec_nmadd(v2dTmp2, v2dR[idx], v2dTmp2);
+            v2dTmp2 = vec_nmsub(v2dTmp2, v2dR[idx], v2dTmp2);
         }
-        v2dTmpRec = rbdKooNRecursiveStepV2dVsx(data, time, n, k-best);
+        v2dTmpRec = rbdKooNGenericShannonStepV2dVsx(data, time, n, k-best);
         v2dRes = vec_mul(v2dTmp1, v2dTmpRec);
-        v2dTmpRec = rbdKooNRecursiveStepV2dVsx(data, time, n, k);
+        v2dTmpRec = rbdKooNGenericShannonStepV2dVsx(data, time, n, k);
         v2dRes = vec_madd(v2dTmp2, v2dTmpRec, v2dRes);
         for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
             v2dTmp1 = v2dZeros;
@@ -462,28 +460,28 @@ static FUNCTION_TARGET("vsx") double64x2 rbdKooNRecursiveStepV2dVsx(struct rbdKo
                 jj = 0;
                 while (ii < idx) {
                     if (data->recur.comb[ii] == jj) {
-                        v2dStepTmp1 = vec_nmadd(v2dStepTmp1, v2dR[jj], v2dStepTmp1);
+                        v2dStepTmp1 = vec_nmsub(v2dStepTmp1, v2dR[jj], v2dStepTmp1);
                         v2dStepTmp2 = vec_mul(v2dStepTmp2, v2dR[jj]);
                         ++ii;
                     }
                     else {
                         v2dStepTmp1 = vec_mul(v2dStepTmp1, v2dR[jj]);
-                        v2dStepTmp2 = vec_nmadd(v2dStepTmp2, v2dR[jj], v2dStepTmp2);
+                        v2dStepTmp2 = vec_nmsub(v2dStepTmp2, v2dR[jj], v2dStepTmp2);
                     }
                     ++jj;
                 }
                 while (jj < best) {
                     v2dStepTmp1 = vec_mul(v2dStepTmp1, v2dR[jj]);
-                    v2dStepTmp2 = vec_nmadd(v2dStepTmp2, v2dR[jj], v2dStepTmp2);
+                    v2dStepTmp2 = vec_nmsub(v2dStepTmp2, v2dR[jj], v2dStepTmp2);
                     ++jj;
                 }
                 v2dTmp1 = vec_add(v2dTmp1, v2dStepTmp1);
                 v2dTmp2 = vec_add(v2dTmp2, v2dStepTmp2);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v2dTmpRec = rbdKooNRecursiveStepV2dVsx(data, time, n, k-best+idx);
+            v2dTmpRec = rbdKooNGenericShannonStepV2dVsx(data, time, n, k-best+idx);
             v2dRes = vec_madd(v2dTmp1, v2dTmpRec, v2dRes);
-            v2dTmpRec = rbdKooNRecursiveStepV2dVsx(data, time, n, k-idx);
+            v2dTmpRec = rbdKooNGenericShannonStepV2dVsx(data, time, n, k-idx);
             v2dRes = vec_madd(v2dTmp2, v2dTmpRec, v2dRes);
         }
         if ((best & 1) == 0) {
@@ -496,7 +494,7 @@ static FUNCTION_TARGET("vsx") double64x2 rbdKooNRecursiveStepV2dVsx(struct rbdKo
                 jj = 0;
                 while (ii < idx) {
                     if (data->recur.comb[ii] == jj) {
-                        v2dStepTmp1 = vec_nmadd(v2dStepTmp1, v2dR[jj], v2dStepTmp1);
+                        v2dStepTmp1 = vec_nmsub(v2dStepTmp1, v2dR[jj], v2dStepTmp1);
                         ++ii;
                     }
                     else {
@@ -511,7 +509,7 @@ static FUNCTION_TARGET("vsx") double64x2 rbdKooNRecursiveStepV2dVsx(struct rbdKo
                 v2dTmp1 = vec_add(v2dTmp1, v2dStepTmp1);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v2dTmpRec = rbdKooNRecursiveStepV2dVsx(data, time, n, k-best+idx);
+            v2dTmpRec = rbdKooNGenericShannonStepV2dVsx(data, time, n, k-best+idx);
             v2dRes = vec_madd(v2dTmp1, v2dTmpRec, v2dRes);
         }
 
@@ -520,10 +518,10 @@ static FUNCTION_TARGET("vsx") double64x2 rbdKooNRecursiveStepV2dVsx(struct rbdKo
 
     /* Recursively compute the Reliability */
     v2dTmp1 = vectorLoad(&data->reliabilities[(--n * data->numTimes) + time]);
-    v2dTmpRec = rbdKooNRecursiveStepV2dVsx(data, time, n, k-1);
+    v2dTmpRec = rbdKooNGenericShannonStepV2dVsx(data, time, n, k-1);
     v2dRes = vec_mul(v2dTmp1, v2dTmpRec);
     v2dTmp1 = vec_sub(v2dOnes, v2dTmp1);
-    v2dTmpRec = rbdKooNRecursiveStepV2dVsx(data, time, n, k);
+    v2dTmpRec = rbdKooNGenericShannonStepV2dVsx(data, time, n, k);
     v2dRes = vec_madd(v2dTmp1, v2dTmpRec, v2dRes);
     return v2dRes;
 }

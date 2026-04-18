@@ -32,49 +32,47 @@
 
 struct rbdKooNFillData
 {
-    unsigned char batchIdx;                         /* Index of work batch */
-    unsigned int numCores;                          /* Number of threads in SMP system */
-    double *output;                                 /* Array of output Reliability filled with fixed value */
-    unsigned int numTimes;                          /* Number of time instants to compute T */
-    double value;                                   /* Fixed value used to fill output Reliability array */
+    double *output;                                     /* Array of output Reliability filled with fixed value */
+    unsigned int numTimes;                              /* Number of time instants to compute T */
+    double value;                                       /* Fixed value used to fill output Reliability array */
 };
 
-struct rbdKooNGenericData
+struct rbdKooNGenericShannonData
 {
-    unsigned char batchIdx;                         /* Index of work batch */
-    unsigned int numCores;                          /* Number of threads in SMP system */
-    double *reliabilities;                          /* Matrix of reliabilities of KooN RBD system */
-    double *output;                                 /* Array of computed reliabilities */
-    unsigned char numComponents;                    /* Number of components of KooN RBD system N */
-    unsigned char minComponents;                    /* Minimum number of components in the KooN system (K) */
-    unsigned int numTimes;                          /* Number of time instants to compute T */
-    struct rbdKooNRecursionData recur;              /* Additional data needed for recursive algorithm */
+    unsigned char batchIdx;                             /* Index of work batch */
+    unsigned int numCores;                              /* Number of threads in SMP system */
+    double *reliabilities;                              /* Matrix of reliabilities of KooN RBD system */
+    double *output;                                     /* Array of computed reliabilities */
+    unsigned char numComponents;                        /* Number of components of KooN RBD system N */
+    unsigned char minComponents;                        /* Minimum number of components in the KooN system (K) */
+    unsigned int numTimes;                              /* Number of time instants to compute T */
+    struct rbdKooNGenericShannonRecursionData recur;    /* Additional data needed for recursive algorithm */
 };
 
 struct rbdKooNIdenticalData
 {
-    unsigned char batchIdx;                         /* Index of work batch */
-    unsigned int numCores;                          /* Number of threads in SMP system */
-    double *reliabilities;                          /* Array of reliabilities of KooN RBD system */
-    double *output;                                 /* Array of computed reliabilities */
-    unsigned char numComponents;                    /* Number of components of KooN RBD system N */
-    unsigned char minComponents;                    /* Minimum number of components in the KooN system (K) */
-    unsigned char bComputeUnreliability;            /* Flag for KooN resolution through usage of Unreliability */
-    unsigned int numTimes;                          /* Number of time instants to compute T */
-    unsigned long long *nCi;                        /* Array of nCi values computed for n=N and i in [K, N] */
+    unsigned char batchIdx;                             /* Index of work batch */
+    unsigned int numCores;                              /* Number of threads in SMP system */
+    double *reliabilities;                              /* Array of reliabilities of KooN RBD system */
+    double *output;                                     /* Array of computed reliabilities */
+    unsigned char numComponents;                        /* Number of components of KooN RBD system N */
+    unsigned char minComponents;                        /* Minimum number of components in the KooN system (K) */
+    unsigned char bComputeUnreliability;                /* Flag for KooN resolution through usage of Unreliability */
+    unsigned int numTimes;                              /* Number of time instants to compute T */
+    unsigned long long *nCi;                            /* Array of nCi values computed for n=N and i in [K, N] */
 };
 
 /* Platform-generic and platform-specific functions */
 void *rbdKooNFillWorker(void *arg);
-void *rbdKooNGenericWorker(void *arg);
+void *rbdKooNGenericShannonWorker(void *arg);
 void *rbdKooNIdenticalWorker(void *arg);
 
 /* Platform-generic functions */
 void *rbdKooNFillWorkerNoarch(struct rbdKooNFillData *data);
-void *rbdKooNGenericWorkerNoarch(struct rbdKooNGenericData *data);
+void *rbdKooNGenericShannonWorkerNoarch(struct rbdKooNGenericShannonData *data);
 void *rbdKooNIdenticalWorkerNoarch(struct rbdKooNIdenticalData *data);
 
-void rbdKooNRecursionS1d(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericShannonS1d(struct rbdKooNGenericShannonData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);
 

@@ -59,16 +59,17 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
     data = (struct rbdKooNFillData *)arg;
 
     if (x86Sse2Supported()) {
-        return rbdKooNGenericWorkerSse2(data);
+        return rbdKooNFillWorkerSse2(data);
     }
 
     return rbdKooNFillWorkerNoarch(data);
 }
 
 /**
- * rbdKooNGenericWorker
+ * rbdKooNGenericShannonWorker
  *
- * Generic KooN RBD Worker function with x86 platform-specific instruction sets
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition with
+ * x86 platform-specific instruction sets
  *
  * Input:
  *      void *arg
@@ -77,29 +78,30 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
  *      None
  *
  * Description:
- *  This function implements the generic KooN RBD Worker exploiting x86 platform-specific instruction sets.
+ *  This function implements the generic KooN RBD Worker exploiting Shannon Decomposition with
+ *  x86 platform-specific instruction sets.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
- *      arg: this parameter shall be the pointer to a generic KooN RBD data. It is provided as a
- *                      void * in order to be compliant with pthread_create API and to thus allow
- *                      SMP computation of KooN RBD
+ *      arg: this parameter shall be the pointer to a generic KooN for Shannon Decomposition RBD data.
+ *                      It is provided as a void * to be compliant with the SMP computation of the
+ *                      Generic KooN for Shannon Decomposition RBD
  *
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNGenericWorker(void *arg)
+HIDDEN void *rbdKooNGenericShannonWorker(void *arg)
 {
-    struct rbdKooNGenericData *data;
+    struct rbdKooNGenericShannonData *data;
 
     /* Retrieve generic KooN RBD data */
-    data = (struct rbdKooNGenericData *)arg;
+    data = (struct rbdKooNGenericShannonData *)arg;
 
     if (x86Sse2Supported()) {
-        return rbdKooNGenericWorkerSse2(data);
+        return rbdKooNGenericShannonWorkerSse2(data);
     }
 
-    return rbdKooNGenericWorkerNoarch(data);
+    return rbdKooNGenericShannonWorkerNoarch(data);
 }
 
 /**

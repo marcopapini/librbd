@@ -30,28 +30,28 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for amd64 AVX instruction set */
 void *rbdKooNFillWorkerAvx(struct rbdKooNFillData *data);
-void *rbdKooNGenericWorkerAvx(struct rbdKooNGenericData *data);
+void *rbdKooNGenericShannonWorkerAvx(struct rbdKooNGenericShannonData *data);
 void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data);
 
-void rbdKooNRecursionV4dAvx(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericShannonV4dAvx(struct rbdKooNGenericShannonData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooNIdenticalData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 FMA3 instruction set */
-void *rbdKooNGenericWorkerFma3(struct rbdKooNGenericData *data);
+void *rbdKooNGenericShannonWorkerFma3(struct rbdKooNGenericShannonData *data);
 void *rbdKooNIdenticalWorkerFma3(struct rbdKooNIdenticalData *data);
 
-void rbdKooNRecursionV4dFma3(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericShannonV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV4dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNRecursionV2dFma3(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericShannonV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV2dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void *rbdKooNFillWorkerAvx512f(struct rbdKooNFillData *data);
-void *rbdKooNGenericWorkerAvx512f(struct rbdKooNGenericData *data);
+void *rbdKooNGenericShannonWorkerAvx512f(struct rbdKooNGenericShannonData *data);
 void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data);
 
-void rbdKooNRecursionV8dAvx512f(struct rbdKooNGenericData *data, unsigned int time);
+void rbdKooNGenericShannonV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time);
 void rbdKooNIdenticalSuccessStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
