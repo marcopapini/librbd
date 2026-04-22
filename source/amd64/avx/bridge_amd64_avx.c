@@ -111,14 +111,14 @@ HIDDEN void *rbdBridgeIdenticalWorkerAvx(struct rbdBridgeData *data)
     time = data->batchIdx * V4D;
 
     /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+    if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeIdenticalStepS1d(data, time);
             /* Increment current time instant */
             time += S1D;
         }
-        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+        if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
             /* Compute reliability of Bridge RBD at current time instant */
             rbdBridgeIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */

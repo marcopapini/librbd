@@ -118,20 +118,20 @@ HIDDEN void *rbdParallelIdenticalWorkerAvx512f(struct rbdParallelData *data)
     time = data->batchIdx * V8D;
 
     /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+    if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
             /* Compute reliability of Parallel RBD at current time instant */
             rbdParallelIdenticalStepS1d(data, time);
             /* Increment current time instant */
             time += S1D;
         }
-        if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+        if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
             /* Compute reliability of Parallel RBD at current time instant */
             rbdParallelIdenticalStepV2dSse2(data, time);
             /* Increment current time instant */
             time += V2D;
         }
-        if (((long)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
+        if (((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
             /* Compute reliability of Parallel RBD at current time instant from working components */
             rbdParallelIdenticalStepV4dAvx(data, time);
             /* Increment current time instant */

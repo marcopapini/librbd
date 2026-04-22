@@ -103,8 +103,8 @@ HIDDEN void *rbdSeriesIdenticalWorkerNeon(struct rbdSeriesData *data)
     time = data->batchIdx * V2D;
 
     /* Align, if possible, to vector size */
-    if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+    if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+        if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
             /* Compute reliability of Series RBD at current time instant */
             rbdSeriesIdenticalStepS1d(data, time);
             /* Increment current time instant */

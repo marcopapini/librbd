@@ -173,14 +173,14 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data)
     /* If compute unreliability flag is not set... */
     if (data->bComputeUnreliability == 0) {
         /* Align, if possible, to vector size */
-        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+        if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of KooN RBD at current time instant from working components */
                 rbdKooNIdenticalSuccessStepS1d(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
-            if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+            if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of KooN RBD at current time instant from working components */
                 rbdKooNIdenticalSuccessStepV2dSse2(data, time);
                 /* Increment current time instant */
@@ -212,14 +212,14 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data)
     }
     else {
         /* Align, if possible, to vector size */
-        if (((long)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-            if (((long)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+        if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of KooN RBD at current time instant from failed components */
                 rbdKooNIdenticalFailStepS1d(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
-            if (((long)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+            if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of KooN RBD at current time instant from failed components */
                 rbdKooNIdenticalFailStepV2dSse2(data, time);
                 /* Increment current time instant */
