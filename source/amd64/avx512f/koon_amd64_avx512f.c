@@ -96,7 +96,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNFillWorkerAvx512f(struct rbdKooNF
 }
 
 /**
- * rbdKooNGenericWorkerShannonAvx512f
+ * rbdKooNGenericShannonWorkerAvx512f
  *
  * Generic KooN RBD Worker function exploiting Shannon Decomposition with amd64 AVX512F instruction set
  *
@@ -117,7 +117,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNFillWorkerAvx512f(struct rbdKooNF
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNGenericWorkerShannonAvx512f(struct rbdKooNGenericShannonData *data)
+HIDDEN void *rbdKooNGenericShannonWorkerAvx512f(struct rbdKooNGenericShannonData *data)
 {
     unsigned int time;
 
