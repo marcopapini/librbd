@@ -245,7 +245,7 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
             koonData[idx].nCi = &nCi[0];
 
             /* Create the identical KooN RBD Worker thread */
-            if (createThread(threadHandles, idx, &rbdKooNIdenticalWorker, &koonData[idx]) < 0) {
+            if (createThread(threadHandles, idx - 1, &rbdKooNIdenticalWorker, &koonData[idx]) < 0) {
                 res = -1;
             }
         }
@@ -266,7 +266,7 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
 
         /* Wait for created threads completion */
         for (idx = 1; idx < numCores; ++idx) {
-            waitThread(threadHandles, idx);
+            waitThread(threadHandles, idx - 1);
         }
         /* Free Thread ID array */
         free(threadHandles);
@@ -378,7 +378,7 @@ static int rbdKooNGenericShannon(double *reliabilities, double *output, unsigned
             initKooNRecursionData(&koonData[idx].recur);
 
             /* Create the generic KooN RBD Worker thread */
-            if (createThread(threadHandles, idx, &rbdKooNGenericShannonWorker, &koonData[idx]) < 0) {
+            if (createThread(threadHandles, idx - 1, &rbdKooNGenericShannonWorker, &koonData[idx]) < 0) {
                 res = -1;
             }
         }
@@ -398,7 +398,7 @@ static int rbdKooNGenericShannon(double *reliabilities, double *output, unsigned
 
         /* Wait for created threads completion */
         for(idx = 1; idx < numCores; ++idx) {
-            waitThread(threadHandles, idx);
+            waitThread(threadHandles, idx - 1);
         }
         /* Free Thread ID array */
         free(threadHandles);

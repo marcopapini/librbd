@@ -175,7 +175,7 @@ static int rbdSeriesInternal(double *reliabilities, double *output, unsigned cha
             data[idx].numTimes = numTimes;
 
             /* Create the Series RBD Worker thread */
-            if (createThread(threadHandles, idx, fpWorker, &data[idx]) < 0) {
+            if (createThread(threadHandles, idx - 1, fpWorker, &data[idx]) < 0) {
                 res = -1;
             }
         }
@@ -193,7 +193,7 @@ static int rbdSeriesInternal(double *reliabilities, double *output, unsigned cha
 
         /* Wait for created threads completion */
         for (idx = 1; idx < numCores; idx++) {
-            waitThread(threadHandles, idx);
+            waitThread(threadHandles, idx - 1);
         }
         /* Free Thread ID array */
         free(threadHandles);
@@ -211,9 +211,10 @@ static int rbdSeriesInternal(double *reliabilities, double *output, unsigned cha
         /* Directly invoke the Series RBD Worker */
         (void)(*fpWorker)(&data[0]);
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
-        /* Free Series RBD data array */
-        free(data);
     }
+
+    /* Free Series RBD data array */
+    free(data);
 #endif /* CPU_SMP */
 
     return res;

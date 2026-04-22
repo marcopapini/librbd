@@ -175,7 +175,7 @@ static int rbdParallelInternal(double *reliabilities, double *output, unsigned c
             data[idx].numTimes = numTimes;
 
             /* Create the Parallel RBD Worker thread */
-            if (createThread(threadHandles, idx, fpWorker, &data[idx]) < 0) {
+            if (createThread(threadHandles, idx - 1, fpWorker, &data[idx]) < 0) {
                 res = -1;
             }
         }
@@ -193,7 +193,7 @@ static int rbdParallelInternal(double *reliabilities, double *output, unsigned c
 
         /* Wait for created threads completion */
         for (idx = 1; idx < numCores; ++idx) {
-            waitThread(threadHandles, idx);
+            waitThread(threadHandles, idx - 1);
         }
         /* Free Thread ID array */
         free(threadHandles);
@@ -211,9 +211,10 @@ static int rbdParallelInternal(double *reliabilities, double *output, unsigned c
         /* Directly invoke the Parallel RBD Worker */
         (void)(*fpWorker)(&data[0]);
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
-        /* Free Parallel RBD data array */
-        free(data);
     }
+
+    /* Free Parallel RBD data array */
+    free(data);
 #endif /* CPU_SMP */
 
     return res;
