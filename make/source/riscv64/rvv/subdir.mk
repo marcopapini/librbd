@@ -10,21 +10,21 @@ C_DEPS += \
 ./source/riscv64/rvv/bridge_riscv64_rvv.d \
 ./source/riscv64/rvv/koon_riscv64_rvv.d \
 ./source/riscv64/rvv/parallel_riscv64_rvv.d \
-../source/riscv64/rvv/processor_riscv64_rvv.d \
+./source/riscv64/rvv/processor_riscv64_rvv.d \
 ./source/riscv64/rvv/series_riscv64_rvv.d 
 
 OBJS_AR += \
 ./source/riscv64/rvv/bridge_riscv64_rvv.ar.o \
 ./source/riscv64/rvv/koon_riscv64_rvv.ar.o \
 ./source/riscv64/rvv/parallel_riscv64_rvv.ar.o \
-../source/riscv64/rvv/processor_riscv64_rvv.ar.o \
+./source/riscv64/rvv/processor_riscv64_rvv.ar.o \
 ./source/riscv64/rvv/series_riscv64_rvv.ar.o 
 
 OBJS_SO += \
 ./source/riscv64/rvv/bridge_riscv64_rvv.so.o \
 ./source/riscv64/rvv/koon_riscv64_rvv.so.o \
 ./source/riscv64/rvv/parallel_riscv64_rvv.so.o \
-../source/riscv64/rvv/processor_riscv64_rvv.so.o \
+./source/riscv64/rvv/processor_riscv64_rvv.so.o \
 ./source/riscv64/rvv/series_riscv64_rvv.so.o 
 
 

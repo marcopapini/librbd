@@ -10,21 +10,21 @@ C_DEPS += \
 ./source/aarch64/sve/bridge_aarch64_sve.d \
 ./source/aarch64/sve/koon_aarch64_sve.d \
 ./source/aarch64/sve/parallel_aarch64_sve.d \
-../source/aarch64/sve/processor_aarch64_sve.d \
+./source/aarch64/sve/processor_aarch64_sve.d \
 ./source/aarch64/sve/series_aarch64_sve.d 
 
 OBJS_AR += \
 ./source/aarch64/sve/bridge_aarch64_sve.ar.o \
 ./source/aarch64/sve/koon_aarch64_sve.ar.o \
 ./source/aarch64/sve/parallel_aarch64_sve.ar.o \
-../source/aarch64/sve/processor_aarch64_sve.ar.o \
+./source/aarch64/sve/processor_aarch64_sve.ar.o \
 ./source/aarch64/sve/series_aarch64_sve.ar.o 
 
 OBJS_SO += \
 ./source/aarch64/sve/bridge_aarch64_sve.so.o \
 ./source/aarch64/sve/koon_aarch64_sve.so.o \
 ./source/aarch64/sve/parallel_aarch64_sve.so.o \
-../source/aarch64/sve/processor_aarch64_sve.so.o \
+./source/aarch64/sve/processor_aarch64_sve.so.o \
 ./source/aarch64/sve/series_aarch64_sve.so.o 
 
 
