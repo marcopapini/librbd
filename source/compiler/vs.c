@@ -203,7 +203,7 @@ HIDDEN int createThread(void *threadHandles, unsigned int threadIdx, fpWorker fp
     HANDLE *pHandles = (HANDLE *)threadHandles;
 
     /* Allocate Windows thread data structure (Windows model) */
-    data = (HANDLE*)malloc(sizeof(struct winThreadData));
+    data = (struct winThreadData *)malloc(sizeof(struct winThreadData));
     if (data == NULL) {
         return -1;
     }
