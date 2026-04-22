@@ -29,7 +29,7 @@
 #include "../../generic/combinations.h"
 
 
-static __m256d rbdKooNGenericShannonStepV4dAvx(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
+static __m256d rbdKooNGenericShannonStepV4dAvx(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
@@ -281,7 +281,7 @@ HIDDEN FUNCTION_TARGET("avx") void rbdKooNGenericShannonV4dAvx(struct rbdKooNGen
     __m256d v4dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v4dRes = rbdKooNGenericShannonStepV4dAvx(data, time, (short)data->numComponents, (short)data->minComponents);
+    v4dRes = rbdKooNGenericShannonStepV4dAvx(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
@@ -425,8 +425,8 @@ HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooN
  * Input:
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
- *      short n
- *      short k
+ *      unsigned char n
+ *      unsigned char k
  *
  * Output:
  *      None
@@ -445,18 +445,18 @@ HIDDEN FUNCTION_TARGET("avx") void rbdKooNIdenticalFailStepV4dAvx(struct rbdKooN
  * Return (__m256d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("avx") __m256d rbdKooNGenericShannonStepV4dAvx(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("avx") __m256d rbdKooNGenericShannonStepV4dAvx(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
 {
-    short best;
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
     __m256d *v4dR;
     __m256d v4dRes;
     __m256d v4dTmpRec;
     __m256d v4dTmp1, v4dTmp2;
     __m256d v4dStepTmp1, v4dStepTmp2;
     __m256d v4dU;
-    int idx;
-    int offset;
-    int ii, jj;
     int nextCombs;
 
     if (k == n) {
@@ -479,7 +479,7 @@ static FUNCTION_TARGET("avx") __m256d rbdKooNGenericShannonStepV4dAvx(struct rbd
         return _mm256_sub_pd(v4dOnes, v4dRes);
     }
 
-    best = (short)minimum((int)(k-1), (int)(n-k));
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;

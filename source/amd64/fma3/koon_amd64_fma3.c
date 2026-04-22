@@ -29,8 +29,8 @@
 #include "../../generic/combinations.h"
 
 
-static __m256d rbdKooNGenericShannonStepV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
-static __m128d rbdKooNGenericShannonStepV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
+static __m256d rbdKooNGenericShannonStepV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
+static __m128d rbdKooNGenericShannonStepV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
@@ -228,7 +228,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV4dFma3(struct rbdKooNGe
     __m256d v4dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v4dRes = rbdKooNGenericShannonStepV4dFma3(data, time, (short)data->numComponents, (short)data->minComponents);
+    v4dRes = rbdKooNGenericShannonStepV4dFma3(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
 }
@@ -325,7 +325,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV2dFma3(struct rbdKooNGe
     __m128d v2dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v2dRes = rbdKooNGenericShannonStepV2dFma3(data, time, (short)data->numComponents, (short)data->minComponents);
+    v2dRes = rbdKooNGenericShannonStepV2dFma3(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
@@ -402,8 +402,8 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma3(struct rbd
  * Input:
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
- *      short n
- *      short k
+ *      unsigned char n
+ *      unsigned char k
  *
  * Output:
  *      None
@@ -422,17 +422,17 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma3(struct rbd
  * Return (__m256d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("fma") __m256d rbdKooNGenericShannonStepV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("fma") __m256d rbdKooNGenericShannonStepV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
 {
-    short best;
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
     __m256d *v4dR;
     __m256d v4dRes;
     __m256d v4dTmpRec;
     __m256d v4dTmp1, v4dTmp2;
     __m256d v4dStepTmp1, v4dStepTmp2;
-    int idx;
-    int offset;
-    int ii, jj;
     int nextCombs;
 
     if (k == n) {
@@ -454,7 +454,7 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNGenericShannonStepV4dFma3(struct rb
         return _mm256_sub_pd(v4dOnes, v4dRes);
     }
 
-    best = (short)minimum((int)(k-1), (int)(n-k));
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;
@@ -555,8 +555,8 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNGenericShannonStepV4dFma3(struct rb
  * Input:
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
- *      short n
- *      short k
+ *      unsigned char n
+ *      unsigned char k
  *
  * Output:
  *      None
@@ -575,17 +575,17 @@ static FUNCTION_TARGET("fma") __m256d rbdKooNGenericShannonStepV4dFma3(struct rb
  * Return (__m128d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("fma") __m128d rbdKooNGenericShannonStepV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("fma") __m128d rbdKooNGenericShannonStepV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
 {
-    short best;
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
     __m128d *v2dR;
     __m128d v2dRes;
     __m128d v2dTmpRec;
     __m128d v2dTmp1, v2dTmp2;
     __m128d v2dStepTmp1, v2dStepTmp2;
-    int idx;
-    int offset;
-    int ii, jj;
     int nextCombs;
 
     if (k == n) {
@@ -607,7 +607,7 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNGenericShannonStepV2dFma3(struct rb
         return _mm_sub_pd(v2dOnes, v2dRes);
     }
 
-    best = (short)minimum((int)(k-1), (int)(n-k));
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;

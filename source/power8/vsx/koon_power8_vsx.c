@@ -28,7 +28,7 @@
 #include "../../generic/combinations.h"
 
 
-static double64x2 rbdKooNGenericShannonStepV2dVsx(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
+static double64x2 rbdKooNGenericShannonStepV2dVsx(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
@@ -238,7 +238,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdKooNGenericShannonV2dVsx(struct rbdKooNGen
     double64x2 v2dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v2dRes = rbdKooNGenericShannonStepV2dVsx(data, time, (short)data->numComponents, (short)data->minComponents);
+    v2dRes = rbdKooNGenericShannonStepV2dVsx(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     vectorStore(&data->output[time], capReliabilityV2dVsx(v2dRes));
 }
@@ -381,8 +381,8 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdKooNIdenticalFailStepV2dVsx(struct rbdKooN
  * Input:
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
- *      short n
- *      short k
+ *      unsigned char n
+ *      unsigned char k
  *
  * Output:
  *      None
@@ -401,17 +401,17 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdKooNIdenticalFailStepV2dVsx(struct rbdKooN
  * Return (vector double):
  *  Computed reliability
  */
-static FUNCTION_TARGET("vsx") double64x2 rbdKooNGenericShannonStepV2dVsx(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("vsx") double64x2 rbdKooNGenericShannonStepV2dVsx(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
 {
-    short best;
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
     double64x2 *v2dR;
     double64x2 v2dRes;
     double64x2 v2dTmpRec;
     double64x2 v2dTmp1, v2dTmp2;
     double64x2 v2dStepTmp1, v2dStepTmp2;
-    int idx;
-    int offset;
-    int ii, jj;
     int nextCombs;
 
     if (k == n) {
@@ -433,7 +433,7 @@ static FUNCTION_TARGET("vsx") double64x2 rbdKooNGenericShannonStepV2dVsx(struct 
         return vec_sub(v2dOnes, v2dRes);
     }
 
-    best = (short)minimum((int)(k-1), (int)(n-k));
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;

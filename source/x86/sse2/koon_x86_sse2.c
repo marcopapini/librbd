@@ -28,7 +28,7 @@
 #include "../../generic/combinations.h"
 
 
-static __m128d rbdKooNGenericShannonStepV2dSse2(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
+static __m128d rbdKooNGenericShannonStepV2dSse2(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
@@ -238,7 +238,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericShannonV2dSse2(struct rbdKooNG
     __m128d v2dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v2dRes = rbdKooNGenericShannonStepV2dSse2(data, time, (short)data->numComponents, (short)data->minComponents);
+    v2dRes = rbdKooNGenericShannonStepV2dSse2(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
@@ -382,8 +382,8 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKo
  * Input:
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
- *      short n
- *      short k
+ *      unsigned char n
+ *      unsigned char k
  *
  * Output:
  *      None
@@ -402,18 +402,18 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKo
  * Return (__m128d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("sse2") __m128d rbdKooNGenericShannonStepV2dSse2(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("sse2") __m128d rbdKooNGenericShannonStepV2dSse2(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
 {
-    short best;
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
     __m128d *v2dR;
     __m128d v2dRes;
     __m128d v2dTmpRec;
     __m128d v2dTmp1, v2dTmp2;
     __m128d v2dStepTmp1, v2dStepTmp2;
     __m128d v2dU;
-    int idx;
-    int offset;
-    int ii, jj;
     int nextCombs;
 
     if (k == n) {
@@ -436,7 +436,7 @@ static FUNCTION_TARGET("sse2") __m128d rbdKooNGenericShannonStepV2dSse2(struct r
         return _mm_sub_pd(v2dOnes, v2dRes);
     }
 
-    best = (short)minimum((int)(k-1), (int)(n-k));
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;

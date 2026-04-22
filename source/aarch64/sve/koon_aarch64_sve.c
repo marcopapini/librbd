@@ -29,7 +29,7 @@
 
 
 #if !defined(COMPILER_VS)
-static svfloat64_t rbdKooNGenericShannonStepVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
+static svfloat64_t rbdKooNGenericShannonStepVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 #endif /* !defined(COMPILER_VS) */
 
 
@@ -247,7 +247,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNGenericShannonVNdSve(svbool_t pg, str
     svfloat64_t vNdRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    vNdRes = rbdKooNGenericShannonStepVNdSve(pg, data, time, (short)data->numComponents, (short)data->minComponents);
+    vNdRes = rbdKooNGenericShannonStepVNdSve(pg, data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     svst1(pg, &data->output[time], capReliabilityVNdSve(pg, vNdRes));
 }
@@ -395,8 +395,8 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, 
  *      svbool_t pg
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
- *      short n
- *      short k
+ *      unsigned char n
+ *      unsigned char k
  *
  * Output:
  *      None
@@ -416,18 +416,18 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, 
  * Return (float64x2_t):
  *  Computed reliability
  */
-static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNGenericShannonStepVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNGenericShannonStepVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
 {
-    short best;
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
     double *s1dPtr;
     svfloat64_t vNdR;
     svfloat64_t vNdRes;
     svfloat64_t vNdTmpRec;
     svfloat64_t vNdTmp1, vNdTmp2;
     svfloat64_t vNdStepTmp1, vNdStepTmp2;
-    int idx;
-    int offset;
-    int ii, jj;
     int nextCombs;
     unsigned long cntd;
 
@@ -452,7 +452,7 @@ static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNGenericShannonStepVNdSve(svboo
         return svsub_f64_x(pg, svdup_f64(1.0), vNdRes);
     }
 
-    best = (short)minimum((int)(k-1), (int)(n-k));
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;

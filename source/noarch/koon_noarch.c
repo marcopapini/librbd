@@ -29,7 +29,7 @@
 #include <limits.h>
 
 
-static double rbdKooNGenericShannonStepS1d(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
+static double rbdKooNGenericShannonStepS1d(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 #if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
@@ -284,7 +284,7 @@ HIDDEN void rbdKooNGenericShannonS1d(struct rbdKooNGenericShannonData *data, uns
     double s1dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    s1dRes = rbdKooNGenericShannonStepS1d(data, time, (short)data->numComponents, (short)data->minComponents);
+    s1dRes = rbdKooNGenericShannonStepS1d(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     data->output[time] = capReliabilityS1d(s1dRes);
 }
@@ -428,8 +428,8 @@ HIDDEN void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsig
  * Input:
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
- *      short n
- *      short k
+ *      unsigned char n
+ *      unsigned char k
  *
  * Output:
  *      None
@@ -447,16 +447,16 @@ HIDDEN void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsig
  * Return (double):
  *  Computed reliability
  */
-static double rbdKooNGenericShannonStepS1d(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
+static double rbdKooNGenericShannonStepS1d(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
 {
-    short best;
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
     double *s1dR;
     double s1dRes;
     double s1dTmp1, s1dTmp2;
     double s1dStepTmp1, s1dStepTmp2;
-    int idx;
-    int offset;
-    int ii, jj;
     int nextCombs;
 
     if (k == n) {
@@ -476,7 +476,7 @@ static double rbdKooNGenericShannonStepS1d(struct rbdKooNGenericShannonData *dat
         return 1.0 - s1dRes;
     }
 
-    best = (short)minimum((int)(k-1), (int)(n-k));
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;

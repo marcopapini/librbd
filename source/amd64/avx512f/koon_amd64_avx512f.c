@@ -29,7 +29,7 @@
 #include "../../generic/combinations.h"
 
 
-static __m512d rbdKooNGenericShannonStepV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
+static __m512d rbdKooNGenericShannonStepV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
@@ -323,7 +323,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericShannonV8dAvx512f(struct rb
     __m512d v8dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v8dRes = rbdKooNGenericShannonStepV8dAvx512f(data, time, (short)data->numComponents, (short)data->minComponents);
+    v8dRes = rbdKooNGenericShannonStepV8dAvx512f(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
 }
@@ -466,8 +466,8 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct
  * Input:
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
- *      short n
- *      short k
+ *      unsigned char n
+ *      unsigned char k
  *
  * Output:
  *      None
@@ -486,17 +486,17 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct
  * Return (__m512d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("avx512f") __m512d rbdKooNGenericShannonStepV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("avx512f") __m512d rbdKooNGenericShannonStepV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
 {
-    short best;
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
     __m512d *v8dR;
     __m512d v8dRes;
     __m512d v8dTmpRec;
     __m512d v8dTmp1, v8dTmp2;
     __m512d v8dStepTmp1, v8dStepTmp2;
-    int idx;
-    int offset;
-    int ii, jj;
     int nextCombs;
 
     if (k == n) {
@@ -518,7 +518,7 @@ static FUNCTION_TARGET("avx512f") __m512d rbdKooNGenericShannonStepV8dAvx512f(st
         return _mm512_sub_pd(v8dOnes, v8dRes);
     }
 
-    best = (short)minimum((int)(k-1), (int)(n-k));
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;

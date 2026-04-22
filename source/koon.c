@@ -135,7 +135,7 @@ EXTERN int rbdKooNGeneric(double *reliabilities, double *output, unsigned char n
  */
 EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char numComponents, unsigned char minComponents, unsigned int numTimes)
 {
-    unsigned short ii;
+    unsigned char ii;
     unsigned int idx;
     int res;
     unsigned long long nCi[SCHAR_MAX];

@@ -29,7 +29,7 @@
 #include "../../generic/combinations.h"
 
 
-static vfloat64m1_t rbdKooNGenericShannonStepVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k, unsigned long int vl);
+static vfloat64m1_t rbdKooNGenericShannonStepVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k, unsigned long int vl);
 
 
 /**
@@ -231,7 +231,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNGenericShannonVNdRvv(struct rbdKoo
     vfloat64m1_t vNdRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    vNdRes = rbdKooNGenericShannonStepVNdRvv(data, time, (short)data->numComponents, (short)data->minComponents, vl);
+    vNdRes = rbdKooNGenericShannonStepVNdRvv(data, time, data->numComponents, data->minComponents, vl);
     /* Cap the computed reliability and set it into output array */
     __riscv_vse64_v_f64m1(&data->output[time], capReliabilityVNdRvv(vNdRes, vl), vl);
 }
@@ -377,8 +377,8 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbd
  * Input:
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
- *      short n
- *      short k
+ *      unsigned char n
+ *      unsigned char k
  *      unsigned long int vl
  *
  * Output:
@@ -399,18 +399,18 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbd
  * Return (vfloat64m1_t):
  *      Computed reliability
  */
-static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNGenericShannonStepVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNGenericShannonStepVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k, unsigned long int vl)
 {
-    short best;
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
     double *s1dPtr;
     vfloat64m1_t vNdR;
     vfloat64m1_t vNdRes;
     vfloat64m1_t vNdTmpRec;
     vfloat64m1_t vNdTmp1, vNdTmp2;
     vfloat64m1_t vNdStepTmp1, vNdStepTmp2;
-    int idx;
-    int offset;
-    int ii, jj;
     int nextCombs;
     unsigned long int vlmax;
 
@@ -435,7 +435,7 @@ static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNGenericShannonStepVNdRvv(s
         return __riscv_vfrsub_vf_f64m1(vNdRes, 1.0, vl);
     }
 
-    best = (short)minimumRiscv64Rvv((int)(k-1), (int)(n-k));
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;

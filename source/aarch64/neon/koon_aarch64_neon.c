@@ -28,7 +28,7 @@
 #include "../../generic/combinations.h"
 
 
-static float64x2_t rbdKooNGenericShannonStepV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k);
+static float64x2_t rbdKooNGenericShannonStepV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 
 
 /**
@@ -238,7 +238,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNGenericShannonV2dNeon(struct rbdKooN
     float64x2_t v2dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v2dRes = rbdKooNGenericShannonStepV2dNeon(data, time, (short)data->numComponents, (short)data->minComponents);
+    v2dRes = rbdKooNGenericShannonStepV2dNeon(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
 }
@@ -381,8 +381,8 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalFailStepV2dNeon(struct rbdK
  * Input:
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
- *      short n
- *      short k
+ *      unsigned char n
+ *      unsigned char k
  *
  * Output:
  *      None
@@ -401,17 +401,17 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalFailStepV2dNeon(struct rbdK
  * Return (float64x2_t):
  *  Computed reliability
  */
-static FUNCTION_TARGET("+simd") float64x2_t rbdKooNGenericShannonStepV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time, short n, short k)
+static FUNCTION_TARGET("+simd") float64x2_t rbdKooNGenericShannonStepV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
 {
-    short best;
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
     float64x2_t *v2dR;
     float64x2_t v2dRes;
     float64x2_t v2dTmpRec;
     float64x2_t v2dTmp1, v2dTmp2;
     float64x2_t v2dStepTmp1, v2dStepTmp2;
-    int idx;
-    int offset;
-    int ii, jj;
     int nextCombs;
 
     if (k == n) {
@@ -433,7 +433,7 @@ static FUNCTION_TARGET("+simd") float64x2_t rbdKooNGenericShannonStepV2dNeon(str
         return vsubq_f64(v2dOnes, v2dRes);
     }
 
-    best = (short)minimum((int)(k-1), (int)(n-k));
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;
