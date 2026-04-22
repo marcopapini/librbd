@@ -159,7 +159,7 @@ HIDDEN void *rbdKooNFillWorkerNoarch(struct rbdKooNFillData *data)
     /* For each time instant... */
     for (time = 0; time < data->numTimes; ++time) {
         /* Fill output Reliability array with fixed value */
-        data->output[time++] = data->value;
+        data->output[time] = data->value;
     }
 
     return NULL;
