@@ -128,9 +128,9 @@ static inline ALWAYS_INLINE FUNCTION_TARGET("vsx") double64x2 vectorLoad(double 
  */
 static inline ALWAYS_INLINE FUNCTION_TARGET("vsx") void vectorStore(double *addr, double64x2 data) {
 #ifdef COMPILER_GCC
-    return vec_vsx_st(data, 0, addr);
+    vec_vsx_st(data, 0, addr);
 #else
-    return vec_xst(data, 0, addr);
+    vec_xst(data, 0, addr);
 #endif
 }
 
