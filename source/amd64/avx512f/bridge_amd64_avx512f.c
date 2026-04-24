@@ -116,25 +116,28 @@ HIDDEN void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
 
-    /* Align, if possible, to vector size */
-    if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV2dFma3(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-        if (((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV4dFma3(data, time);
-            /* Increment current time instant */
-            time += V4D;
+    /* Are there at least 8 - 1 time instants to process? */
+    if ((time + V8D) < data->numTimes) {
+        /* Align, if possible, to vector size */
+        if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Bridge RBD at current time instant */
+                rbdBridgeIdenticalStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+            if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Bridge RBD at current time instant */
+                rbdBridgeIdenticalStepV2dFma3(data, time);
+                /* Increment current time instant */
+                time += V2D;
+            }
+            if (((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Bridge RBD at current time instant */
+                rbdBridgeIdenticalStepV4dFma3(data, time);
+                /* Increment current time instant */
+                time += V4D;
+            }
         }
     }
     /* For each time instant to be processed (blocks of 8 time instants)... */

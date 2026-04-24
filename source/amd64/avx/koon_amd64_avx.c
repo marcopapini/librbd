@@ -172,19 +172,22 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data)
 
     /* If compute unreliability flag is not set... */
     if (data->bComputeUnreliability == 0) {
-        /* Align, if possible, to vector size */
-        if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNIdenticalSuccessStepS1d(data, time);
-                /* Increment current time instant */
-                time += S1D;
-            }
-            if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-                /* Compute reliability of KooN RBD at current time instant from working components */
-                rbdKooNIdenticalSuccessStepV2dSse2(data, time);
-                /* Increment current time instant */
-                time += V2D;
+        /* Are there at least 4 - 1 time instants to process? */
+        if ((time + V4D) < data->numTimes) {
+            /* Align, if possible, to vector size */
+            if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+                if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                    /* Compute reliability of KooN RBD at current time instant from working components */
+                    rbdKooNIdenticalSuccessStepS1d(data, time);
+                    /* Increment current time instant */
+                    time += S1D;
+                }
+                if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+                    /* Compute reliability of KooN RBD at current time instant from working components */
+                    rbdKooNIdenticalSuccessStepV2dSse2(data, time);
+                    /* Increment current time instant */
+                    time += V2D;
+                }
             }
         }
         /* For each time instant to be processed (blocks of 4 time instants)... */
@@ -211,19 +214,22 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data)
         }
     }
     else {
-        /* Align, if possible, to vector size */
-        if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNIdenticalFailStepS1d(data, time);
-                /* Increment current time instant */
-                time += S1D;
-            }
-            if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-                /* Compute reliability of KooN RBD at current time instant from failed components */
-                rbdKooNIdenticalFailStepV2dSse2(data, time);
-                /* Increment current time instant */
-                time += V2D;
+        /* Are there at least 4 - 1 time instants to process? */
+        if ((time + V4D) < data->numTimes) {
+            /* Align, if possible, to vector size */
+            if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+                if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                    /* Compute reliability of KooN RBD at current time instant from failed components */
+                    rbdKooNIdenticalFailStepS1d(data, time);
+                    /* Increment current time instant */
+                    time += S1D;
+                }
+                if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+                    /* Compute reliability of KooN RBD at current time instant from failed components */
+                    rbdKooNIdenticalFailStepV2dSse2(data, time);
+                    /* Increment current time instant */
+                    time += V2D;
+                }
             }
         }
         /* For each time instant to be processed (blocks of 4 time instants)... */

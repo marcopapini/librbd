@@ -113,19 +113,22 @@ HIDDEN void *rbdParallelIdenticalWorkerAvx(void *arg)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V4D;
 
-    /* Align, if possible, to vector size */
-    if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Parallel RBD at current time instant */
-            rbdParallelIdenticalStepV2dSse2(data, time);
-            /* Increment current time instant */
-            time += V2D;
+    /* Are there at least 4 - 1 time instants to process? */
+    if ((time + V4D) < data->numTimes) {
+        /* Align, if possible, to vector size */
+        if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Parallel RBD at current time instant */
+                rbdParallelIdenticalStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+            if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Parallel RBD at current time instant */
+                rbdParallelIdenticalStepV2dSse2(data, time);
+                /* Increment current time instant */
+                time += V2D;
+            }
         }
     }
     /* For each time instant to be processed (blocks of 4 time instants)... */

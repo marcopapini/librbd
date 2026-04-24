@@ -109,19 +109,22 @@ HIDDEN void *rbdBridgeIdenticalWorkerFma3(struct rbdBridgeData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V4D;
 
-    /* Align, if possible, to vector size */
-    if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepV2dFma3(data, time);
-            /* Increment current time instant */
-            time += V2D;
+    /* Are there at least 4 - 1 time instants to process? */
+    if ((time + V4D) < data->numTimes) {
+        /* Align, if possible, to vector size */
+        if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Bridge RBD at current time instant */
+                rbdBridgeIdenticalStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+            if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Bridge RBD at current time instant */
+                rbdBridgeIdenticalStepV2dFma3(data, time);
+                /* Increment current time instant */
+                time += V2D;
+            }
         }
     }
     /* For each time instant to be processed (blocks of 4 time instants)... */

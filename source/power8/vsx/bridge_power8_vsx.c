@@ -102,13 +102,16 @@ HIDDEN void *rbdBridgeIdenticalWorkerVsx(struct rbdBridgeData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V2D;
 
-    /* Align, if possible, to vector size */
-    if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Bridge RBD at current time instant */
-            rbdBridgeIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
+    /* Are there at least 2 - 1 time instants to process? */
+    if ((time + V2D) < data->numTimes) {
+        /* Align, if possible, to vector size */
+        if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Bridge RBD at current time instant */
+                rbdBridgeIdenticalStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
         }
     }
     /* For each time instant to be processed (blocks of 2 time instants)... */

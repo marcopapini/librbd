@@ -117,25 +117,28 @@ HIDDEN void *rbdSeriesIdenticalWorkerAvx512f(struct rbdSeriesData *data)
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
 
-    /* Align, if possible, to vector size */
-    if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-        if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesIdenticalStepS1d(data, time);
-            /* Increment current time instant */
-            time += S1D;
-        }
-        if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesIdenticalStepV2dSse2(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-        if (((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
-            /* Compute reliability of Series RBD at current time instant */
-            rbdSeriesIdenticalStepV4dAvx(data, time);
-            /* Increment current time instant */
-            time += V4D;
+    /* Are there at least 8 - 1 time instants to process? */
+    if ((time + V8D) < data->numTimes) {
+        /* Align, if possible, to vector size */
+        if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
+            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Series RBD at current time instant */
+                rbdSeriesIdenticalStepS1d(data, time);
+                /* Increment current time instant */
+                time += S1D;
+            }
+            if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Series RBD at current time instant */
+                rbdSeriesIdenticalStepV2dSse2(data, time);
+                /* Increment current time instant */
+                time += V2D;
+            }
+            if (((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
+                /* Compute reliability of Series RBD at current time instant */
+                rbdSeriesIdenticalStepV4dAvx(data, time);
+                /* Increment current time instant */
+                time += V4D;
+            }
         }
     }
     /* For each time instant to be processed (blocks of 8 time instants)... */
