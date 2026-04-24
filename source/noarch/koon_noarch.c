@@ -30,6 +30,7 @@
 
 
 static double rbdKooNGenericShannonStepS1d(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
+static double *rbdKooNBddNoarch(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 
 
 #if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
@@ -96,6 +97,39 @@ HIDDEN void *rbdKooNGenericShannonWorker(void *arg)
     data = (struct rbdKooNGenericShannonData *)arg;
 
     return rbdKooNGenericShannonWorkerNoarch(data);
+}
+
+/**
+ * rbdKooNBddWorker
+ *
+ * Generic KooN RBD Worker function exploiting BDD Evaluation
+ *
+ * Input:
+ *      void *arg
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic KooN RBD Worker exploiting BDD Evaluation.
+ *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
+ *
+ * Parameters:
+ *      arg: this parameter shall be the pointer to a generic KooN for BDD Evaluation RBD data.
+ *                      It is provided as a void * to be compliant with the SMP computation of the
+ *                      Generic KooN for BDD Evaluation RBD
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNBddWorker(void *arg)
+{
+    struct rbdKooNBddData *data;
+
+    /* Retrieve generic KooN RBD data */
+    data = (struct rbdKooNBddData *)arg;
+
+    return rbdKooNBddWorkerNoarch(data);
 }
 
 /**
@@ -206,6 +240,62 @@ HIDDEN void *rbdKooNGenericShannonWorkerNoarch(struct rbdKooNGenericShannonData 
 }
 
 /**
+ * rbdKooNBddWorkerNoarch
+ *
+ * Generic KooN RBD Worker function exploiting BDD Evaluation with platform-independent instruction sets
+ *
+ * Input:
+ *      struct rbdKooNBddData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic KooN RBD Worker exploiting BDD Evaluation using
+ *  platform-independent instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a generic KooN RBD system
+ *
+ * Parameters:
+ *      data: Generic KooN for BDD Evaluation RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNBddWorkerNoarch(struct rbdKooNBddData *data)
+{
+    unsigned int time;
+    unsigned int steps;
+    unsigned char *computedPool;
+    double *reliability;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * BDD_WINDOW_SIZE;
+
+    /* Retrieve the current computed pool */
+    computedPool = bddGetComputed(data->bddmgr, data->batchIdx);
+
+    /* For each time batch to be processed... */
+    while (time < data->numTimes) {
+        /* Compute the number of time instants processed during current batch */
+        steps = u32min(data->numTimes - time, BDD_WINDOW_SIZE);
+        /* Reset that all BDD Nodes (excluding the terminal nodes) are already evaluated */
+        memset(&computedPool[BDD_NUM_TERMINAL], 0,
+               (data->bddmgr->numNodes - BDD_NUM_TERMINAL) * sizeof(unsigned char));
+        /* Recursively compute reliability of KooN RBD at current batch */
+        if (rbdKooNBddNoarch(data, data->bddmgr->root, time, steps) == NULL) {
+            return NULL;
+        }
+        /* Copy reliability computed with BDD to output */
+        reliability = bddGetValues(data->bddmgr, data->bddmgr->root, data->batchIdx);
+        memcpy(&data->output[time], reliability, steps * sizeof(double));
+        /* Increment current time batch */
+        time += (data->numCores * BDD_WINDOW_SIZE);
+    }
+
+    return NULL;
+}
+
+/**
  * rbdKooNIdenticalWorkerNoarch
  *
  * Identical KooN RBD Worker function with platform-independent instruction sets
@@ -287,6 +377,36 @@ HIDDEN void rbdKooNGenericShannonS1d(struct rbdKooNGenericShannonData *data, uns
     s1dRes = rbdKooNGenericShannonStepS1d(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     data->output[time] = capReliabilityS1d(s1dRes);
+}
+
+/**
+ * rbdKooNBddStepS1d
+ *
+ * Compute the Reliability value for a BDD Node
+ *
+ * Input:
+ *      double *r
+ *      double *h
+ *      double *l
+ *
+ * Output:
+ *      double *o
+ *
+ * Description:
+ *  This function computes the reliability value of KooN RBD system through BDD Evaluation
+ *
+ * Parameters:
+ *      r: reliability value of BDD Variable under analysis
+ *      h: reliability value of BDD High Node, i.e., the BDD Variable is working
+ *      l: reliability value of BDD Low Node, i.e., the BDD Variable is failed
+ *      o: output reliability value
+ *
+ * Return:
+ *  None
+ */
+HIDDEN void rbdKooNBddStepS1d(double *r, double *h, double *l, double *o)
+{
+    *o = capReliabilityS1d(((*r) * (*h)) + ((1.0 - (*r)) * (*l)));
 }
 
 /**
@@ -559,4 +679,75 @@ static double rbdKooNGenericShannonStepS1d(struct rbdKooNGenericShannonData *dat
     s1dRes = s1dTmp1 * rbdKooNGenericShannonStepS1d(data, time, n, k-1);
     s1dRes += (1.0 - s1dTmp1) * rbdKooNGenericShannonStepS1d(data, time, n, k);
     return s1dRes;
+}
+
+/**
+ * rbdKooNBddNoarch
+ *
+ * Recursively compute the Reliability curve of a BDD Node
+ *
+ * Input:
+ *      struct rbdKooNBddData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This recursive function computes the Reliability curve of the provided BDD Node
+ *
+ * Parameters:
+ *      bddmgr: The BDD Manager
+ *      nodeIdx: The BDD Node identified
+ *      timeStart: The first time instant for which the reliability curve is computed
+ *      numSteps: The number of time instants for which the reliability curve is computed
+ *
+ * Return (double *):
+ *  The cached reliability curve of this BDD Node is successful, NULL otherwise
+ */
+static double *rbdKooNBddNoarch(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps)
+{
+    double *nodeValues;
+    unsigned char *computedNodes;
+    double *high;
+    double *low;
+    double *rel;
+    struct bddnode *node;
+    unsigned int tIdx;
+
+    /* Retrieve the values array associated with the current BDD Node */
+    nodeValues = bddGetValues(data->bddmgr, nodeIdx, data->batchIdx);
+
+    /* If the BDD Node has been already evaluated, then immediately return its reliability */
+    computedNodes = bddGetComputed(data->bddmgr, data->batchIdx);
+    if (computedNodes[nodeIdx]) {
+        return nodeValues;
+    }
+
+    /* Retrieve the BDD Node */
+    node = &data->bddmgr->nodes[nodeIdx];
+
+    /* Recursively evaluate the reliability of the high part of the current BDD Node */
+    high = rbdKooNBddNoarch(data, node->high, timeStart, numSteps);
+    if (high == NULL) {
+        return NULL;
+    }
+    /* Recursively evaluate the reliability of the low part of the current BDD Node */
+    low  = rbdKooNBddNoarch(data, node->low, timeStart, numSteps);
+    if (low == NULL) {
+        return NULL;
+    }
+
+    /* Retrieve the reliability curve associated with the variable */
+    rel = &data->bddmgr->vars[node->var].reliability[timeStart];
+
+    /* For each time instant to be evaluated... */
+    for (tIdx = 0; tIdx < numSteps; ++tIdx) {
+        /* Compute the (cached) reliability curve associated with the current BDD Node */
+        rbdKooNBddStepS1d(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+    }
+
+    /* Set the BDD Node as already evaluated */
+    computedNodes[nodeIdx] = 1;
+
+    return nodeValues;
 }

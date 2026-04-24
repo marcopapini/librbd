@@ -222,6 +222,9 @@
     <ClInclude Include="..\..\source\riscv64\rvv\rbd_internal_riscv64_rvv.h">
       <Filter>Header Files\riscv64\rvv</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\generic\bdddata.h">
+      <Filter>Header Files\generic</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\aarch64\bridge_aarch64.c">
@@ -472,6 +475,9 @@
     </ClCompile>
     <ClCompile Include="..\..\source\riscv64\rvv\processor_riscv64_rvv.c">
       <Filter>Source Files\riscv64\rvv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\generic\bdddata.c">
+      <Filter>Source Files\generic</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

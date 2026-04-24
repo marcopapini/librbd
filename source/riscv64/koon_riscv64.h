@@ -31,9 +31,11 @@
 /* Platform-specific functions for RISC-V 64bit RVV instruction set */
 void *rbdKooNFillWorkerRvv(struct rbdKooNFillData *data);
 void *rbdKooNGenericShannonWorkerRvv(struct rbdKooNGenericShannonData *data);
+void *rbdKooNBddWorkerRvv(struct rbdKooNBddData *data);
 void *rbdKooNIdenticalWorkerRvv(struct rbdKooNIdenticalData *data);
 
 void rbdKooNGenericShannonVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned long int vl);
+void rbdKooNBddStepVNdRvv(double *r, double *h, double *l, double *o, unsigned long int vl);
 void rbdKooNIdenticalSuccessStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time, unsigned long int vl);
 void rbdKooNIdenticalFailStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time, unsigned long int vl);
 #endif /* defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0) */

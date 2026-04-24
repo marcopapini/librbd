@@ -30,6 +30,7 @@
 
 #if !defined(COMPILER_VS)
 static svfloat64_t rbdKooNGenericShannonStepVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
+static double *rbdKooNBddSve(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 #endif /* !defined(COMPILER_VS) */
 
 
@@ -135,6 +136,67 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNGenericShannonWorkerSve(struct rbdKo
         rbdKooNGenericShannonVNdSve(pg, data, time);
         /* Increment current time instant */
         time += vectorSize;
+    }
+#endif /* !defined(COMPILER_VS) */
+
+    return NULL;
+}
+
+/**
+ * rbdKooNBddWorkerSve
+ *
+ * Generic KooN RBD Worker function exploiting BDD Evaluation with AArch64 SVE instruction set
+ *
+ * Input:
+ *      struct rbdKooNBddData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic KooN RBD Worker exploiting BDD Evaluation using
+ *  AArch64 SVE instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a generic KooN RBD system
+ *
+ * Parameters:
+ *      data: Generic KooN for BDD Evaluation RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNBddWorkerSve(struct rbdKooNBddData *data)
+{
+#if !defined(COMPILER_VS)
+    unsigned int time;
+    unsigned int steps;
+    unsigned char *computedPool;
+    double *reliability;
+
+    /* Set CPU affinity */
+    setAArch64ThreadAffinitySve(data->batchIdx);
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * BDD_WINDOW_SIZE;
+
+    /* Retrieve the current computed pool */
+    computedPool = bddGetComputed(data->bddmgr, data->batchIdx);
+
+    /* For each time batch to be processed... */
+    while (time < data->numTimes) {
+        /* Compute the number of time instants processed during current batch */
+        steps = u32min(data->numTimes - time, BDD_WINDOW_SIZE);
+        /* Reset that all BDD Nodes (excluding the terminal nodes) are already evaluated */
+        memset(&computedPool[BDD_NUM_TERMINAL], 0,
+               (data->bddmgr->numNodes - BDD_NUM_TERMINAL) * sizeof(unsigned char));
+        /* Recursively compute reliability of KooN RBD at current batch */
+        if (rbdKooNBddSve(data, data->bddmgr->root, time, steps) == NULL) {
+            return NULL;
+        }
+        /* Copy reliability computed with BDD to output */
+        reliability = bddGetValues(data->bddmgr, data->bddmgr->root, data->batchIdx);
+        memcpy(&data->output[time], reliability, steps * sizeof(double));
+        /* Increment current time batch */
+        time += (data->numCores * BDD_WINDOW_SIZE);
     }
 #endif /* !defined(COMPILER_VS) */
 
@@ -250,6 +312,50 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNGenericShannonVNdSve(svbool_t pg, str
     vNdRes = rbdKooNGenericShannonStepVNdSve(pg, data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     svst1(pg, &data->output[time], capReliabilityVNdSve(pg, vNdRes));
+}
+
+/**
+ * rbdKooNBddStepV2dNeon
+ *
+ * Compute the Reliability value for a BDD Node with AArch64 SVE
+ *
+ * Input:
+ *      svbool_t pg
+ *      double *r
+ *      double *h
+ *      double *l
+ *
+ * Output:
+ *      double *o
+ *
+ * Description:
+ *  This function computes the reliability value of KooN RBD system through BDD Evaluation
+ *  using AArch64 SVE
+ *
+ * Parameters:
+ *      pg: SVE Predicate for lane access
+ *      r: reliability value of BDD Variable under analysis
+ *      h: reliability value of BDD High Node, i.e., the BDD Variable is working
+ *      l: reliability value of BDD Low Node, i.e., the BDD Variable is failed
+ *      o: output reliability value
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("+sve") void rbdKooNBddStepVNdSve(svbool_t pg, double *r, double *h, double *l, double *o)
+{
+    svfloat64_t vNdR;
+    svfloat64_t vNdH;
+    svfloat64_t vNdL;
+    svfloat64_t vNdRes;
+
+    /* Compute the reliability of the BDD Node NODE = R * H + (1 - R) * L */
+    vNdR = svld1(pg, r);
+    vNdL = svld1(pg, l);
+    vNdRes = svmls_f64_x(pg, vNdL, vNdR, vNdL);
+    vNdH = svld1(pg, h);
+    vNdRes = svmla_f64_x(pg, vNdRes, vNdR, vNdH);
+    svst1(pg, o, capReliabilityVNdSve(pg, vNdRes));
 }
 
 /**
@@ -548,6 +654,85 @@ static FUNCTION_TARGET("+sve") svfloat64_t rbdKooNGenericShannonStepVNdSve(svboo
     vNdTmpRec = rbdKooNGenericShannonStepVNdSve(pg, data, time, n, k);
     vNdRes = svmla_f64_x(pg, vNdRes, vNdTmp1, vNdTmpRec);
     return vNdRes;
+}
+
+/**
+ * rbdKooNBddSve
+ *
+ * Recursively compute the Reliability curve of a BDD Node with AArch64 SVE instruction set
+ *
+ * Input:
+ *      struct rbdKooNBddData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This recursive function computes the Reliability curve of the provided BDD Node
+ *  using AArch64 SVE instruction set
+ *
+ * Parameters:
+ *      bddmgr: The BDD Manager
+ *      nodeIdx: The BDD Node identified
+ *      timeStart: The first time instant for which the reliability curve is computed
+ *      numSteps: The number of time instants for which the reliability curve is computed
+ *
+ * Return (double *):
+ *  The cached reliability curve of this BDD Node is successful, NULL otherwise
+ */
+static FUNCTION_TARGET("+sve") double *rbdKooNBddSve(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps)
+{
+    double *nodeValues;
+    unsigned char *computedNodes;
+    double *high;
+    double *low;
+    double *rel;
+    struct bddnode *node;
+    unsigned int tIdx;
+    unsigned int vectorSize;
+    svbool_t pg;
+
+    /* Retrieve the values array associated with the current BDD Node */
+    nodeValues = bddGetValues(data->bddmgr, nodeIdx, data->batchIdx);
+
+    /* If the BDD Node has been already evaluated, then immediately return its reliability */
+    computedNodes = bddGetComputed(data->bddmgr, data->batchIdx);
+    if (computedNodes[nodeIdx]) {
+        return nodeValues;
+    }
+
+    /* Retrieve the BDD Node */
+    node = &data->bddmgr->nodes[nodeIdx];
+
+    /* Recursively evaluate the reliability of the high part of the current BDD Node */
+    high = rbdKooNBddSve(data, node->high, timeStart, numSteps);
+    if (high == NULL) {
+        return NULL;
+    }
+    /* Recursively evaluate the reliability of the low part of the current BDD Node */
+    low  = rbdKooNBddSve(data, node->low, timeStart, numSteps);
+    if (low == NULL) {
+        return NULL;
+    }
+
+    /* Retrieve the reliability curve associated with the variable */
+    rel = &data->bddmgr->vars[node->var].reliability[timeStart];
+
+    /* For each time instant to be evaluated (blocks of N time instants)... */
+    tIdx = 0;
+    while (tIdx < numSteps) {
+        pg = svwhilelt_b64(tIdx, numSteps);
+        vectorSize = svcntp_b64(svptrue_b64(), pg);
+        /* Compute the (cached) reliability curve associated with the current BDD Node */
+        rbdKooNBddStepVNdSve(pg, &rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+        /* Increment current time instant */
+        tIdx += vectorSize;
+    }
+
+    /* Set the BDD Node as already evaluated */
+    computedNodes[nodeIdx] = 1;
+
+    return nodeValues;
 }
 #endif /* !defined(COMPILER_VS) */
 

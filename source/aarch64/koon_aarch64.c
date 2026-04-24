@@ -105,6 +105,45 @@ HIDDEN void *rbdKooNGenericShannonWorker(void *arg)
 }
 
 /**
+ * rbdKooNBddWorker
+ *
+ * Generic KooN RBD Worker function exploiting BDD Evaluation with
+ * AArch64 platform-specific instruction sets
+ *
+ * Input:
+ *      void *arg
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic KooN RBD Worker exploiting BDD Evaluation with
+ *  AArch64 platform-specific instruction sets.
+ *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
+ *
+ * Parameters:
+ *      arg: this parameter shall be the pointer to a generic KooN for BDD Evaluation RBD data.
+ *                      It is provided as a void * to be compliant with the SMP computation of the
+ *                      Generic KooN for BDD Evaluation RBD
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNBddWorker(void *arg)
+{
+    struct rbdKooNBddData *data;
+
+    /* Retrieve generic KooN RBD data */
+    data = (struct rbdKooNBddData *)arg;
+
+    if (aarch64SveSupported()) {
+        return rbdKooNBddWorkerSve(data);
+    }
+
+    return rbdKooNBddWorkerNeon(data);
+}
+
+/**
  * rbdKooNIdenticalWorker
  *
  * Identical KooN RBD Worker function with AArch64 platform-specific instruction sets

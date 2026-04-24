@@ -31,6 +31,7 @@
 
 static __m256d rbdKooNGenericShannonStepV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static __m128d rbdKooNGenericShannonStepV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
+static double *rbdKooNBddFma3(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 
 
 /**
@@ -83,6 +84,62 @@ HIDDEN void *rbdKooNGenericShannonWorkerFma3(struct rbdKooNGenericShannonData *d
     if (time < data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
         rbdKooNGenericShannonS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdKooNBddWorkerFma3
+ *
+ * Generic KooN RBD Worker function exploiting BDD Evaluation with amd64 FMA3 instruction set
+ *
+ * Input:
+ *      struct rbdKooNBddData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic KooN RBD Worker exploiting BDD Evaluation using
+ *  amd64 FMA3 instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a generic KooN RBD system
+ *
+ * Parameters:
+ *      data: Generic KooN for BDD Evaluation RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNBddWorkerFma3(struct rbdKooNBddData *data)
+{
+    unsigned int time;
+    unsigned int steps;
+    unsigned char *computedPool;
+    double *reliability;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * BDD_WINDOW_SIZE;
+
+    /* Retrieve the current computed pool */
+    computedPool = bddGetComputed(data->bddmgr, data->batchIdx);
+
+    /* For each time batch to be processed... */
+    while (time < data->numTimes) {
+        /* Compute the number of time instants processed during current batch */
+        steps = u32min(data->numTimes - time, BDD_WINDOW_SIZE);
+        /* Reset that all BDD Nodes (excluding the terminal nodes) are already evaluated */
+        memset(&computedPool[BDD_NUM_TERMINAL], 0,
+               (data->bddmgr->numNodes - BDD_NUM_TERMINAL) * sizeof(unsigned char));
+        /* Recursively compute reliability of KooN RBD at current batch */
+        if (rbdKooNBddFma3(data, data->bddmgr->root, time, steps) == NULL) {
+            return NULL;
+        }
+        /* Copy reliability computed with BDD to output */
+        reliability = bddGetValues(data->bddmgr, data->bddmgr->root, data->batchIdx);
+        memcpy(&data->output[time], reliability, steps * sizeof(double));
+        /* Increment current time batch */
+        time += (data->numCores * BDD_WINDOW_SIZE);
     }
 
     return NULL;
@@ -240,6 +297,48 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV4dFma3(struct rbdKooNGe
 }
 
 /**
+ * rbdKooNBddStepV4dFma3
+ *
+ * Compute the Reliability value for a BDD Node with amd64 FMA3 256bit
+ *
+ * Input:
+ *      double *r
+ *      double *h
+ *      double *l
+ *
+ * Output:
+ *      double *o
+ *
+ * Description:
+ *  This function computes the reliability value of KooN RBD system through BDD Evaluation
+ *  using amd64 FMA3 256bit
+ *
+ * Parameters:
+ *      r: reliability value of BDD Variable under analysis
+ *      h: reliability value of BDD High Node, i.e., the BDD Variable is working
+ *      l: reliability value of BDD Low Node, i.e., the BDD Variable is failed
+ *      o: output reliability value
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNBddStepV4dFma3(double *r, double *h, double *l, double *o)
+{
+    __m256d v4dR;
+    __m256d v4dH;
+    __m256d v4dL;
+    __m256d v4dRes;
+
+    /* Compute the reliability of the BDD Node NODE = R * H + (1 - R) * L */
+    v4dR = _mm256_loadu_pd(r);
+    v4dL = _mm256_loadu_pd(l);
+    v4dRes = _mm256_fnmadd_pd(v4dR, v4dL, v4dL);
+    v4dH = _mm256_loadu_pd(h);
+    v4dRes = _mm256_fmadd_pd(v4dR, v4dH, v4dRes);
+    _mm256_storeu_pd(o, capReliabilityV4dAvx(v4dRes));
+}
+
+/**
  * rbdKooNIdenticalSuccessStepV4dFma3
  *
  * Identical KooN RBD Step function from working components with amd64 FMA3 256bit
@@ -334,6 +433,48 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV2dFma3(struct rbdKooNGe
     v2dRes = rbdKooNGenericShannonStepV2dFma3(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+}
+
+/**
+ * rbdKooNBddStepV2dFma3
+ *
+ * Compute the Reliability value for a BDD Node with amd64 FMA3 128bit
+ *
+ * Input:
+ *      double *r
+ *      double *h
+ *      double *l
+ *
+ * Output:
+ *      double *o
+ *
+ * Description:
+ *  This function computes the reliability value of KooN RBD system through BDD Evaluation
+ *  using amd64 FMA3 128bit
+ *
+ * Parameters:
+ *      r: reliability value of BDD Variable under analysis
+ *      h: reliability value of BDD High Node, i.e., the BDD Variable is working
+ *      l: reliability value of BDD Low Node, i.e., the BDD Variable is failed
+ *      o: output reliability value
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("fma") void rbdKooNBddStepV2dFma3(double *r, double *h, double *l, double *o)
+{
+    __m128d v2dR;
+    __m128d v2dH;
+    __m128d v2dL;
+    __m128d v2dRes;
+
+    /* Compute the reliability of the BDD Node NODE = R * H + (1 - R) * L */
+    v2dR = _mm_loadu_pd(r);
+    v2dL = _mm_loadu_pd(l);
+    v2dRes = _mm_fnmadd_pd(v2dR, v2dL, v2dL);
+    v2dH = _mm_loadu_pd(h);
+    v2dRes = _mm_fmadd_pd(v2dR, v2dH, v2dRes);
+    _mm_storeu_pd(o, capReliabilityV2dSse2(v2dRes));
 }
 
 /**
@@ -704,6 +845,89 @@ static FUNCTION_TARGET("fma") __m128d rbdKooNGenericShannonStepV2dFma3(struct rb
     v2dTmpRec = rbdKooNGenericShannonStepV2dFma3(data, time, n, k);
     v2dRes = _mm_fmadd_pd(v2dTmp1, v2dTmpRec, v2dRes);
     return v2dRes;
+}
+
+/**
+ * rbdKooNBddFma3
+ *
+ * Recursively compute the Reliability curve of a BDD Node with amd64 FMA3 instruction set
+ *
+ * Input:
+ *      struct rbdKooNBddData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This recursive function computes the Reliability curve of the provided BDD Node
+ *  using amd64 FMA3 instruction set
+ *
+ * Parameters:
+ *      bddmgr: The BDD Manager
+ *      nodeIdx: The BDD Node identified
+ *      timeStart: The first time instant for which the reliability curve is computed
+ *      numSteps: The number of time instants for which the reliability curve is computed
+ *
+ * Return (double *):
+ *  The cached reliability curve of this BDD Node is successful, NULL otherwise
+ */
+static FUNCTION_TARGET("fma") double *rbdKooNBddFma3(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps)
+{
+    double *nodeValues;
+    unsigned char *computedNodes;
+    double *high;
+    double *low;
+    double *rel;
+    struct bddnode *node;
+    unsigned int tIdx;
+
+    /* Retrieve the values array associated with the current BDD Node */
+    nodeValues = bddGetValues(data->bddmgr, nodeIdx, data->batchIdx);
+
+    /* If the BDD Node has been already evaluated, then immediately return its reliability */
+    computedNodes = bddGetComputed(data->bddmgr, data->batchIdx);
+    if (computedNodes[nodeIdx]) {
+        return nodeValues;
+    }
+
+    /* Retrieve the BDD Node */
+    node = &data->bddmgr->nodes[nodeIdx];
+
+    /* Recursively evaluate the reliability of the high part of the current BDD Node */
+    high = rbdKooNBddFma3(data, node->high, timeStart, numSteps);
+    if (high == NULL) {
+        return NULL;
+    }
+    /* Recursively evaluate the reliability of the low part of the current BDD Node */
+    low  = rbdKooNBddFma3(data, node->low, timeStart, numSteps);
+    if (low == NULL) {
+        return NULL;
+    }
+
+    /* Retrieve the reliability curve associated with the variable */
+    rel = &data->bddmgr->vars[node->var].reliability[timeStart];
+
+    /* For each time instant to be evaluated (blocks of 4 time instants)... */
+    for (tIdx = 0; (tIdx + V4D) <= numSteps; tIdx += V4D) {
+        /* Compute the (cached) reliability curve associated with the current BDD Node */
+        rbdKooNBddStepV4dFma3(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+    }
+    /* Are 2 time instants remaining? */
+    if ((tIdx + V2D) <= numSteps) {
+        /* Compute the (cached) reliability curve associated with the current BDD Node */
+        rbdKooNBddStepV2dFma3(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+        tIdx += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (tIdx < numSteps) {
+        /* Compute the (cached) reliability curve associated with the current BDD Node */
+        rbdKooNBddStepS1d(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+    }
+
+    /* Set the BDD Node as already evaluated */
+    computedNodes[nodeIdx] = 1;
+
+    return nodeValues;
 }
 
 

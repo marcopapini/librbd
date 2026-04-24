@@ -61,6 +61,7 @@
     <ClInclude Include="..\..\source\compiler\vs.h" />
     <ClInclude Include="..\..\source\compiler\xlc.h" />
     <ClInclude Include="..\..\source\generic\architecture.h" />
+    <ClInclude Include="..\..\source\generic\bdddata.h" />
     <ClInclude Include="..\..\source\generic\binomial.h" />
     <ClInclude Include="..\..\source\generic\combinations.h" />
     <ClInclude Include="..\..\source\generic\rbd_internal_generic.h" />
@@ -265,6 +266,7 @@
     <ClCompile Include="..\..\source\compiler\gcc.c" />
     <ClCompile Include="..\..\source\compiler\vs.c" />
     <ClCompile Include="..\..\source\compiler\xlc.c" />
+    <ClCompile Include="..\..\source\generic\bdddata.c" />
     <ClCompile Include="..\..\source\generic\binomial.c" />
     <ClCompile Include="..\..\source\generic\combinations.c" />
     <ClCompile Include="..\..\source\generic\processor_generic.c" />

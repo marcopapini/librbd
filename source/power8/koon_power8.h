@@ -31,9 +31,11 @@
 /* Platform-specific functions for POWER8 VSX instruction set */
 void *rbdKooNFillWorkerVsx(struct rbdKooNFillData *data);
 void *rbdKooNGenericShannonWorkerVsx(struct rbdKooNGenericShannonData *data);
+void *rbdKooNBddWorkerVsx(struct rbdKooNBddData *data);
 void *rbdKooNIdenticalWorkerVsx(struct rbdKooNIdenticalData *data);
 
 void rbdKooNGenericShannonV2dVsx(struct rbdKooNGenericShannonData *data, unsigned int time);
+void rbdKooNBddStepV2dVsx(double *r, double *h, double *l, double *o);
 void rbdKooNIdenticalSuccessStepV2dVsx(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV2dVsx(struct rbdKooNIdenticalData *data, unsigned int time);
 #endif /* defined(ARCH_POWER8) && (CPU_ENABLE_SIMD != 0) */

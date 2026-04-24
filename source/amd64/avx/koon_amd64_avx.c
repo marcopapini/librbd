@@ -30,6 +30,7 @@
 
 
 static __m256d rbdKooNGenericShannonStepV4dAvx(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
+static double *rbdKooNBddAvx(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 
 
 /**
@@ -136,6 +137,62 @@ HIDDEN void *rbdKooNGenericShannonWorkerAvx(struct rbdKooNGenericShannonData *da
     if (time < data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
         rbdKooNGenericShannonS1d(data, time);
+    }
+
+    return NULL;
+}
+
+/**
+ * rbdKooNBddWorkerAvx
+ *
+ * Generic KooN RBD Worker function exploiting BDD Evaluation with amd64 AVX instruction set
+ *
+ * Input:
+ *      struct rbdKooNBddData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic KooN RBD Worker exploiting BDD Evaluation using
+ *  amd64 AVX instruction set.
+ *  It is responsible to compute the reliabilities over a given batch of a generic KooN RBD system
+ *
+ * Parameters:
+ *      data: Generic KooN for BDD Evaluation RBD data structure
+ *
+ * Return (void *):
+ *  NULL
+ */
+HIDDEN void *rbdKooNBddWorkerAvx(struct rbdKooNBddData *data)
+{
+    unsigned int time;
+    unsigned int steps;
+    unsigned char *computedPool;
+    double *reliability;
+
+    /* Retrieve first time instant to be processed by worker */
+    time = data->batchIdx * BDD_WINDOW_SIZE;
+
+    /* Retrieve the current computed pool */
+    computedPool = bddGetComputed(data->bddmgr, data->batchIdx);
+
+    /* For each time batch to be processed... */
+    while (time < data->numTimes) {
+        /* Compute the number of time instants processed during current batch */
+        steps = u32min(data->numTimes - time, BDD_WINDOW_SIZE);
+        /* Reset that all BDD Nodes (excluding the terminal nodes) are already evaluated */
+        memset(&computedPool[BDD_NUM_TERMINAL], 0,
+               (data->bddmgr->numNodes - BDD_NUM_TERMINAL) * sizeof(unsigned char));
+        /* Recursively compute reliability of KooN RBD at current batch */
+        if (rbdKooNBddAvx(data, data->bddmgr->root, time, steps) == NULL) {
+            return NULL;
+        }
+        /* Copy reliability computed with BDD to output */
+        reliability = bddGetValues(data->bddmgr, data->bddmgr->root, data->batchIdx);
+        memcpy(&data->output[time], reliability, steps * sizeof(double));
+        /* Increment current time batch */
+        time += (data->numCores * BDD_WINDOW_SIZE);
     }
 
     return NULL;
@@ -290,6 +347,49 @@ HIDDEN FUNCTION_TARGET("avx") void rbdKooNGenericShannonV4dAvx(struct rbdKooNGen
     v4dRes = rbdKooNGenericShannonStepV4dAvx(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+}
+
+/**
+ * rbdKooNBddStepV4dAvx
+ *
+ * Compute the Reliability value for a BDD Node with amd64 AVX 256bit
+ *
+ * Input:
+ *      double *r
+ *      double *h
+ *      double *l
+ *
+ * Output:
+ *      double *o
+ *
+ * Description:
+ *  This function computes the reliability value of KooN RBD system through BDD Evaluation
+ *  using amd64 AVX 256bit
+ *
+ * Parameters:
+ *      r: reliability value of BDD Variable under analysis
+ *      h: reliability value of BDD High Node, i.e., the BDD Variable is working
+ *      l: reliability value of BDD Low Node, i.e., the BDD Variable is failed
+ *      o: output reliability value
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("avx") void rbdKooNBddStepV4dAvx(double *r, double *h, double *l, double *o)
+{
+    __m256d v4dR;
+    __m256d v4dRes;
+    __m256d v4dTmp;
+
+    /* Compute the reliability of the BDD Node NODE = R * H + (1 - R) * L */
+    v4dR = _mm256_loadu_pd(r);
+    v4dRes = _mm256_sub_pd(v4dOnes, v4dR);
+    v4dTmp = _mm256_loadu_pd(l);
+    v4dRes = _mm256_mul_pd(v4dRes, v4dTmp);
+    v4dTmp = _mm256_loadu_pd(h);
+    v4dTmp = _mm256_mul_pd(v4dR, v4dTmp);
+    v4dRes = _mm256_add_pd(v4dRes, v4dTmp);
+    _mm256_storeu_pd(o, capReliabilityV4dAvx(v4dRes));
 }
 
 /**
@@ -585,6 +685,89 @@ static FUNCTION_TARGET("avx") __m256d rbdKooNGenericShannonStepV4dAvx(struct rbd
     v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dTmpRec);
     v4dRes = _mm256_add_pd(v4dRes, v4dTmp1);
     return v4dRes;
+}
+
+/**
+ * rbdKooNBddAvx
+ *
+ * Recursively compute the Reliability curve of a BDD Node with amd64 AVX instruction set
+ *
+ * Input:
+ *      struct rbdKooNBddData *data
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This recursive function computes the Reliability curve of the provided BDD Node
+ *  using amd64 AVX instruction set
+ *
+ * Parameters:
+ *      bddmgr: The BDD Manager
+ *      nodeIdx: The BDD Node identified
+ *      timeStart: The first time instant for which the reliability curve is computed
+ *      numSteps: The number of time instants for which the reliability curve is computed
+ *
+ * Return (double *):
+ *  The cached reliability curve of this BDD Node is successful, NULL otherwise
+ */
+static FUNCTION_TARGET("avx") double *rbdKooNBddAvx(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps)
+{
+    double *nodeValues;
+    unsigned char *computedNodes;
+    double *high;
+    double *low;
+    double *rel;
+    struct bddnode *node;
+    unsigned int tIdx;
+
+    /* Retrieve the values array associated with the current BDD Node */
+    nodeValues = bddGetValues(data->bddmgr, nodeIdx, data->batchIdx);
+
+    /* If the BDD Node has been already evaluated, then immediately return its reliability */
+    computedNodes = bddGetComputed(data->bddmgr, data->batchIdx);
+    if (computedNodes[nodeIdx]) {
+        return nodeValues;
+    }
+
+    /* Retrieve the BDD Node */
+    node = &data->bddmgr->nodes[nodeIdx];
+
+    /* Recursively evaluate the reliability of the high part of the current BDD Node */
+    high = rbdKooNBddAvx(data, node->high, timeStart, numSteps);
+    if (high == NULL) {
+        return NULL;
+    }
+    /* Recursively evaluate the reliability of the low part of the current BDD Node */
+    low  = rbdKooNBddAvx(data, node->low, timeStart, numSteps);
+    if (low == NULL) {
+        return NULL;
+    }
+
+    /* Retrieve the reliability curve associated with the variable */
+    rel = &data->bddmgr->vars[node->var].reliability[timeStart];
+
+    /* For each time instant to be evaluated (blocks of 4 time instants)... */
+    for (tIdx = 0; (tIdx + V4D) <= numSteps; tIdx += V4D) {
+        /* Compute the (cached) reliability curve associated with the current BDD Node */
+        rbdKooNBddStepV4dAvx(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+    }
+    /* Are 2 time instants remaining? */
+    if ((tIdx + V2D) <= numSteps) {
+        /* Compute the (cached) reliability curve associated with the current BDD Node */
+        rbdKooNBddStepV2dSse2(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+        tIdx += V2D;
+    }
+    /* Is 1 time instant remaining? */
+    if (tIdx < numSteps) {
+        /* Compute the (cached) reliability curve associated with the current BDD Node */
+        rbdKooNBddStepS1d(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+    }
+
+    /* Set the BDD Node as already evaluated */
+    computedNodes[nodeIdx] = 1;
+
+    return nodeValues;
 }
 
 

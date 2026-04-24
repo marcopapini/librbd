@@ -1,23 +1,27 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../source/generic/bdddata.c \
 ../source/generic/binomial.c \
 ../source/generic/combinations.c \
 ../source/generic/processor_generic.c \
 ../source/generic/rbd_internal_generic.c 
 
 C_DEPS += \
+./source/generic/bdddata.d \
 ./source/generic/binomial.d \
 ./source/generic/combinations.d \
 ./source/generic/processor_generic.d \
 ./source/generic/rbd_internal_generic.d 
 
 OBJS_AR += \
+./source/generic/bdddata.ar.o \
 ./source/generic/binomial.ar.o \
 ./source/generic/combinations.ar.o \
 ./source/generic/processor_generic.ar.o \
 ./source/generic/rbd_internal_generic.ar.o 
 
 OBJS_SO += \
+./source/generic/bdddata.so.o \
 ./source/generic/binomial.so.o \
 ./source/generic/combinations.so.o \
 ./source/generic/processor_generic.so.o \

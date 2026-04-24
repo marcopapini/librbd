@@ -27,6 +27,7 @@
 
 #include <limits.h>
 
+#include "generic/bdddata.h"
 #include "generic/rbd_internal_generic.h"
 
 
@@ -49,6 +50,17 @@ struct rbdKooNGenericShannonData
     struct rbdKooNGenericShannonRecursionData recur;    /* Additional data needed for recursive algorithm */
 };
 
+struct rbdKooNBddData
+{
+    unsigned char batchIdx;                             /* Index of work batch */
+    unsigned int numCores;                              /* Number of threads in SMP system */
+    double *output;                                     /* Array of computed reliabilities */
+    unsigned char numComponents;                        /* Number of components of KooN RBD system N */
+    unsigned char minComponents;                        /* Minimum number of components in the KooN system (K) */
+    unsigned int numTimes;                              /* Number of time instants to compute T */
+    struct bdd *bddmgr;                                 /* The BDD Manager */
+};
+
 struct rbdKooNIdenticalData
 {
     unsigned char batchIdx;                             /* Index of work batch */
@@ -65,14 +77,17 @@ struct rbdKooNIdenticalData
 /* Platform-generic and platform-specific functions */
 void *rbdKooNFillWorker(void *arg);
 void *rbdKooNGenericShannonWorker(void *arg);
+void *rbdKooNBddWorker(void *arg);
 void *rbdKooNIdenticalWorker(void *arg);
 
 /* Platform-generic functions */
 void *rbdKooNFillWorkerNoarch(struct rbdKooNFillData *data);
 void *rbdKooNGenericShannonWorkerNoarch(struct rbdKooNGenericShannonData *data);
+void *rbdKooNBddWorkerNoarch(struct rbdKooNBddData *data);
 void *rbdKooNIdenticalWorkerNoarch(struct rbdKooNIdenticalData *data);
 
 void rbdKooNGenericShannonS1d(struct rbdKooNGenericShannonData *data, unsigned int time);
+void rbdKooNBddStepS1d(double *r, double *h, double *l, double *o);
 void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);
 
