@@ -22,8 +22,6 @@
 
 #include "../../generic/rbd_internal_generic.h"
 
-#include <sys/types.h>
-
 #if defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0)
 #include "rbd_internal_riscv64_rvv.h"
 #include "../rbd_internal_riscv64.h"

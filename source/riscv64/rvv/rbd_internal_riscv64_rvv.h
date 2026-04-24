@@ -26,6 +26,7 @@
 #include "../../generic/rbd_internal_generic.h"
 
 
+#if defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0)
 /**
  * minimumRiscv64Rvv
  *
@@ -103,6 +104,7 @@ static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int floorDivisionRiscv64R
 static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int ceilDivisionRiscv64Rvv(int dividend, int divisor) {
     return floorDivisionRiscv64Rvv(dividend + divisor - 1, divisor);
 }
+#endif /* defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0) */
 
 
 #endif /* RBD_INTERNAL_RISCV64_RVV_H_ */

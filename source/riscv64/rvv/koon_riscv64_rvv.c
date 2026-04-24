@@ -80,7 +80,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNFillWorkerRvv(struct rbdKooNFillD
 /**
  * rbdKooNGenericShannonWorkerRvv
  *
- * Generic KooN RBD Worker function exploiting Shannon Decomposition with RISC-V 64bit 64bit RVV instruction set
+ * Generic KooN RBD Worker function exploiting Shannon Decomposition with RISC-V 64bit RVV instruction set
  *
  * Input:
  *      struct rbdKooNGenericShannonData *data
@@ -90,7 +90,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNFillWorkerRvv(struct rbdKooNFillD
  *
  * Description:
  *  This function implements the generic KooN RBD Worker exploiting Shannon Decomposition using
- *  RISC-V 64bit 64bit RVV instruction set.
+ *  RISC-V 64bit RVV instruction set.
  *  It is responsible to compute the reliabilities over a given batch of a KooN RBD system
  *
  * Parameters:
@@ -134,7 +134,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNGenericShannonWorkerRvv(struct rb
 /**
  * rbdKooNIdenticalWorkerRvv
  *
- * Identical KooN RBD Worker function with RISC-V RVV instruction set
+ * Identical KooN RBD Worker function with RISC-V 64bit RVV instruction set
  *
  * Input:
  *      struct rbdKooNIdenticalData *data
@@ -143,7 +143,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNGenericShannonWorkerRvv(struct rb
  *      None
  *
  * Description:
- *  This function implements the identical KooN RBD Worker exploiting RISC-V RVV instruction set.
+ *  This function implements the identical KooN RBD Worker exploiting RISC-V 64bit RVV instruction set.
  *  It is responsible to compute the reliabilities over a given batch of an identical KooN RBD system
  *  using the previously computed nCk values
  *
@@ -435,7 +435,7 @@ static FUNCTION_TARGET("arch=+v") vfloat64m1_t rbdKooNGenericShannonStepVNdRvv(s
         return __riscv_vfrsub_vf_f64m1(vNdRes, 1.0, vl);
     }
 
-    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
+    best = (unsigned char)minimumRiscv64Rvv(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;
