@@ -27,6 +27,8 @@
 
 #if defined(COMPILER_CLANG)
 
+#include "../os/os.h"
+
 
 /* Update architecture target for functions and variables */
 #define FUNCTION_TARGET(X)      __attribute__((__target__(X)))
@@ -35,7 +37,11 @@
 #define ALWAYS_INLINE           __attribute__((always_inline))
 
 /* Declare hidden symbols */
+#if defined(OS_WINDOWS)
+#define HIDDEN
+#else
 #define HIDDEN                  __attribute__((visibility ("hidden")))
+#endif
 
 /**
  * compilerPrefetchRead
