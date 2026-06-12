@@ -53,7 +53,7 @@ VARIABLE_TARGET("avx512f") extern const __m512d v8dTwos;
 
 
 FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR);
-FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR);
+FUNCTION_TARGET("avx512f") __m512d capReliabilityVNdAvx512f(__mmask8 mask, __m512d vNdR);
 
 
 /**

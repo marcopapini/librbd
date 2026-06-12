@@ -39,8 +39,8 @@ void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
 void *rbdSeriesGenericWorkerAvx512f(struct rbdSeriesData *data);
 void *rbdSeriesIdenticalWorkerAvx512f(struct rbdSeriesData *data);
 
-void rbdSeriesGenericStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time);
-void rbdSeriesIdenticalStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time);
+void rbdSeriesGenericStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time);
+void rbdSeriesIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 

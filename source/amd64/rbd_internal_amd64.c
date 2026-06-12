@@ -62,30 +62,32 @@ HIDDEN FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR)
 }
 
 /**
- * capReliabilityV8dAvx512f
+ * capReliabilityVNdAvx512f
  *
  * Cap reliability to accepted bounds [0.0, 1.0] with amd64 AVX512F 512bit
  *
  * Input:
- *      __m512d v8dR
+ *      __mmask8 mask
+ *      __m512d vNdR
  *
  * Output:
  *      None
  *
  * Description:
- *  This function caps the provided reliability (vector of 8 values, double-precision FP)
+ *  This function caps the provided reliability (vector of N masked values, double-precision FP)
  *      to the accepted bounds exploiting amd64 AVX512F 512bit
  *
  * Parameters:
+ *      mask: AVX512F 8-bit mask used during current step
  *      v8dR: Reliability
  *
  * Return (__m512d):
  *  Reliability within accepted bounds
  */
-HIDDEN FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR)
+HIDDEN FUNCTION_TARGET("avx512f") __m512d capReliabilityVNdAvx512f(__mmask8 mask, __m512d vNdR)
 {
     /* Cap computed reliability to accepted bounds [0, 1] */
-    return _mm512_max_pd(_mm512_min_pd(v8dOnes, v8dR), v8dZeros);
+    return _mm512_maskz_max_pd(mask, _mm512_maskz_min_pd(mask, v8dOnes, vNdR), v8dZeros);
 }
 
 

@@ -29,7 +29,7 @@
 #include "../../generic/combinations.h"
 
 
-static __m512d rbdKooNGenericShannonStepV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
+static __m512d rbdKooNGenericShannonStepVNdAvx512f(__mmask8 mask, struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static double *rbdKooNBddAvx512f(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 
 
@@ -58,13 +58,10 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNFillWorkerAvx512f(struct rbdKooNF
 {
     unsigned int time;
     __m512d m512d;
-    __m256d m256d;
-    __m128d m128d;
+    __mmask8 mask;
 
-    /* Define vector (8d, 4d and 2d) with provided value */
+    /* Define vector (8d) with provided value */
     m512d = _mm512_set1_pd(data->value);
-    m256d = _mm256_set1_pd(data->value);
-    m128d = _mm_set1_pd(data->value);
 
     /* For each time instant (blocks of 8 time instants)... */
     for (time = 0; (time + V8D) <= data->numTimes; time += V8D) {
@@ -73,24 +70,12 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNFillWorkerAvx512f(struct rbdKooNF
         /* Fill output Reliability array with fixed value */
         _mm512_storeu_pd(&data->output[time], m512d);
     }
-    /* Are (at least) 4 time instants remaining? */
-    if ((time + V4D) <= data->numTimes) {
-        /* Fill output Reliability array with fixed value */
-        _mm256_storeu_pd(&data->output[time], m256d);
-        /* Increment current time instant */
-        time += V4D;
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Fill output Reliability array with fixed value */
-        _mm_storeu_pd(&data->output[time], m128d);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
+    /* Is (at least) 1 time instant remaining? */
     if (time < data->numTimes) {
+        /* Compute mask for the management of the tail */
+        mask = (__mmask8)_cvtu32_mask16((1U << (data->numTimes - time)) - 1);
         /* Fill output Reliability array with fixed value */
-        data->output[time++] = data->value;
+        _mm512_mask_storeu_pd(&data->output[time], mask, m512d);
     }
 
     return NULL;
@@ -118,9 +103,10 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNFillWorkerAvx512f(struct rbdKooNF
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNGenericShannonWorkerAvx512f(struct rbdKooNGenericShannonData *data)
+HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNGenericShannonWorkerAvx512f(struct rbdKooNGenericShannonData *data)
 {
     unsigned int time;
+    __mmask8 mask;
 
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
@@ -131,28 +117,16 @@ HIDDEN void *rbdKooNGenericShannonWorkerAvx512f(struct rbdKooNGenericShannonData
         prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V8D));
         prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNGenericShannonV8dAvx512f(data, time);
+        rbdKooNGenericShannonVNdAvx512f((__mmask8)0xFFU, data, time);
         /* Increment current time instant */
         time += (data->numCores * V8D);
     }
-    /* Are (at least) 4 time instants remaining? */
-    if ((time + V4D) <= data->numTimes) {
-        /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNGenericShannonV4dFma3(data, time);
-        /* Increment current time instant */
-        time += V4D;
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNGenericShannonV2dFma3(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
+    /* Is (at least) 1 time instant remaining? */
     if (time < data->numTimes) {
+        /* Compute mask for the management of the tail */
+        mask = (__mmask8)_cvtu32_mask16((1U << (data->numTimes - time)) - 1);
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNGenericShannonS1d(data, time);
+        rbdKooNGenericShannonVNdAvx512f(mask, data, time);
     }
 
     return NULL;
@@ -236,9 +210,11 @@ HIDDEN void *rbdKooNBddWorkerAvx512f(struct rbdKooNBddData *data)
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data)
+HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data)
 {
     unsigned int time;
+    unsigned int alignSteps;
+    __mmask8 mask;
 
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
@@ -249,23 +225,16 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data)
         if ((time + V8D) < data->numTimes) {
             /* Align, if possible, to vector size */
             if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-                if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute the number of doubles to align to vector size */
+                alignSteps = ((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) / sizeof(double);
+                alignSteps = (V8D - alignSteps) & (V8D - 1);
+                if (alignSteps > 0) {
+                    /* Compute mask for the management of the head */
+                    mask = (__mmask8)_cvtu32_mask16((1U << alignSteps) - 1);
                     /* Compute reliability of KooN RBD at current time instant from working components */
-                    rbdKooNIdenticalSuccessStepS1d(data, time);
+                    rbdKooNIdenticalSuccessStepVNdAvx512f(mask, data, time);
                     /* Increment current time instant */
-                    time += S1D;
-                }
-                if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-                    /* Compute reliability of KooN RBD at current time instant from working components */
-                    rbdKooNIdenticalSuccessStepV2dFma3(data, time);
-                    /* Increment current time instant */
-                    time += V2D;
-                }
-                if (((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
-                    /* Compute reliability of KooN RBD at current time instant from working components */
-                    rbdKooNIdenticalSuccessStepV4dFma3(data, time);
-                    /* Increment current time instant */
-                    time += V4D;
+                    time += alignSteps;
                 }
             }
         }
@@ -275,28 +244,16 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data)
             prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V8D));
             prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
             /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepV8dAvx512f(data, time);
+            rbdKooNIdenticalSuccessStepVNdAvx512f((__mmask8)0xFFU, data, time);
             /* Increment current time instant */
             time += (data->numCores * V8D);
         }
-        /* Are (at least) 4 time instants remaining? */
-        if ((time + V4D) <= data->numTimes) {
-            /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepV4dFma3(data, time);
-            /* Increment current time instant */
-            time += V4D;
-        }
-        /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D) <= data->numTimes) {
-            /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepV2dFma3(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-        /* Is 1 time instant remaining? */
+        /* Is (at least) 1 time instant remaining? */
         if (time < data->numTimes) {
+            /* Compute mask for the management of the tail */
+            mask = (__mmask8)_cvtu32_mask16((1U << (data->numTimes - time)) - 1);
             /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepS1d(data, time);
+            rbdKooNIdenticalSuccessStepVNdAvx512f(mask, data, time);
         }
     }
     else {
@@ -304,23 +261,16 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data)
         if ((time + V8D) < data->numTimes) {
             /* Align, if possible, to vector size */
             if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-                if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+                /* Compute the number of doubles to align to vector size */
+                alignSteps = ((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) / sizeof(double);
+                alignSteps = (V8D - alignSteps) & (V8D - 1);
+                if (alignSteps > 0) {
+                    /* Compute mask for the management of the head */
+                    mask = (__mmask8)_cvtu32_mask16((1U << alignSteps) - 1);
                     /* Compute reliability of KooN RBD at current time instant from failed components */
-                    rbdKooNIdenticalFailStepS1d(data, time);
+                    rbdKooNIdenticalFailStepVNdAvx512f(mask, data, time);
                     /* Increment current time instant */
-                    time += S1D;
-                }
-                if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-                    /* Compute reliability of KooN RBD at current time instant from failed components */
-                    rbdKooNIdenticalFailStepV2dSse2(data, time);
-                    /* Increment current time instant */
-                    time += V2D;
-                }
-                if (((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
-                    /* Compute reliability of KooN RBD at current time instant from failed components */
-                    rbdKooNIdenticalFailStepV4dAvx(data, time);
-                    /* Increment current time instant */
-                    time += V4D;
+                    time += alignSteps;
                 }
             }
         }
@@ -330,28 +280,18 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data)
             prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V8D));
             prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
             /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepV8dAvx512f(data, time);
+            rbdKooNIdenticalFailStepVNdAvx512f((__mmask8)0xFFU, data, time);
             /* Increment current time instant */
             time += (data->numCores * V8D);
         }
-        /* Are (at least) 4 time instants remaining? */
-        if ((time + V4D) <= data->numTimes) {
+        /* Is (at least) 1 time instant remaining? */
+        if (time < data->numTimes) {
+            /* Compute mask for the management of the tail */
+            mask = (__mmask8)_cvtu32_mask16((1U << (data->numTimes - time)) - 1);
             /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepV4dAvx(data, time);
+            rbdKooNIdenticalFailStepVNdAvx512f(mask, data, time);
             /* Increment current time instant */
             time += V4D;
-        }
-        /* Are (at least) 2 time instants remaining? */
-        if ((time + V2D) <= data->numTimes) {
-            /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepV2dSse2(data, time);
-            /* Increment current time instant */
-            time += V2D;
-        }
-        /* Is 1 time instant remaining? */
-        if (time < data->numTimes) {
-            /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepS1d(data, time);
         }
     }
 
@@ -359,11 +299,12 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data)
 }
 
 /**
- * rbdKooNGenericShannonV8dAvx512f
+ * rbdKooNGenericShannonVNdAvx512f
  *
  * Compute KooN RBD through Shannon Decomposition method with amd64 AVX512F 512bit
  *
  * Input:
+ *      __mmask8 mask
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *
@@ -375,28 +316,30 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data)
  *  exploiting amd64 AVX512F 512bit
  *
  * Parameters:
+ *      mask: AVX512F 8-bit mask used during current step
  *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericShannonV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericShannonVNdAvx512f(__mmask8 mask, struct rbdKooNGenericShannonData *data, unsigned int time)
 {
-    __m512d v8dRes;
+    __m512d vNdRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
-    v8dRes = rbdKooNGenericShannonStepV8dAvx512f(data, time, data->numComponents, data->minComponents);
+    vNdRes = rbdKooNGenericShannonStepVNdAvx512f(mask, data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
-    _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
+    _mm512_mask_storeu_pd(&data->output[time], mask, capReliabilityVNdAvx512f(mask, vNdRes));
 }
 
 /**
- * rbdKooNBddStepV8dAvx512f
+ * rbdKooNBddStepVNdAvx512f
  *
  * Compute the Reliability value for a BDD Node with amd64 AVX512F 512bit
  *
  * Input:
+ *      __mmask8 mask
  *      double *r
  *      double *h
  *      double *l
@@ -409,6 +352,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericShannonV8dAvx512f(struct rb
  *  using amd64 AVX512F 512bit
  *
  * Parameters:
+ *      mask: AVX512F 8-bit mask used during current step
  *      r: reliability value of BDD Variable under analysis
  *      h: reliability value of BDD High Node, i.e., the BDD Variable is working
  *      l: reliability value of BDD Low Node, i.e., the BDD Variable is failed
@@ -417,28 +361,29 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericShannonV8dAvx512f(struct rb
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNBddStepV8dAvx512f(double *r, double *h, double *l, double *o)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNBddStepVNdAvx512f(__mmask8 mask, double *r, double *h, double *l, double *o)
 {
-    __m512d v8dR;
-    __m512d v8dH;
-    __m512d v8dL;
-    __m512d v8dRes;
+    __m512d vNdR;
+    __m512d vNdH;
+    __m512d vNdL;
+    __m512d vNdRes;
 
     /* Compute the reliability of the BDD Node NODE = R * H + (1 - R) * L */
-    v8dR = _mm512_loadu_pd(r);
-    v8dL = _mm512_loadu_pd(l);
-    v8dRes = _mm512_fnmadd_pd(v8dR, v8dL, v8dL);
-    v8dH = _mm512_loadu_pd(h);
-    v8dRes = _mm512_fmadd_pd(v8dR, v8dH, v8dRes);
-    _mm512_storeu_pd(o, capReliabilityV8dAvx512f(v8dRes));
+    vNdR = _mm512_maskz_loadu_pd(mask, r);
+    vNdL = _mm512_maskz_loadu_pd(mask, l);
+    vNdRes = _mm512_maskz_fnmadd_pd(mask, vNdR, vNdL, vNdL);
+    vNdH = _mm512_maskz_loadu_pd(mask, h);
+    vNdRes = _mm512_maskz_fmadd_pd(mask, vNdR, vNdH, vNdRes);
+    _mm512_mask_storeu_pd(o, mask, capReliabilityVNdAvx512f(mask, vNdRes));
 }
 
 /**
- * rbdKooNIdenticalSuccessStepV8dAvx512f
+ * rbdKooNIdenticalSuccessStepVNdAvx512f
  *
  * Identical KooN RBD Step function from working components with amd64 AVX512F 512bit
  *
  * Input:
+ *      __mmask8 mask
  *      struct rbdKooNIdenticalData *data
  *      unsigned int time
  *
@@ -451,58 +396,60 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNBddStepV8dAvx512f(double *r, doubl
  *  taking into account the working components
  *
  * Parameters:
+ *      mask: AVX512F 8-bit mask used during current step
  *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalSuccessStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalSuccessStepVNdAvx512f(__mmask8 mask, struct rbdKooNIdenticalData *data, unsigned int time)
 {
-    __m512d v8dR;
-    __m512d v8dTmp1, v8dTmp2;
-    __m512d v8dRes;
+    __m512d vNdR;
+    __m512d vNdTmp1, vNdTmp2;
+    __m512d vNdRes;
     int numWork, numFail;
     int ii, jj;
 
     /* Retrieve reliability */
-    v8dR = _mm512_loadu_pd(&data->reliabilities[time]);
+    vNdR = _mm512_maskz_loadu_pd(mask, &data->reliabilities[time]);
     /* Initialize reliability to 0 */
-    v8dRes = v8dZeros;
+    vNdRes = v8dZeros;
     /* Compute product between reliability and unreliability */
-    v8dTmp2 = _mm512_fnmadd_pd(v8dR, v8dR, v8dR);
+    vNdTmp2 = _mm512_maskz_fnmadd_pd(mask, vNdR, vNdR, vNdR);
 
     /* For each iteration... */
     for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
         /* Initialize step reliability to nCi */
-        v8dTmp1 = _mm512_set1_pd((double)data->nCi[ii]);
+        vNdTmp1 = _mm512_maskz_mov_pd(mask, _mm512_set1_pd((double)data->nCi[ii]));
         /* Compute number of working and failed components */
         numWork = data->minComponents + ii;
         numFail = data->numComponents - data->minComponents - ii;
         /* For each failed component... */
         for (jj = (numFail - 1); jj >= 0; --jj) {
             /* Multiply step reliability for product of reliability and unreliability of component */
-            v8dTmp1 = _mm512_mul_pd(v8dTmp1, v8dTmp2);
+            vNdTmp1 = _mm512_maskz_mul_pd(mask, vNdTmp1, vNdTmp2);
         }
         /* For each non-considered working component... */
         for (jj = (numWork - numFail - 1); jj >= 0; --jj) {
             /* Multiply step reliability for reliability of component */
-            v8dTmp1 = _mm512_mul_pd(v8dTmp1, v8dR);
+            vNdTmp1 = _mm512_maskz_mul_pd(mask, vNdTmp1, vNdR);
         }
         /* Add reliability of current iteration */
-        v8dRes = _mm512_add_pd(v8dRes, v8dTmp1);
+        vNdRes = _mm512_maskz_add_pd(mask, vNdRes, vNdTmp1);
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
+    _mm512_mask_storeu_pd(&data->output[time], mask, capReliabilityVNdAvx512f(mask, vNdRes));
 }
 
 /**
- * rbdKooNIdenticalFailStepV8dAvx512f
+ * rbdKooNIdenticalFailStepVNdAvx512f
  *
  * Identical KooN RBD Step function from failed components with amd64 AVX512F 512bit
  *
  * Input:
+ *      __mmask8 mask
  *      struct rbdKooNIdenticalData *data
  *      unsigned int time
  *
@@ -515,60 +462,62 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalSuccessStepV8dAvx512f(str
  *  taking into account the failed components
  *
  * Parameters:
+ *      mask: AVX512F 8-bit mask used during current step
  *      data: Identical KooN RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepVNdAvx512f(__mmask8 mask, struct rbdKooNIdenticalData *data, unsigned int time)
 {
-    __m512d v8dU;
-    __m512d v8dTmp1, v8dTmp2;
-    __m512d v8dRes;
+    __m512d vNdU;
+    __m512d vNdTmp1, vNdTmp2;
+    __m512d vNdRes;
     int numWork, numFail;
     int ii, jj;
 
     /* Retrieve reliability */
-    v8dTmp2 = _mm512_loadu_pd(&data->reliabilities[time]);
+    vNdTmp2 = _mm512_maskz_loadu_pd(mask, &data->reliabilities[time]);
     /* Compute unreliability */
-    v8dU = _mm512_sub_pd(v8dOnes, v8dTmp2);
+    vNdU = _mm512_maskz_sub_pd(mask, v8dOnes, vNdTmp2);
     /* Initialize reliability to 1 */
-    v8dRes = v8dOnes;
+    vNdRes = v8dOnes;
     /* Compute product between reliability and unreliability */
-    v8dTmp2 = _mm512_mul_pd(v8dTmp2, v8dU);
+    vNdTmp2 = _mm512_maskz_mul_pd(mask, vNdTmp2, vNdU);
 
     /* For each iteration... */
     for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
         /* Initialize step reliability to nCi */
-        v8dTmp1 = _mm512_set1_pd((double)data->nCi[ii]);
+        vNdTmp1 = _mm512_maskz_mov_pd(mask, _mm512_set1_pd((double)data->nCi[ii]));
         /* Compute number of working and failed components */
         numWork = data->numComponents - data->minComponents - ii;
         numFail = data->minComponents + ii;
         /* For each working component... */
         for (jj = (numWork - 1); jj >= 0; --jj) {
             /* Multiply step unreliability for product of reliability and unreliability of component */
-            v8dTmp1 = _mm512_mul_pd(v8dTmp1, v8dTmp2);
+            vNdTmp1 = _mm512_maskz_mul_pd(mask, vNdTmp1, vNdTmp2);
         }
         /* For each non-considered failed component... */
         for (jj = (numFail - numWork - 1); jj >= 0; --jj) {
             /* Multiply step unreliability for unreliability of component */
-            v8dTmp1 = _mm512_mul_pd(v8dTmp1, v8dU);
+            vNdTmp1 = _mm512_maskz_mul_pd(mask, vNdTmp1, vNdU);
         }
         /* Subtract unreliability of current iteration */
-        v8dRes = _mm512_sub_pd(v8dRes, v8dTmp1);
+        vNdRes = _mm512_maskz_sub_pd(mask, vNdRes, vNdTmp1);
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
+    _mm512_mask_storeu_pd(&data->output[time], mask, capReliabilityVNdAvx512f(mask, vNdRes));
 }
 
 /**
- * rbdKooNGenericShannonStepV8dAvx512f
+ * rbdKooNGenericShannonStepVNdAvx512f
  *
  * Recursive KooN RBD Shannon Decomposition function with amd64 AVX512F 512bit
  *
  * Input:
+ *      __mmask8 mask
  *      struct rbdKooNGenericShannonData *data
  *      unsigned int time
  *      unsigned char n
@@ -583,6 +532,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct
  *  It is responsible to recursively compute the reliability of a KooN RBD system
  *
  * Parameters:
+ *      mask: AVX512F 8-bit mask used during current step
  *      data: Generic KooN for Shannon Decomposition RBD data structure
  *      time: current time instant over which KooN RBD shall be computed
  *      n: current number of components in KooN RBD
@@ -591,129 +541,129 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepV8dAvx512f(struct
  * Return (__m512d):
  *  Computed reliability
  */
-static FUNCTION_TARGET("avx512f") __m512d rbdKooNGenericShannonStepV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
+static FUNCTION_TARGET("avx512f") __m512d rbdKooNGenericShannonStepVNdAvx512f(__mmask8 mask, struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
 {
     unsigned char best;
     unsigned char offset;
     unsigned char idx;
     unsigned char ii, jj;
-    __m512d *v8dR;
-    __m512d v8dRes;
-    __m512d v8dTmpRec;
-    __m512d v8dTmp1, v8dTmp2;
-    __m512d v8dStepTmp1, v8dStepTmp2;
+    __m512d *vNdR;
+    __m512d vNdRes;
+    __m512d vNdTmpRec;
+    __m512d vNdTmp1, vNdTmp2;
+    __m512d vNdStepTmp1, vNdStepTmp2;
     int nextCombs;
 
     if (k == n) {
         /* Compute the Reliability as Series block */
-        v8dRes = v8dOnes;
+        vNdRes = v8dOnes;
         while (n > 0) {
-            v8dTmp1 = _mm512_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v8dRes = _mm512_mul_pd(v8dRes, v8dTmp1);
+            vNdTmp1 = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(--n * data->numTimes) + time]);
+            vNdRes = _mm512_maskz_mul_pd(mask, vNdRes, vNdTmp1);
         }
-        return v8dRes;
+        return vNdRes;
     }
     if (k == 1) {
         /* Compute the Reliability as Parallel block */
-        v8dRes = v8dOnes;
+        vNdRes = v8dOnes;
         while (n > 0) {
-            v8dTmp1 = _mm512_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v8dRes = _mm512_fnmadd_pd(v8dRes, v8dTmp1, v8dRes);
+            vNdTmp1 = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(--n * data->numTimes) + time]);
+            vNdRes = _mm512_maskz_fnmadd_pd(mask, vNdRes, vNdTmp1, vNdRes);
         }
-        return _mm512_sub_pd(v8dOnes, v8dRes);
+        return _mm512_maskz_sub_pd(mask, v8dOnes, vNdRes);
     }
 
     best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
     if (best > 1) {
         /* Recursively compute the Reliability - Minimize number of recursive calls */
         offset = n - best;
-        v8dTmp1 = v8dOnes;
-        v8dTmp2 = v8dOnes;
-        v8dR = &data->recur.v8dR[offset];
+        vNdTmp1 = v8dOnes;
+        vNdTmp2 = v8dOnes;
+        vNdR = &data->recur.v8dR[offset];
         for (idx = 0; idx < best; idx++) {
-            v8dR[idx] = _mm512_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-            v8dTmp1 = _mm512_mul_pd(v8dTmp1, v8dR[idx]);
-            v8dTmp2 = _mm512_fnmadd_pd(v8dTmp2, v8dR[idx], v8dTmp2);
+            vNdR[idx] = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(--n * data->numTimes) + time]);
+            vNdTmp1 = _mm512_maskz_mul_pd(mask, vNdTmp1, vNdR[idx]);
+            vNdTmp2 = _mm512_maskz_fnmadd_pd(mask, vNdTmp2, vNdR[idx], vNdTmp2);
         }
-        v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k-best);
-        v8dRes = _mm512_mul_pd(v8dTmp1, v8dTmpRec);
-        v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k);
-        v8dRes = _mm512_fmadd_pd(v8dTmp2, v8dTmpRec, v8dRes);
+        vNdTmpRec = rbdKooNGenericShannonStepVNdAvx512f(mask, data, time, n, k-best);
+        vNdRes = _mm512_maskz_mul_pd(mask, vNdTmp1, vNdTmpRec);
+        vNdTmpRec = rbdKooNGenericShannonStepVNdAvx512f(mask, data, time, n, k);
+        vNdRes = _mm512_maskz_fmadd_pd(mask, vNdTmp2, vNdTmpRec, vNdRes);
         for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
-            v8dTmp1 = v8dZeros;
-            v8dTmp2 = v8dZeros;
+            vNdTmp1 = v8dZeros;
+            vNdTmp2 = v8dZeros;
             firstCombination((unsigned char)idx, data->recur.comb);
             do {
-                v8dStepTmp1 = v8dOnes;
-                v8dStepTmp2 = v8dOnes;
+                vNdStepTmp1 = v8dOnes;
+                vNdStepTmp2 = v8dOnes;
                 ii = 0;
                 jj = 0;
                 while (ii < idx) {
                     if (data->recur.comb[ii] == jj) {
-                        v8dStepTmp1 = _mm512_fnmadd_pd(v8dStepTmp1, v8dR[jj], v8dStepTmp1);
-                        v8dStepTmp2 = _mm512_mul_pd(v8dStepTmp2, v8dR[jj]);
+                        vNdStepTmp1 = _mm512_maskz_fnmadd_pd(mask, vNdStepTmp1, vNdR[jj], vNdStepTmp1);
+                        vNdStepTmp2 = _mm512_maskz_mul_pd(mask, vNdStepTmp2, vNdR[jj]);
                         ++ii;
                     }
                     else {
-                        v8dStepTmp1 = _mm512_mul_pd(v8dStepTmp1, v8dR[jj]);
-                        v8dStepTmp2 = _mm512_fnmadd_pd(v8dStepTmp2, v8dR[jj], v8dStepTmp2);
+                        vNdStepTmp1 = _mm512_maskz_mul_pd(mask, vNdStepTmp1, vNdR[jj]);
+                        vNdStepTmp2 = _mm512_maskz_fnmadd_pd(mask, vNdStepTmp2, vNdR[jj], vNdStepTmp2);
                     }
                     ++jj;
                 }
                 while (jj < best) {
-                    v8dStepTmp1 = _mm512_mul_pd(v8dStepTmp1, v8dR[jj]);
-                    v8dStepTmp2 = _mm512_fnmadd_pd(v8dStepTmp2, v8dR[jj], v8dStepTmp2);
+                    vNdStepTmp1 = _mm512_maskz_mul_pd(mask, vNdStepTmp1, vNdR[jj]);
+                    vNdStepTmp2 = _mm512_maskz_fnmadd_pd(mask, vNdStepTmp2, vNdR[jj], vNdStepTmp2);
                     ++jj;
                 }
-                v8dTmp1 = _mm512_add_pd(v8dTmp1, v8dStepTmp1);
-                v8dTmp2 = _mm512_add_pd(v8dTmp2, v8dStepTmp2);
+                vNdTmp1 = _mm512_maskz_add_pd(mask, vNdTmp1, vNdStepTmp1);
+                vNdTmp2 = _mm512_maskz_add_pd(mask, vNdTmp2, vNdStepTmp2);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k-best+idx);
-            v8dRes = _mm512_fmadd_pd(v8dTmp1, v8dTmpRec, v8dRes);
-            v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k-idx);
-            v8dRes = _mm512_fmadd_pd(v8dTmp2, v8dTmpRec, v8dRes);
+            vNdTmpRec = rbdKooNGenericShannonStepVNdAvx512f(mask, data, time, n, k-best+idx);
+            vNdRes = _mm512_maskz_fmadd_pd(mask, vNdTmp1, vNdTmpRec, vNdRes);
+            vNdTmpRec = rbdKooNGenericShannonStepVNdAvx512f(mask, data, time, n, k-idx);
+            vNdRes = _mm512_maskz_fmadd_pd(mask, vNdTmp2, vNdTmpRec, vNdRes);
         }
         if ((best & 1) == 0) {
             idx = best / 2;
-            v8dTmp1 = v8dZeros;
+            vNdTmp1 = v8dZeros;
             firstCombination((unsigned char)idx, data->recur.comb);
             do {
-                v8dStepTmp1 = v8dOnes;
+                vNdStepTmp1 = v8dOnes;
                 ii = 0;
                 jj = 0;
                 while (ii < idx) {
                     if (data->recur.comb[ii] == jj) {
-                        v8dStepTmp1 = _mm512_fnmadd_pd(v8dStepTmp1, v8dR[jj], v8dStepTmp1);
+                        vNdStepTmp1 = _mm512_maskz_fnmadd_pd(mask, vNdStepTmp1, vNdR[jj], vNdStepTmp1);
                         ++ii;
                     }
                     else {
-                        v8dStepTmp1 = _mm512_mul_pd(v8dStepTmp1, v8dR[jj]);
+                        vNdStepTmp1 = _mm512_maskz_mul_pd(mask, vNdStepTmp1, vNdR[jj]);
                     }
                     ++jj;
                 }
                 while (jj < best) {
-                    v8dStepTmp1 = _mm512_mul_pd(v8dStepTmp1, v8dR[jj]);
+                    vNdStepTmp1 = _mm512_maskz_mul_pd(mask, vNdStepTmp1, vNdR[jj]);
                     ++jj;
                 }
-                v8dTmp1 = _mm512_add_pd(v8dTmp1, v8dStepTmp1);
+                vNdTmp1 = _mm512_maskz_add_pd(mask, vNdTmp1, vNdStepTmp1);
                 nextCombs = nextCombination(best, idx, data->recur.comb);
             } while(nextCombs == 0);
-            v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k-best+idx);
-            v8dRes = _mm512_fmadd_pd(v8dTmp1, v8dTmpRec, v8dRes);
+            vNdTmpRec = rbdKooNGenericShannonStepVNdAvx512f(mask, data, time, n, k-best+idx);
+            vNdRes = _mm512_maskz_fmadd_pd(mask, vNdTmp1, vNdTmpRec, vNdRes);
         }
 
-        return v8dRes;
+        return vNdRes;
     }
 
     /* Recursively compute the Reliability */
-    v8dTmp1 = _mm512_loadu_pd(&data->reliabilities[(--n * data->numTimes) + time]);
-    v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k-1);
-    v8dRes = _mm512_mul_pd(v8dTmp1, v8dTmpRec);
-    v8dTmp1 = _mm512_sub_pd(v8dOnes, v8dTmp1);
-    v8dTmpRec = rbdKooNGenericShannonStepV8dAvx512f(data, time, n, k);
-    v8dRes = _mm512_fmadd_pd(v8dTmp1, v8dTmpRec, v8dRes);
-    return v8dRes;
+    vNdTmp1 = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(--n * data->numTimes) + time]);
+    vNdTmpRec = rbdKooNGenericShannonStepVNdAvx512f(mask, data, time, n, k-1);
+    vNdRes = _mm512_maskz_mul_pd(mask, vNdTmp1, vNdTmpRec);
+    vNdTmp1 = _mm512_maskz_sub_pd(mask, v8dOnes, vNdTmp1);
+    vNdTmpRec = rbdKooNGenericShannonStepVNdAvx512f(mask, data, time, n, k);
+    vNdRes = _mm512_maskz_fmadd_pd(mask, vNdTmp1, vNdTmpRec, vNdRes);
+    return vNdRes;
 }
 
 /**
@@ -749,6 +699,7 @@ static FUNCTION_TARGET("avx512f") double *rbdKooNBddAvx512f(struct rbdKooNBddDat
     double *rel;
     struct bddnode *node;
     unsigned int tIdx;
+    __mmask8 mask;
 
     /* Retrieve the values array associated with the current BDD Node */
     nodeValues = bddGetValues(data->bddmgr, nodeIdx, data->batchIdx);
@@ -779,24 +730,14 @@ static FUNCTION_TARGET("avx512f") double *rbdKooNBddAvx512f(struct rbdKooNBddDat
     /* For each time instant to be evaluated (blocks of 8 time instants)... */
     for (tIdx = 0; (tIdx + V8D) <= numSteps; tIdx += V8D) {
         /* Compute the (cached) reliability curve associated with the current BDD Node */
-        rbdKooNBddStepV8dAvx512f(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+        rbdKooNBddStepVNdAvx512f((__mmask8)0xFFU, &rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
     }
-    /* Are 4 time instants remaining? */
-    if ((tIdx + V4D) <= numSteps) {
-        /* Compute the (cached) reliability curve associated with the current BDD Node */
-        rbdKooNBddStepV4dFma3(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
-        tIdx += V4D;
-    }
-    /* Are 2 time instants remaining? */
-    if ((tIdx + V2D) <= numSteps) {
-        /* Compute the (cached) reliability curve associated with the current BDD Node */
-        rbdKooNBddStepV2dFma3(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
-        tIdx += V2D;
-    }
-    /* Is 1 time instant remaining? */
+    /* Is (at least) 1 time instant remaining? */
     if (tIdx < numSteps) {
+        /* Compute mask for the management of the tail */
+        mask = (__mmask8)_cvtu32_mask16((1U << (numSteps - tIdx)) - 1);
         /* Compute the (cached) reliability curve associated with the current BDD Node */
-        rbdKooNBddStepS1d(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+        rbdKooNBddStepVNdAvx512f(mask, &rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
     }
 
     /* Set the BDD Node as already evaluated */

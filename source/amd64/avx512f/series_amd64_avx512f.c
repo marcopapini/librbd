@@ -49,9 +49,10 @@
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdSeriesGenericWorkerAvx512f(struct rbdSeriesData *data)
+HIDDEN FUNCTION_TARGET("avx512f") void *rbdSeriesGenericWorkerAvx512f(struct rbdSeriesData *data)
 {
     unsigned int time;
+    __mmask8 mask;
 
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
@@ -62,28 +63,16 @@ HIDDEN void *rbdSeriesGenericWorkerAvx512f(struct rbdSeriesData *data)
         prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V8D));
         prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepV8dAvx512f(data, time);
+        rbdSeriesGenericStepVNdAvx512f((__mmask8)0xFFU, data, time);
         /* Increment current time instant */
         time += (data->numCores * V8D);
     }
-    /* Are (at least) 4 time instants remaining? */
-    if ((time + V4D) <= data->numTimes) {
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepV4dAvx(data, time);
-        /* Increment current time instant */
-        time += V4D;
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepV2dSse2(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
+    /* Is (at least) 1 time instant remaining? */
     if (time < data->numTimes) {
+        /* Compute mask for the management of the tail */
+        mask = (__mmask8)_cvtu32_mask16((1U << (data->numTimes - time)) - 1);
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepS1d(data, time);
+        rbdSeriesGenericStepVNdAvx512f(mask, data, time);
     }
 
     return NULL;
@@ -110,9 +99,11 @@ HIDDEN void *rbdSeriesGenericWorkerAvx512f(struct rbdSeriesData *data)
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdSeriesIdenticalWorkerAvx512f(struct rbdSeriesData *data)
+HIDDEN FUNCTION_TARGET("avx512f") void *rbdSeriesIdenticalWorkerAvx512f(struct rbdSeriesData *data)
 {
     unsigned int time;
+    unsigned int alignSteps;
+    __mmask8 mask;
 
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
@@ -121,23 +112,16 @@ HIDDEN void *rbdSeriesIdenticalWorkerAvx512f(struct rbdSeriesData *data)
     if ((time + V8D) < data->numTimes) {
         /* Align, if possible, to vector size */
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute the number of doubles to align to vector size */
+            alignSteps = ((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) / sizeof(double);
+            alignSteps = (V8D - alignSteps) & (V8D - 1);
+            if (alignSteps > 0) {
+                /* Compute mask for the management of the head */
+                mask = (__mmask8)_cvtu32_mask16((1U << alignSteps) - 1);
                 /* Compute reliability of Series RBD at current time instant */
-                rbdSeriesIdenticalStepS1d(data, time);
+                rbdSeriesIdenticalStepVNdAvx512f(mask, data, time);
                 /* Increment current time instant */
-                time += S1D;
-            }
-            if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-                /* Compute reliability of Series RBD at current time instant */
-                rbdSeriesIdenticalStepV2dSse2(data, time);
-                /* Increment current time instant */
-                time += V2D;
-            }
-            if (((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
-                /* Compute reliability of Series RBD at current time instant */
-                rbdSeriesIdenticalStepV4dAvx(data, time);
-                /* Increment current time instant */
-                time += V4D;
+                time += alignSteps;
             }
         }
     }
@@ -147,39 +131,28 @@ HIDDEN void *rbdSeriesIdenticalWorkerAvx512f(struct rbdSeriesData *data)
         prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V8D));
         prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepV8dAvx512f(data, time);
+        rbdSeriesIdenticalStepVNdAvx512f((__mmask8)0xFFU, data, time);
         /* Increment current time instant */
         time += (data->numCores * V8D);
     }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V4D) <= data->numTimes) {
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepV4dAvx(data, time);
-        /* Increment current time instant */
-        time += V4D;
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepV2dSse2(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
+    /* Is (at least) 1 time instant remaining? */
     if (time < data->numTimes) {
+        /* Compute mask for the management of the tail */
+        mask = (__mmask8)_cvtu32_mask16((1U << (data->numTimes - time)) - 1);
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepS1d(data, time);
+        rbdSeriesIdenticalStepVNdAvx512f(mask, data, time);
     }
 
     return NULL;
 }
 
 /**
- * rbdSeriesGenericStepV8dAvx512f
+ * rbdSeriesGenericStepVNdAvx512f
  *
  * Generic Series RBD step function with amd64 AVX512F 512bit
  *
  * Input:
+ *      __mmask8 mask
  *      struct rbdSeriesData *data
  *      unsigned int time
  *
@@ -192,32 +165,34 @@ HIDDEN void *rbdSeriesIdenticalWorkerAvx512f(struct rbdSeriesData *data)
  *  given their reliabilities
  *
  * Parameters:
+ *      mask: AVX512F 8-bit mask used during current step
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesGenericStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesGenericStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
-    __m512d v8dTmp;
-    __m512d v8dRes;
+    __m512d vNdTmp;
+    __m512d vNdRes;
 
     /* Compute reliability of Series RBD at current time instant */
-    v8dRes = _mm512_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
+    vNdRes = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(0 * data->numTimes) + time]);
     for (component = 1; component < data->numComponents; ++component) {
-        v8dTmp = _mm512_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
-        v8dRes = _mm512_mul_pd(v8dRes, v8dTmp);
+        vNdTmp = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(component * data->numTimes) + time]);
+        vNdRes = _mm512_maskz_mul_pd(mask, vNdRes, vNdTmp);
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
+    _mm512_mask_storeu_pd(&data->output[time], mask, capReliabilityVNdAvx512f(mask, vNdRes));
 }
 
 /**
- * rbdSeriesIdenticalStepV8dAvx512f
+ * rbdSeriesIdenticalStepVNdAvx512f
  *
  * Identical Series RBD step function with amd64 AVX512F 512bit
  *
  * Input:
+ *      __mmask8 mask
  *      struct rbdSeriesData *data
  *      unsigned int time
  *
@@ -230,26 +205,27 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesGenericStepV8dAvx512f(struct rbd
  *  given their reliability
  *
  * Parameters:
+ *      mask: AVX512F 8-bit mask used during current step
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesIdenticalStepV8dAvx512f(struct rbdSeriesData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
-    __m512d v8dTmp;
-    __m512d v8dRes;
+    __m512d vNdTmp;
+    __m512d vNdRes;
 
     /* Load reliability */
-    v8dTmp = _mm512_loadu_pd(&data->reliabilities[time]);
+    vNdTmp = _mm512_maskz_loadu_pd(mask, &data->reliabilities[time]);
 
     /* Compute reliability of Series RBD at current time instant */
-    v8dRes = v8dTmp;
+    vNdRes = vNdTmp;
     for (component = (data->numComponents - 1); component > 0; --component) {
-        v8dRes = _mm512_mul_pd(v8dRes, v8dTmp);
+        vNdRes = _mm512_maskz_mul_pd(mask, vNdRes, vNdTmp);
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
+    _mm512_mask_storeu_pd(&data->output[time], mask, capReliabilityVNdAvx512f(mask, vNdRes));
 }
 
 

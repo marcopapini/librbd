@@ -60,10 +60,10 @@ void *rbdKooNGenericShannonWorkerAvx512f(struct rbdKooNGenericShannonData *data)
 void *rbdKooNBddWorkerAvx512f(struct rbdKooNBddData *data);
 void *rbdKooNIdenticalWorkerAvx512f(struct rbdKooNIdenticalData *data);
 
-void rbdKooNGenericShannonV8dAvx512f(struct rbdKooNGenericShannonData *data, unsigned int time);
-void rbdKooNBddStepV8dAvx512f(double *r, double *h, double *l, double *o);
-void rbdKooNIdenticalSuccessStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNIdenticalFailStepV8dAvx512f(struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNGenericShannonVNdAvx512f(__mmask8 mask, struct rbdKooNGenericShannonData *data, unsigned int time);
+void rbdKooNBddStepVNdAvx512f(__mmask8 mask, double *r, double *h, double *l, double *o);
+void rbdKooNIdenticalSuccessStepVNdAvx512f(__mmask8 mask, struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNIdenticalFailStepVNdAvx512f(__mmask8 mask, struct rbdKooNIdenticalData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 

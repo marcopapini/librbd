@@ -50,8 +50,8 @@ void rbdBridgeIdenticalStepV1dFma3(struct rbdBridgeData *data, unsigned int time
 void *rbdBridgeGenericWorkerAvx512f(struct rbdBridgeData *data);
 void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data);
 
-void rbdBridgeGenericStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeGenericStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 

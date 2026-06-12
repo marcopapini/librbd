@@ -46,8 +46,8 @@ void rbdParallelGenericStepV1dFma3(struct rbdParallelData *data, unsigned int ti
 void *rbdParallelGenericWorkerAvx512f(struct rbdParallelData *data);
 void *rbdParallelIdenticalWorkerAvx512f(struct rbdParallelData *data);
 
-void rbdParallelGenericStepV8dAvx512f(struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepV8dAvx512f(struct rbdParallelData *data, unsigned int time);
+void rbdParallelGenericStepVNdAvx512f(__mmask8 mask, struct rbdParallelData *data, unsigned int time);
+void rbdParallelIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdParallelData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 

@@ -48,9 +48,10 @@
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdBridgeGenericWorkerAvx512f(struct rbdBridgeData *data)
+HIDDEN FUNCTION_TARGET("avx512f") void *rbdBridgeGenericWorkerAvx512f(struct rbdBridgeData *data)
 {
     unsigned int time;
+    __mmask8 mask;
 
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
@@ -61,28 +62,16 @@ HIDDEN void *rbdBridgeGenericWorkerAvx512f(struct rbdBridgeData *data)
         prefetchRead(data->reliabilities, data->numComponents, data->numTimes, time + (data->numCores * V8D));
         prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV8dAvx512f(data, time);
+        rbdBridgeGenericStepVNdAvx512f((__mmask8)0xFFU, data, time);
         /* Increment current time instant */
         time += (data->numCores * V8D);
     }
-    /* Are (at least) 4 time instants remaining? */
-    if ((time + V4D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV4dFma3(data, time);
-        /* Increment current time instant */
-        time += V4D;
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepV2dFma3(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
+    /* Is (at least) 1 time instant remaining? */
     if (time < data->numTimes) {
+        /* Compute mask for the management of the tail */
+        mask = (__mmask8)_cvtu32_mask16((1U << (data->numTimes - time)) - 1);
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
+        rbdBridgeGenericStepVNdAvx512f(mask, data, time);
     }
 
     return NULL;
@@ -109,9 +98,11 @@ HIDDEN void *rbdBridgeGenericWorkerAvx512f(struct rbdBridgeData *data)
  * Return (void *):
  *  NULL
  */
-HIDDEN void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data)
+HIDDEN FUNCTION_TARGET("avx512f") void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data)
 {
     unsigned int time;
+    unsigned int alignSteps;
+    __mmask8 mask;
 
     /* Retrieve first time instant to be processed by worker */
     time = data->batchIdx * V8D;
@@ -120,23 +111,16 @@ HIDDEN void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data)
     if ((time + V8D) < data->numTimes) {
         /* Align, if possible, to vector size */
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
-            if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
+            /* Compute the number of doubles to align to vector size */
+            alignSteps = ((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) / sizeof(double);
+            alignSteps = (V8D - alignSteps) & (V8D - 1);
+            if (alignSteps > 0) {
+                /* Compute mask for the management of the head */
+                mask = (__mmask8)_cvtu32_mask16((1U << alignSteps) - 1);
                 /* Compute reliability of Bridge RBD at current time instant */
-                rbdBridgeIdenticalStepS1d(data, time);
+                rbdBridgeIdenticalStepVNdAvx512f(mask, data, time);
                 /* Increment current time instant */
-                time += S1D;
-            }
-            if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
-                /* Compute reliability of Bridge RBD at current time instant */
-                rbdBridgeIdenticalStepV2dFma3(data, time);
-                /* Increment current time instant */
-                time += V2D;
-            }
-            if (((uintptr_t)&data->reliabilities[time] & (V8D * sizeof(double) - 1)) != 0) {
-                /* Compute reliability of Bridge RBD at current time instant */
-                rbdBridgeIdenticalStepV4dFma3(data, time);
-                /* Increment current time instant */
-                time += V4D;
+                time += alignSteps;
             }
         }
     }
@@ -146,39 +130,28 @@ HIDDEN void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data)
         prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V8D));
         prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V8D));
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV8dAvx512f(data, time);
+        rbdBridgeIdenticalStepVNdAvx512f((__mmask8)0xFFU, data, time);
         /* Increment current time instant */
         time += (data->numCores * V8D);
     }
-    /* Are (at least) 4 time instants remaining? */
-    if ((time + V4D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV4dFma3(data, time);
-        /* Increment current time instant */
-        time += V4D;
-    }
-    /* Are (at least) 2 time instants remaining? */
-    if ((time + V2D) <= data->numTimes) {
-        /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepV2dFma3(data, time);
-        /* Increment current time instant */
-        time += V2D;
-    }
-    /* Is 1 time instant remaining? */
+    /* Is (at least) 1 time instant remaining? */
     if (time < data->numTimes) {
+        /* Compute mask for the management of the tail */
+        mask = (__mmask8)_cvtu32_mask16((1U << (data->numTimes - time)) - 1);
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
+        rbdBridgeIdenticalStepVNdAvx512f(mask, data, time);
     }
 
     return NULL;
 }
 
 /**
- * rbdBridgeGenericStepV8dAvx512f
+ * rbdBridgeGenericStepVNdAvx512f
  *
  * Generic Bridge RBD step function with amd64 AVX512F instruction set
  *
  * Input:
+ *      __mmask8 mask
  *      struct rbdBridgeData *data
  *      unsigned int time
  *
@@ -191,21 +164,22 @@ HIDDEN void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data)
  *  given their reliabilities
  *
  * Parameters:
+ *      mask: AVX512F 8-bit mask used during current step
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time)
 {
-    __m512d v8dR1, v8dR2, v8dR3, v8dR4, v8dR5;
-    __m512d v8dTmp1, v8dTmp2;
-    __m512d v8dRes;
+    __m512d vNdR1, vNdR2, vNdR3, vNdR4, vNdR5;
+    __m512d vNdTmp1, vNdTmp2;
+    __m512d vNdRes;
 
     /* Load reliabilities */
-    v8dR1 = _mm512_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
-    v8dR2 = _mm512_loadu_pd(&data->reliabilities[(1 * data->numTimes) + time]);
-    v8dR3 = _mm512_loadu_pd(&data->reliabilities[(2 * data->numTimes) + time]);
-    v8dR4 = _mm512_loadu_pd(&data->reliabilities[(3 * data->numTimes) + time]);
-    v8dR5 = _mm512_loadu_pd(&data->reliabilities[(4 * data->numTimes) + time]);
+    vNdR1 = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(0 * data->numTimes) + time]);
+    vNdR2 = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(1 * data->numTimes) + time]);
+    vNdR3 = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(2 * data->numTimes) + time]);
+    vNdR4 = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(3 * data->numTimes) + time]);
+    vNdR5 = _mm512_maskz_loadu_pd(mask, &data->reliabilities[(4 * data->numTimes) + time]);
 
     /**
      * Formula:
@@ -218,30 +192,31 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepV8dAvx512f(struct rbd
      */
 
     /* Compute reliability of Bridge block */
-    v8dTmp1 = _mm512_add_pd(v8dR1, v8dR3);
-    v8dTmp2 = _mm512_add_pd(v8dR2, v8dR4);
-    v8dTmp1 = _mm512_fnmadd_pd(v8dR1, v8dR3, v8dTmp1);
-    v8dTmp2 = _mm512_fnmadd_pd(v8dR2, v8dR4, v8dTmp2);
-    v8dRes = _mm512_mul_pd(v8dTmp1, v8dTmp2);
+    vNdTmp1 = _mm512_maskz_add_pd(mask, vNdR1, vNdR3);
+    vNdTmp2 = _mm512_maskz_add_pd(mask, vNdR2, vNdR4);
+    vNdTmp1 = _mm512_maskz_fnmadd_pd(mask, vNdR1, vNdR3, vNdTmp1);
+    vNdTmp2 = _mm512_maskz_fnmadd_pd(mask, vNdR2, vNdR4, vNdTmp2);
+    vNdRes = _mm512_maskz_mul_pd(mask, vNdTmp1, vNdTmp2);
     /* At this point v8dRes vector contains VAL1 value */
-    v8dTmp1 = _mm512_mul_pd(v8dR3, v8dR4);
-    v8dTmp2 = _mm512_mul_pd(v8dR1, v8dR2);
-    v8dTmp1 = _mm512_fnmadd_pd(v8dTmp1, v8dTmp2, v8dTmp1);
-    v8dTmp1 = _mm512_add_pd(v8dTmp1, v8dTmp2);
+    vNdTmp1 = _mm512_maskz_mul_pd(mask, vNdR3, vNdR4);
+    vNdTmp2 = _mm512_maskz_mul_pd(mask, vNdR1, vNdR2);
+    vNdTmp1 = _mm512_maskz_fnmadd_pd(mask, vNdTmp1, vNdTmp2, vNdTmp1);
+    vNdTmp1 = _mm512_maskz_add_pd(mask, vNdTmp1, vNdTmp2);
     /* At this point v8dTmp1 vector contains VAL2 value */
-    v8dRes = _mm512_sub_pd(v8dRes, v8dTmp1);
-    v8dRes = _mm512_fmadd_pd(v8dR5, v8dRes, v8dTmp1);
+    vNdRes = _mm512_maskz_sub_pd(mask, vNdRes, vNdTmp1);
+    vNdRes = _mm512_maskz_fmadd_pd(mask, vNdR5, vNdRes, vNdTmp1);
 
     /* Cap the computed reliability and set it into output array */
-    _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
+    _mm512_mask_storeu_pd(&data->output[time], mask, capReliabilityVNdAvx512f(mask, vNdRes));
 }
 
 /**
- * rbdBridgeIdenticalStepV8dAvx512f
+ * rbdBridgeIdenticalStepVNdAvx512f
  *
  * Identical Bridge RBD step function with amd64 AVX512F instruction set
  *
  * Input:
+ *      __mmask8 mask
  *      struct rbdBridgeData *data
  *      unsigned int time
  *
@@ -254,33 +229,34 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepV8dAvx512f(struct rbd
  *  given their reliability
  *
  * Parameters:
+ *      mask: AVX512F 8-bit mask used during current step
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeIdenticalStepV8dAvx512f(struct rbdBridgeData *data, unsigned int time)
+HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time)
 {
-    __m512d v8dR, v8dU;
-    __m512d v8dTmp;
-    __m512d v8dRes;
+    __m512d vNdR, vNdU;
+    __m512d vNdTmp;
+    __m512d vNdRes;
 
     /* Load reliability */
-    v8dR = _mm512_loadu_pd(&data->reliabilities[time]);
+    vNdR = _mm512_maskz_loadu_pd(mask, &data->reliabilities[time]);
 
     /* Compute unreliability */
-    v8dU = _mm512_sub_pd(v8dOnes, v8dR);
+    vNdU = _mm512_maskz_sub_pd(mask, v8dOnes, vNdR);
 
     /* Compute reliability of Bridge block */
-    v8dRes = v8dR;
-    v8dRes = _mm512_fnmadd_pd(v8dRes, v8dRes, v8dTwos);
-    v8dRes = _mm512_mul_pd(v8dRes, v8dR);
-    v8dTmp = v8dU;
-    v8dTmp = _mm512_fmsub_pd(v8dTmp, v8dTmp, v8dTwos);
-    v8dTmp = _mm512_fmadd_pd(v8dTmp, v8dU, v8dRes);
-    v8dTmp = _mm512_fmadd_pd(v8dTmp, v8dU, v8dOnes);
-    v8dRes = _mm512_mul_pd(v8dTmp, v8dR);
+    vNdRes = vNdR;
+    vNdRes = _mm512_maskz_fnmadd_pd(mask, vNdRes, vNdRes, v8dTwos);
+    vNdRes = _mm512_maskz_mul_pd(mask, vNdRes, vNdR);
+    vNdTmp = vNdU;
+    vNdTmp = _mm512_maskz_fmsub_pd(mask, vNdTmp, vNdTmp, v8dTwos);
+    vNdTmp = _mm512_maskz_fmadd_pd(mask, vNdTmp, vNdU, vNdRes);
+    vNdTmp = _mm512_maskz_fmadd_pd(mask, vNdTmp, vNdU, v8dOnes);
+    vNdRes = _mm512_maskz_mul_pd(mask, vNdTmp, vNdR);
 
     /* Cap the computed reliability and set it into output array */
-    _mm512_storeu_pd(&data->output[time], capReliabilityV8dAvx512f(v8dRes));
+    _mm512_mask_storeu_pd(&data->output[time], mask, capReliabilityVNdAvx512f(mask, vNdRes));
 }
 
 
