@@ -31,7 +31,7 @@
 /**
  * rbdParallelGenericWorker
  *
- * Parallel RBD Worker function with POWER8 platform-specific instruction sets
+ * Generic Parallel RBD Worker function with POWER8 platform-specific instruction sets
  *
  * Input:
  *      void *arg

@@ -69,7 +69,8 @@ VARIABLE_TARGET("vsx") extern const double64x2 v2dTwos;
  * Parameters:
  *      data: RBD KooN Recursive Data to be initialized
  */
-static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data) {
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data)
+{
     unsigned long long alignAddr;
     memset(data, 0, sizeof(struct rbdKooNGenericShannonRecursionData));
     alignAddr = ((unsigned long long)(&data->buff) + sizeof(double64x2) - 1) & ~(sizeof(double64x2) - 1);
@@ -98,7 +99,8 @@ static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShan
  * Return (double64x2):
  *  Loaded vector
  */
-static inline ALWAYS_INLINE FUNCTION_TARGET("vsx") double64x2 vectorLoad(double *addr) {
+static inline ALWAYS_INLINE FUNCTION_TARGET("vsx") double64x2 vectorLoad(double *addr)
+{
 #ifdef COMPILER_GCC
     return vec_vsx_ld(0, addr);
 #else
@@ -126,7 +128,8 @@ static inline ALWAYS_INLINE FUNCTION_TARGET("vsx") double64x2 vectorLoad(double 
  *      addr: Effective address to which vector of doubles is stored
  *      data: Vector of doubles to be stored
  */
-static inline ALWAYS_INLINE FUNCTION_TARGET("vsx") void vectorStore(double *addr, double64x2 data) {
+static inline ALWAYS_INLINE FUNCTION_TARGET("vsx") void vectorStore(double *addr, double64x2 data)
+{
 #ifdef COMPILER_GCC
     vec_vsx_st(data, 0, addr);
 #else

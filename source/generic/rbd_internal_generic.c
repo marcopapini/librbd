@@ -108,7 +108,8 @@ HIDDEN void prefetchWrite(double *reliability, unsigned char numComponents, unsi
  * Return (int):
  *  Batch size
  */
-HIDDEN int computeNumCores(int numTimes) {
+HIDDEN int computeNumCores(int numTimes)
+{
     int numCores, batchSize;
 
     /* Retrieve number of cores available in SMP system */

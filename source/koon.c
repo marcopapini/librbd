@@ -33,7 +33,8 @@
  * For a given N, BDD is used if:
  * K >= rbdKoonGenericBddRange[N][0] && K <= rbdKoonGenericBddRange[N][1]
  */
-static const unsigned char rbdKoonGenericBddRange[256][2] = {
+static const unsigned char rbdKoonGenericBddRange[256][2] =
+{
     /* N */ /* {min_K, max_K} */
     /*   0 */ { 255,   0 },
     /*   1 */ { 255,   0 },

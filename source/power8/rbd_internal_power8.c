@@ -53,7 +53,8 @@ VARIABLE_TARGET("vsx") const double64x2 v2dTwos = {2.0, 2.0};
  * Return (double64x2):
  *  Reliability within accepted bounds
  */
-HIDDEN FUNCTION_TARGET("vsx") double64x2 capReliabilityV2dVsx(double64x2 v2dR) {
+HIDDEN FUNCTION_TARGET("vsx") double64x2 capReliabilityV2dVsx(double64x2 v2dR)
+{
     /* Cap computed reliability to accepted bounds [0, 1] */
     return vec_min(vec_max(v2dZeros, v2dR), v2dOnes);
 }

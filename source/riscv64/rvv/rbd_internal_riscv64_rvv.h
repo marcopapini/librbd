@@ -49,7 +49,8 @@
  * Return (int):
  *  minimum value
  */
-static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int minimumRiscv64Rvv(int a, int b) {
+static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int minimumRiscv64Rvv(int a, int b)
+{
     return (a <= b) ? a : b;
 }
 
@@ -75,7 +76,8 @@ static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int minimumRiscv64Rvv(int
  * Return (int):
  *  Floor value of division
  */
-static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int floorDivisionRiscv64Rvv(int dividend, int divisor) {
+static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int floorDivisionRiscv64Rvv(int dividend, int divisor)
+{
     return (dividend / divisor);
 }
 
@@ -101,7 +103,8 @@ static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int floorDivisionRiscv64R
  * Return (int):
  *  Ceil value of division
  */
-static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int ceilDivisionRiscv64Rvv(int dividend, int divisor) {
+static inline ALWAYS_INLINE FUNCTION_TARGET("arch=+v") int ceilDivisionRiscv64Rvv(int dividend, int divisor)
+{
     return floorDivisionRiscv64Rvv(dividend + divisor - 1, divisor);
 }
 #endif /* defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0) */

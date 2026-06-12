@@ -56,7 +56,8 @@ struct riscv64Cpu
 
 #if defined(OS_LINUX)
 #if defined(RISCV64_RVV_LINUX_USE_HWPROBE)
-struct rbd_riscv_hwprobe {
+struct rbd_riscv_hwprobe
+{
     int64_t key;                    /* RISC-V 64bit: Key for HWPROBE */
     uint64_t value;                 /* RISC-V 64bit: Value for HWPROBE */
 };

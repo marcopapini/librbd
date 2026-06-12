@@ -46,7 +46,8 @@
  * Return (double):
  *  Reliability within accepted bounds
  */
-HIDDEN double capReliabilityS1d(double s1dR) {
+HIDDEN double capReliabilityS1d(double s1dR)
+{
     /* Cap computed reliability to accepted bounds [0, 1] */
     return fmin(fmax(0.0, s1dR), 1.0);
 }
