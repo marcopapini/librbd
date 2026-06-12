@@ -68,7 +68,7 @@ HIDDEN void *rbdBridgeGenericWorkerVsx(struct rbdBridgeData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
+        rbdBridgeGenericStepV1dVsx(data, time);
     }
 
     return NULL;
@@ -108,7 +108,7 @@ HIDDEN void *rbdBridgeIdenticalWorkerVsx(struct rbdBridgeData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Bridge RBD at current time instant */
-                rbdBridgeIdenticalStepS1d(data, time);
+                rbdBridgeIdenticalStepV1dVsx(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -127,7 +127,7 @@ HIDDEN void *rbdBridgeIdenticalWorkerVsx(struct rbdBridgeData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
+        rbdBridgeIdenticalStepV1dVsx(data, time);
     }
 
     return NULL;
@@ -239,6 +239,114 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeIdenticalStepV2dVsx(struct rbdBridge
 
     /* Cap the computed reliability and set it into output array */
     vectorStore(&data->output[time], capReliabilityV2dVsx(v2dRes));
+}
+
+/**
+ * rbdBridgeGenericStepV1dVsx
+ *
+ * Generic Bridge RBD step function with POWER8 VSX 64bit
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Bridge RBD step exploiting POWER8 VSX 64bit.
+ *  It is responsible to compute the reliability of a Bridge block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *      time: current time instant over which Bridge RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeGenericStepV1dVsx(struct rbdBridgeData *data, unsigned int time)
+{
+    double64x2 v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
+    double64x2 v2dTmp1, v2dTmp2;
+    double64x2 v2dRes;
+
+    /* Load reliabilities */
+    v2dR1 = vec_promote(data->reliabilities[(0 * data->numTimes) + time], 0);
+    v2dR2 = vec_promote(data->reliabilities[(1 * data->numTimes) + time], 0);
+    v2dR3 = vec_promote(data->reliabilities[(2 * data->numTimes) + time], 0);
+    v2dR4 = vec_promote(data->reliabilities[(3 * data->numTimes) + time], 0);
+    v2dR5 = vec_promote(data->reliabilities[(4 * data->numTimes) + time], 0);
+
+    /**
+     * Formula:
+     *   R = R5 * (1 - (F1 * F3)) * (1 - (F2 * F4)) + F5 * (1 - (1 - (R1 * R2)) * (1 - (R3 * R4)))
+     *
+     * Optimized formula:
+     *   VAL1 = (R1 + R3 - (R1 * R3)) * (R2 + R4 - (R2 * R4))
+     *   VAL2 = (R1 * R2) + (R3 * R4) - (R1 * R2 * R3 * R4)
+     *   R = R5 * (VAL1 - VAL2) + VAL2
+     */
+
+    /* Compute reliability of Bridge block */
+    v2dTmp1 = vec_add(v2dR1, v2dR3);
+    v2dTmp2 = vec_add(v2dR2, v2dR4);
+    v2dTmp1 = vec_nmsub(v2dR1, v2dR3, v2dTmp1);
+    v2dTmp2 = vec_nmsub(v2dR2, v2dR4, v2dTmp2);
+    v2dRes = vec_mul(v2dTmp1, v2dTmp2);
+    /* At this point v2dRes vector contains VAL1 value */
+    v2dTmp1 = vec_mul(v2dR3, v2dR4);
+    v2dTmp2 = vec_mul(v2dR1, v2dR2);
+    v2dTmp1 = vec_nmsub(v2dTmp1, v2dTmp2, v2dTmp1);
+    v2dTmp1 = vec_add(v2dTmp1, v2dTmp2);
+    /* At this point v2dTmp1 vector contains VAL2 value */
+    v2dRes = vec_sub(v2dRes, v2dTmp1);
+    v2dRes = vec_madd(v2dRes, v2dR5, v2dTmp1);
+
+    /* Cap the computed reliability and set it into output array */
+    data->output[time] = vec_extract(capReliabilityV2dVsx(v2dRes), 0);
+}
+
+/**
+ * rbdBridgeIdenticalStepV1dVsx
+ *
+ * Identical Bridge RBD step function with POWER8 VSX 64bit
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Bridge RBD step exploiting POWER8 VSX 64bit.
+ *  It is responsible to compute the reliability of a Bridge block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *      time: current time instant over which Bridge RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeIdenticalStepV1dVsx(struct rbdBridgeData *data, unsigned int time)
+{
+    double64x2 v2dR, v2dU;
+    double64x2 v2dTmp;
+    double64x2 v2dRes;
+
+    /* Load reliability */
+    v2dR = vec_promote(data->reliabilities[time], 0);
+
+    /* Compute unreliability */
+    v2dU = vec_sub(v2dOnes, v2dR);
+
+    /* Compute reliability of Bridge block */
+    v2dRes = vec_nmsub(v2dR, v2dR, v2dTwos);
+    v2dTmp = vec_msub(v2dU, v2dU, v2dTwos);
+    v2dRes = vec_mul(v2dRes, v2dR);
+    v2dTmp = vec_madd(v2dTmp, v2dU, v2dRes);
+    v2dTmp = vec_madd(v2dTmp, v2dU, v2dOnes);
+    v2dRes = vec_mul(v2dTmp, v2dR);
+
+    /* Cap the computed reliability and set it into output array */
+    data->output[time] = vec_extract(capReliabilityV2dVsx(v2dRes), 0);
 }
 
 

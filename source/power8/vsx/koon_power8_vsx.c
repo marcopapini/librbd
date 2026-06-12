@@ -29,6 +29,7 @@
 
 
 static double64x2 rbdKooNGenericShannonStepV2dVsx(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
+static double64x2 rbdKooNGenericShannonStepV1dVsx(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static double *rbdKooNBddVsx(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 
 
@@ -119,7 +120,7 @@ HIDDEN void *rbdKooNGenericShannonWorkerVsx(struct rbdKooNGenericShannonData *da
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNGenericShannonS1d(data, time);
+        rbdKooNGenericShannonV1dVsx(data, time);
     }
 
     return NULL;
@@ -218,7 +219,7 @@ HIDDEN void *rbdKooNIdenticalWorkerVsx(struct rbdKooNIdenticalData *data)
             if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
                 if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                     /* Compute reliability of KooN RBD at current time instant from working components */
-                    rbdKooNIdenticalSuccessStepS1d(data, time);
+                    rbdKooNIdenticalSuccessStepV1dVsx(data, time);
                     /* Increment current time instant */
                     time += S1D;
                 }
@@ -237,7 +238,7 @@ HIDDEN void *rbdKooNIdenticalWorkerVsx(struct rbdKooNIdenticalData *data)
         /* Is 1 time instant remaining? */
         if (time < data->numTimes) {
             /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepS1d(data, time);
+            rbdKooNIdenticalSuccessStepV1dVsx(data, time);
         }
     }
     else {
@@ -247,7 +248,7 @@ HIDDEN void *rbdKooNIdenticalWorkerVsx(struct rbdKooNIdenticalData *data)
             if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
                 if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                     /* Compute reliability of KooN RBD at current time instant from failed components */
-                    rbdKooNIdenticalFailStepS1d(data, time);
+                    rbdKooNIdenticalFailStepV1dVsx(data, time);
                     /* Increment current time instant */
                     time += S1D;
                 }
@@ -266,7 +267,7 @@ HIDDEN void *rbdKooNIdenticalWorkerVsx(struct rbdKooNIdenticalData *data)
         /* Is 1 time instant remaining? */
         if (time < data->numTimes) {
             /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepS1d(data, time);
+            rbdKooNIdenticalFailStepV1dVsx(data, time);
         }
     }
 
@@ -479,6 +480,211 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdKooNIdenticalFailStepV2dVsx(struct rbdKooN
 }
 
 /**
+ * rbdKooNGenericShannonV1dVsx
+ *
+ * Compute KooN RBD through Shannon Decomposition method with POWER8 VSX 64bit
+ *
+ * Input:
+ *      struct rbdKooNGenericShannonData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function computes the reliability of KooN RBD system through Shannon Decomposition
+ *  exploiting POWER8 VSX 64bit
+ *
+ * Parameters:
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("vsx") void rbdKooNGenericShannonV1dVsx(struct rbdKooNGenericShannonData *data, unsigned int time)
+{
+    double64x2 v2dRes;
+
+    /* Recursively compute reliability of KooN RBD at current time instant */
+    v2dRes = rbdKooNGenericShannonStepV1dVsx(data, time, data->numComponents, data->minComponents);
+    /* Cap the computed reliability and set it into output array */
+    data->output[time] = vec_extract(capReliabilityV2dVsx(v2dRes), 0);
+}
+
+/**
+ * rbdKooNBddStepV1dVsx
+ *
+ * Compute the Reliability value for a BDD Node with POWER8 VSX 64bit
+ *
+ * Input:
+ *      double *r
+ *      double *h
+ *      double *l
+ *
+ * Output:
+ *      double *o
+ *
+ * Description:
+ *  This function computes the reliability value of KooN RBD system through BDD Evaluation
+ *  using POWER8 VSX 64bit
+ *
+ * Parameters:
+ *      r: reliability value of BDD Variable under analysis
+ *      h: reliability value of BDD High Node, i.e., the BDD Variable is working
+ *      l: reliability value of BDD Low Node, i.e., the BDD Variable is failed
+ *      o: output reliability value
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("vsx") void rbdKooNBddStepV1dVsx(double *r, double *h, double *l, double *o)
+{
+    double64x2 v2dR;
+    double64x2 v2dH;
+    double64x2 v2dL;
+    double64x2 v2dRes;
+
+    /* Compute the reliability of the BDD Node NODE = R * H + (1 - R) * L */
+    v2dR = vec_promote(*r, 0);
+    v2dL = vec_promote(*l, 0);
+    v2dRes = vec_nmsub(v2dR, v2dL, v2dL);
+    v2dH = vec_promote(*h, 0);
+    v2dRes = vec_madd(v2dR, v2dH, v2dRes);
+    *o = vec_extract(capReliabilityV2dVsx(v2dRes), 0);
+}
+
+/**
+ * rbdKooNIdenticalSuccessStepV1dVsx
+ *
+ * Identical KooN RBD Step function from working components with POWER8 VSX 64bit
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD function exploiting POWER8 VSX 64bit.
+ *  It is responsible to compute the reliability of a KooN RBD system
+ *  taking into account the working components
+ *
+ * Parameters:
+ *      data: KooN RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("vsx") void rbdKooNIdenticalSuccessStepV1dVsx(struct rbdKooNIdenticalData *data, unsigned int time)
+{
+    double64x2 v2dR;
+    double64x2 v2dTmp1, v2dTmp2;
+    double64x2 v2dRes;
+    int numWork, numFail;
+    int ii, jj;
+
+    /* Retrieve reliability */
+    v2dR = vec_promote(data->reliabilities[time], 0);
+    /* Initialize reliability to 0 */
+    v2dRes = v2dZeros;
+    /* Compute product between reliability and unreliability */
+    v2dTmp2 = vec_nmsub(v2dR, v2dR, v2dR);
+
+    /* For each iteration... */
+    for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
+        /* Initialize step reliability to nCi */
+        v2dTmp1 = vec_promote((double)data->nCi[ii], 0);
+        /* Compute number of working and failed components */
+        numWork = data->minComponents + ii;
+        numFail = data->numComponents - data->minComponents - ii;
+        /* For each failed component... */
+        for (jj = (numFail - 1); jj >= 0; --jj) {
+            /* Multiply step reliability for product of reliability and unreliability of component */
+            v2dTmp1 = vec_mul(v2dTmp1, v2dTmp2);
+        }
+        /* For each non-considered working component... */
+        for (jj = (numWork - numFail - 1); jj >= 0; --jj) {
+            /* Multiply step reliability for reliability of component */
+            v2dTmp1 = vec_mul(v2dTmp1, v2dR);
+        }
+        /* Add reliability of current iteration */
+        v2dRes = vec_add(v2dRes, v2dTmp1);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    data->output[time] = vec_extract(capReliabilityV2dVsx(v2dRes), 0);
+}
+
+/**
+ * rbdKooNIdenticalFailStepV1dVsx
+ *
+ * Identical KooN RBD Step function from failed components with POWER8 VSX 64bit
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD function exploiting POWER8 VSX 64bit.
+ *  It is responsible to compute the reliability of a KooN RBD system
+ *  taking into account the failed components
+ *
+ * Parameters:
+ *      data: KooN RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("vsx") void rbdKooNIdenticalFailStepV1dVsx(struct rbdKooNIdenticalData *data, unsigned int time)
+{
+    double64x2 v2dU;
+    double64x2 v2dTmp1, v2dTmp2;
+    double64x2 v2dRes;
+    int numWork, numFail;
+    int ii, jj;
+
+    /* Retrieve reliability */
+    v2dTmp2 = vec_promote(data->reliabilities[time], 0);
+    /* Compute unreliability */
+    v2dU = vec_sub(v2dOnes, v2dTmp2);
+    /* Initialize reliability to 1 */
+    v2dRes = v2dOnes;
+    /* Compute product between reliability and unreliability */
+    v2dTmp2 = vec_mul(v2dTmp2, v2dU);
+
+    /* For each iteration... */
+    for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
+        /* Initialize step reliability to nCi */
+        v2dTmp1 = vec_promote((double)data->nCi[ii], 0);
+        /* Compute number of working and failed components */
+        numWork = data->numComponents - data->minComponents - ii;
+        numFail = data->minComponents + ii;
+        /* For each working component... */
+        for (jj = (numWork - 1); jj >= 0; --jj) {
+            /* Multiply step unreliability for product of reliability and unreliability of component */
+            v2dTmp1 = vec_mul(v2dTmp1, v2dTmp2);
+        }
+        /* For each non-considered failed component... */
+        for (jj = (numFail - numWork - 1); jj >= 0; --jj) {
+            /* Multiply step unreliability for unreliability of component */
+            v2dTmp1 = vec_mul(v2dTmp1, v2dU);
+        }
+        /* Subtract unreliability of current iteration */
+        v2dRes = vec_sub(v2dRes, v2dTmp1);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    data->output[time] = vec_extract(capReliabilityV2dVsx(v2dRes), 0);
+}
+
+/**
  * rbdKooNGenericShannonStepV2dVsx
  *
  * Recursive KooN RBD Shannon Decomposition function with POWER8 VSX 128bit
@@ -503,7 +709,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdKooNIdenticalFailStepV2dVsx(struct rbdKooN
  *      n: current number of components in KooN RBD
  *      k: minimum number of working components in KooN RBD
  *
- * Return (vector double):
+ * Return (double64x2):
  *  Computed reliability
  */
 static FUNCTION_TARGET("vsx") double64x2 rbdKooNGenericShannonStepV2dVsx(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
@@ -632,6 +838,159 @@ static FUNCTION_TARGET("vsx") double64x2 rbdKooNGenericShannonStepV2dVsx(struct 
 }
 
 /**
+ * rbdKooNGenericShannonStepV1dVsx
+ *
+ * Recursive KooN RBD Shannon Decomposition function with POWER8 VSX 64bit
+ *
+ * Input:
+ *      struct rbdKooNGenericShannonData *data
+ *      unsigned int time
+ *      unsigned char n
+ *      unsigned char k
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method
+ *  exploiting POWER8 VSX 64bit.
+ *  It is responsible to recursively compute the reliability of a KooN RBD system
+ *
+ * Parameters:
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *      n: current number of components in KooN RBD
+ *      k: minimum number of working components in KooN RBD
+ *
+ * Return (double64x2):
+ *  Computed reliability
+ */
+static FUNCTION_TARGET("vsx") double64x2 rbdKooNGenericShannonStepV1dVsx(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
+{
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
+    double64x2 *v2dR;
+    double64x2 v2dRes;
+    double64x2 v2dTmpRec;
+    double64x2 v2dTmp1, v2dTmp2;
+    double64x2 v2dStepTmp1, v2dStepTmp2;
+    int nextCombs;
+
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        v2dRes = v2dOnes;
+        while (n > 0) {
+            v2dTmp1 = vec_promote(data->reliabilities[(--n * data->numTimes) + time], 0);
+            v2dRes = vec_mul(v2dRes, v2dTmp1);
+        }
+        return v2dRes;
+    }
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        v2dRes = v2dOnes;
+        while (n > 0) {
+            v2dTmp1 = vec_promote(data->reliabilities[(--n * data->numTimes) + time], 0);
+            v2dRes = vec_nmsub(v2dRes, v2dTmp1, v2dRes);
+        }
+        return vec_sub(v2dOnes, v2dRes);
+    }
+
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
+    if (best > 1) {
+        /* Recursively compute the Reliability - Minimize number of recursive calls */
+        offset = n - best;
+        v2dTmp1 = v2dOnes;
+        v2dTmp2 = v2dOnes;
+        v2dR = &data->recur.v2dR[offset];
+        for (idx = 0; idx < best; idx++) {
+            v2dR[idx] = vec_promote(data->reliabilities[(--n * data->numTimes) + time], 0);
+            v2dTmp1 = vec_mul(v2dTmp1, v2dR[idx]);
+            v2dTmp2 = vec_nmsub(v2dTmp2, v2dR[idx], v2dTmp2);
+        }
+        v2dTmpRec = rbdKooNGenericShannonStepV1dVsx(data, time, n, k-best);
+        v2dRes = vec_mul(v2dTmp1, v2dTmpRec);
+        v2dTmpRec = rbdKooNGenericShannonStepV1dVsx(data, time, n, k);
+        v2dRes = vec_madd(v2dTmp2, v2dTmpRec, v2dRes);
+        for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
+            v2dTmp1 = v2dZeros;
+            v2dTmp2 = v2dZeros;
+            firstCombination((unsigned char)idx, data->recur.comb);
+            do {
+                v2dStepTmp1 = v2dOnes;
+                v2dStepTmp2 = v2dOnes;
+                ii = 0;
+                jj = 0;
+                while (ii < idx) {
+                    if (data->recur.comb[ii] == jj) {
+                        v2dStepTmp1 = vec_nmsub(v2dStepTmp1, v2dR[jj], v2dStepTmp1);
+                        v2dStepTmp2 = vec_mul(v2dStepTmp2, v2dR[jj]);
+                        ++ii;
+                    }
+                    else {
+                        v2dStepTmp1 = vec_mul(v2dStepTmp1, v2dR[jj]);
+                        v2dStepTmp2 = vec_nmsub(v2dStepTmp2, v2dR[jj], v2dStepTmp2);
+                    }
+                    ++jj;
+                }
+                while (jj < best) {
+                    v2dStepTmp1 = vec_mul(v2dStepTmp1, v2dR[jj]);
+                    v2dStepTmp2 = vec_nmsub(v2dStepTmp2, v2dR[jj], v2dStepTmp2);
+                    ++jj;
+                }
+                v2dTmp1 = vec_add(v2dTmp1, v2dStepTmp1);
+                v2dTmp2 = vec_add(v2dTmp2, v2dStepTmp2);
+                nextCombs = nextCombination(best, idx, data->recur.comb);
+            } while(nextCombs == 0);
+            v2dTmpRec = rbdKooNGenericShannonStepV1dVsx(data, time, n, k-best+idx);
+            v2dRes = vec_madd(v2dTmp1, v2dTmpRec, v2dRes);
+            v2dTmpRec = rbdKooNGenericShannonStepV1dVsx(data, time, n, k-idx);
+            v2dRes = vec_madd(v2dTmp2, v2dTmpRec, v2dRes);
+        }
+        if ((best & 1) == 0) {
+            idx = best / 2;
+            v2dTmp1 = v2dZeros;
+            firstCombination((unsigned char)idx, data->recur.comb);
+            do {
+                v2dStepTmp1 = v2dOnes;
+                ii = 0;
+                jj = 0;
+                while (ii < idx) {
+                    if (data->recur.comb[ii] == jj) {
+                        v2dStepTmp1 = vec_nmsub(v2dStepTmp1, v2dR[jj], v2dStepTmp1);
+                        ++ii;
+                    }
+                    else {
+                        v2dStepTmp1 = vec_mul(v2dStepTmp1, v2dR[jj]);
+                    }
+                    ++jj;
+                }
+                while (jj < best) {
+                    v2dStepTmp1 = vec_mul(v2dStepTmp1, v2dR[jj]);
+                    ++jj;
+                }
+                v2dTmp1 = vec_add(v2dTmp1, v2dStepTmp1);
+                nextCombs = nextCombination(best, idx, data->recur.comb);
+            } while(nextCombs == 0);
+            v2dTmpRec = rbdKooNGenericShannonStepV1dVsx(data, time, n, k-best+idx);
+            v2dRes = vec_madd(v2dTmp1, v2dTmpRec, v2dRes);
+        }
+
+        return v2dRes;
+    }
+
+    /* Recursively compute the Reliability */
+    v2dTmp1 = vec_promote(data->reliabilities[(--n * data->numTimes) + time], 0);
+    v2dTmpRec = rbdKooNGenericShannonStepV1dVsx(data, time, n, k-1);
+    v2dRes = vec_mul(v2dTmp1, v2dTmpRec);
+    v2dTmp1 = vec_sub(v2dOnes, v2dTmp1);
+    v2dTmpRec = rbdKooNGenericShannonStepV1dVsx(data, time, n, k);
+    v2dRes = vec_madd(v2dTmp1, v2dTmpRec, v2dRes);
+    return v2dRes;
+}
+
+/**
  * rbdKooNBddVsx
  *
  * Recursively compute the Reliability curve of a BDD Node with POWER8 VSX instruction set
@@ -699,7 +1058,7 @@ static FUNCTION_TARGET("vsx") double *rbdKooNBddVsx(struct rbdKooNBddData *data,
     /* Is 1 time instant remaining? */
     if (tIdx < numSteps) {
         /* Compute the (cached) reliability curve associated with the current BDD Node */
-        rbdKooNBddStepS1d(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+        rbdKooNBddStepV1dVsx(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
     }
 
     /* Set the BDD Node as already evaluated */

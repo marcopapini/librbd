@@ -38,6 +38,10 @@ void rbdKooNGenericShannonV2dVsx(struct rbdKooNGenericShannonData *data, unsigne
 void rbdKooNBddStepV2dVsx(double *r, double *h, double *l, double *o);
 void rbdKooNIdenticalSuccessStepV2dVsx(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV2dVsx(struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNGenericShannonV1dVsx(struct rbdKooNGenericShannonData *data, unsigned int time);
+void rbdKooNBddStepV1dVsx(double *r, double *h, double *l, double *o);
+void rbdKooNIdenticalSuccessStepV1dVsx(struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNIdenticalFailStepV1dVsx(struct rbdKooNIdenticalData *data, unsigned int time);
 #endif /* defined(ARCH_POWER8) && (CPU_ENABLE_SIMD != 0) */
 
 

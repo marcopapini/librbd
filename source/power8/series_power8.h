@@ -34,6 +34,8 @@ void *rbdSeriesIdenticalWorkerVsx(struct rbdSeriesData *data);
 
 void rbdSeriesGenericStepV2dVsx(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV2dVsx(struct rbdSeriesData *data, unsigned int time);
+void rbdSeriesGenericStepV1dVsx(struct rbdSeriesData *data, unsigned int time);
+void rbdSeriesIdenticalStepV1dVsx(struct rbdSeriesData *data, unsigned int time);
 #endif /* defined(ARCH_POWER8) && (CPU_ENABLE_SIMD != 0) */
 
 

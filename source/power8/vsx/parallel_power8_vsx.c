@@ -68,7 +68,7 @@ HIDDEN void *rbdParallelGenericWorkerVsx(struct rbdParallelData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepS1d(data, time);
+        rbdParallelGenericStepV1dVsx(data, time);
     }
 
     return NULL;
@@ -108,7 +108,7 @@ HIDDEN void *rbdParallelIdenticalWorkerVsx(struct rbdParallelData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Parallel RBD at current time instant */
-                rbdParallelIdenticalStepS1d(data, time);
+                rbdParallelIdenticalStepV1dVsx(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -127,7 +127,7 @@ HIDDEN void *rbdParallelIdenticalWorkerVsx(struct rbdParallelData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelIdenticalStepS1d(data, time);
+        rbdParallelIdenticalStepV1dVsx(data, time);
     }
 
     return NULL;
@@ -213,6 +213,88 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdParallelIdenticalStepV2dVsx(struct rbdPara
 
     /* Cap the computed reliability and set it into output array */
     vectorStore(&data->output[time], capReliabilityV2dVsx(v2dRes));
+}
+
+/**
+ * rbdParallelGenericStepV1dVsx
+ *
+ * Generic Parallel RBD step function with POWER8 VSX 64bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Parallel RBD step exploiting POWER8 VSX 64bit.
+ *  It is responsible to compute the reliability of a Parallel block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("vsx") void rbdParallelGenericStepV1dVsx(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    double64x2 v2dTmp;
+    double64x2 v2dRes;
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v2dRes = vec_promote(data->reliabilities[(0 * data->numTimes) + time], 0);
+    v2dRes = vec_sub(v2dOnes, v2dRes);
+    for (component = 1; component < data->numComponents; ++component) {
+        v2dTmp = vec_promote(data->reliabilities[(component * data->numTimes) + time], 0);
+        v2dRes = vec_nmsub(v2dRes, v2dTmp, v2dRes);
+    }
+    v2dRes = vec_sub(v2dOnes, v2dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    data->output[time] = vec_extract(capReliabilityV2dVsx(v2dRes), 0);
+}
+
+/**
+ * rbdParallelIdenticalStepV1dVsx
+ *
+ * Identical Parallel RBD step function with POWER8 VSX 64bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Parallel RBD step exploiting POWER8 VSX 64bit.
+ *  It is responsible to compute the reliability of a Parallel block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("vsx") void rbdParallelIdenticalStepV1dVsx(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    double64x2 v2dU;
+    double64x2 v2dRes;
+
+    /* Load unreliability */
+    v2dU = vec_promote(data->reliabilities[time], 0);
+    v2dU = vec_sub(v2dOnes, v2dU);
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v2dRes = v2dU;
+    for (component = (data->numComponents - 1); component > 0; --component) {
+        v2dRes = vec_mul(v2dRes, v2dU);
+    }
+    v2dRes = vec_sub(v2dOnes, v2dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    data->output[time] = vec_extract(capReliabilityV2dVsx(v2dRes), 0);
 }
 
 

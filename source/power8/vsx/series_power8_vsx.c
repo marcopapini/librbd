@@ -68,7 +68,7 @@ HIDDEN void *rbdSeriesGenericWorkerVsx(struct rbdSeriesData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepS1d(data, time);
+        rbdSeriesGenericStepV1dVsx(data, time);
     }
 
     return NULL;
@@ -108,7 +108,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerVsx(struct rbdSeriesData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Series RBD at current time instant */
-                rbdSeriesIdenticalStepS1d(data, time);
+                rbdSeriesIdenticalStepV1dVsx(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -127,7 +127,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerVsx(struct rbdSeriesData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepS1d(data, time);
+        rbdSeriesIdenticalStepV1dVsx(data, time);
     }
 
     return NULL;
@@ -209,6 +209,84 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdSeriesIdenticalStepV2dVsx(struct rbdSeries
 
     /* Cap the computed reliability and set it into output array */
     vectorStore(&data->output[time], capReliabilityV2dVsx(v2dRes));
+}
+
+/**
+ * rbdSeriesGenericStepV1dVsx
+ *
+ * Generic Series RBD step function with POWER8 VSX 64bit
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Series RBD step exploiting POWER8 VSX 64bit.
+ *  It is responsible to compute the reliability of a Series block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("vsx") void rbdSeriesGenericStepV1dVsx(struct rbdSeriesData *data, unsigned int time)
+{
+    unsigned char component;
+    double64x2 v2dTmp;
+    double64x2 v2dRes;
+
+    /* Compute reliability of Series RBD at current time instant */
+    v2dRes = vec_promote(data->reliabilities[(0 * data->numTimes) + time], 0);
+    for (component = 1; component < data->numComponents; ++component) {
+        v2dTmp = vec_promote(data->reliabilities[(component * data->numTimes) + time], 0);
+        v2dRes = vec_mul(v2dRes, v2dTmp);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    data->output[time] = vec_extract(capReliabilityV2dVsx(v2dRes), 0);
+}
+
+/**
+ * rbdSeriesIdenticalStepV1dVsx
+ *
+ * Identical Series RBD step function with POWER8 VSX 64bit
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Series RBD step exploiting POWER8 VSX 64bit.
+ *  It is responsible to compute the reliability of a Series block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("vsx") void rbdSeriesIdenticalStepV1dVsx(struct rbdSeriesData *data, unsigned int time)
+{
+    unsigned char component;
+    double64x2 v2dTmp;
+    double64x2 v2dRes;
+
+    /* Load reliability */
+    v2dTmp = vec_promote(data->reliabilities[time], 0);
+
+    /* Compute reliability of Series RBD at current time instant */
+    v2dRes = v2dTmp;
+    for (component = (data->numComponents - 1); component > 0; --component) {
+        v2dRes = vec_mul(v2dRes, v2dTmp);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    data->output[time] = vec_extract(capReliabilityV2dVsx(v2dRes), 0);
 }
 
 
