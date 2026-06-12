@@ -34,6 +34,8 @@ void *rbdParallelIdenticalWorkerSse2(struct rbdParallelData *data);
 
 void rbdParallelGenericStepV2dSse2(struct rbdParallelData *data, unsigned int time);
 void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int time);
+void rbdParallelGenericStepV1dSse2(struct rbdParallelData *data, unsigned int time);
+void rbdParallelIdenticalStepV1dSse2(struct rbdParallelData *data, unsigned int time);
 #endif /* (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0) */
 
 

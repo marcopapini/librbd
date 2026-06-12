@@ -68,7 +68,7 @@ HIDDEN void *rbdSeriesGenericWorkerSse2(struct rbdSeriesData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepS1d(data, time);
+        rbdSeriesGenericStepV1dSse2(data, time);
     }
 
     return NULL;
@@ -108,7 +108,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerSse2(struct rbdSeriesData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Series RBD at current time instant */
-                rbdSeriesIdenticalStepS1d(data, time);
+                rbdSeriesIdenticalStepV1dSse2(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -127,7 +127,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerSse2(struct rbdSeriesData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepS1d(data, time);
+        rbdSeriesIdenticalStepV1dSse2(data, time);
     }
 
     return NULL;
@@ -209,6 +209,84 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesIdenticalStepV2dSse2(struct rbdSeri
 
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+}
+
+/**
+ * rbdSeriesGenericStepV1dSse2
+ *
+ * Generic Series RBD step function with x86 SSE2 64bit
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Series RBD step exploiting x86 SSE2 64bit.
+ *  It is responsible to compute the reliability of a Series block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesGenericStepV1dSse2(struct rbdSeriesData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dTmp;
+    __m128d v2dRes;
+
+    /* Compute reliability of Series RBD at current time instant */
+    v2dRes = _mm_load_sd(&data->reliabilities[(0 * data->numTimes) + time]);
+    for (component = 1; component < data->numComponents; ++component) {
+        v2dTmp = _mm_load_sd(&data->reliabilities[(component * data->numTimes) + time]);
+        v2dRes = _mm_mul_sd(v2dRes, v2dTmp);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+}
+
+/**
+ * rbdSeriesIdenticalStepV1dSse2
+ *
+ * Identical Series RBD step function with x86 SSE2 64bit
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Series RBD step exploiting x86 SSE2 64bit.
+ *  It is responsible to compute the reliability of a Series block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesIdenticalStepV1dSse2(struct rbdSeriesData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dTmp;
+    __m128d v2dRes;
+
+    /* Load reliability */
+    v2dTmp = _mm_load_sd(&data->reliabilities[time]);
+
+    /* Compute reliability of Series RBD at current time instant */
+    v2dRes = v2dTmp;
+    for (component = (data->numComponents - 1); component > 0; --component) {
+        v2dRes = _mm_mul_sd(v2dRes, v2dTmp);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 

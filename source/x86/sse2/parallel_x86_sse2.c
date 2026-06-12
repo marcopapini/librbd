@@ -68,7 +68,7 @@ HIDDEN void *rbdParallelGenericWorkerSse2(struct rbdParallelData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepS1d(data, time);
+        rbdParallelGenericStepV1dSse2(data, time);
     }
 
     return NULL;
@@ -108,7 +108,7 @@ HIDDEN void *rbdParallelIdenticalWorkerSse2(struct rbdParallelData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Parallel RBD at current time instant */
-                rbdParallelIdenticalStepS1d(data, time);
+                rbdParallelIdenticalStepV1dSse2(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -127,7 +127,7 @@ HIDDEN void *rbdParallelIdenticalWorkerSse2(struct rbdParallelData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelIdenticalStepS1d(data, time);
+        rbdParallelIdenticalStepV1dSse2(data, time);
     }
 
     return NULL;
@@ -214,6 +214,89 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdParallelIdenticalStepV2dSse2(struct rbdPa
 
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+}
+
+/**
+ * rbdParallelGenericStepV1dSse2
+ *
+ * Generic Parallel RBD step function with x86 SSE2 64bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Parallel RBD step exploiting x86 SSE2 64bit.
+ *  It is responsible to compute the reliability of a Parallel block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("sse2") void rbdParallelGenericStepV1dSse2(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dTmp;
+    __m128d v2dRes;
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v2dRes = _mm_load_sd(&data->reliabilities[(0 * data->numTimes) + time]);
+    v2dRes = _mm_sub_sd(v2dOnes, v2dRes);
+    for (component = 1; component < data->numComponents; ++component) {
+        v2dTmp = _mm_load_sd(&data->reliabilities[(component * data->numTimes) + time]);
+        v2dTmp = _mm_sub_sd(v2dOnes, v2dTmp);
+        v2dRes = _mm_mul_sd(v2dRes, v2dTmp);
+    }
+    v2dRes = _mm_sub_sd(v2dOnes, v2dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+}
+
+/**
+ * rbdParallelIdenticalStepV1dSse2
+ *
+ * Identical Parallel RBD step function with x86 SSE2 64bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Parallel RBD step exploiting x86 SSE2 64bit.
+ *  It is responsible to compute the reliability of a Parallel block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("sse2") void rbdParallelIdenticalStepV1dSse2(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dU;
+    __m128d v2dRes;
+
+    /* Load unreliability */
+    v2dU = _mm_load_sd(&data->reliabilities[time]);
+    v2dU = _mm_sub_sd(v2dOnes, v2dU);
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v2dRes = v2dU;
+    for (component = (data->numComponents - 1); component > 0; --component) {
+        v2dRes = _mm_mul_sd(v2dRes, v2dU);
+    }
+    v2dRes = _mm_sub_sd(v2dOnes, v2dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 

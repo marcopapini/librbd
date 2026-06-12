@@ -52,7 +52,8 @@ VARIABLE_TARGET("sse2") const __m128d v2dTwos = {2.0, 2.0};
  * Return (__m128d):
  *  Reliability within accepted bounds
  */
-HIDDEN FUNCTION_TARGET("sse2") __m128d capReliabilityV2dSse2(__m128d v2dR) {
+HIDDEN FUNCTION_TARGET("sse2") __m128d capReliabilityV2dSse2(__m128d v2dR)
+{
     /* Cap computed reliability to accepted bounds [0, 1] */
     return _mm_max_pd(_mm_min_pd(v2dOnes, v2dR), v2dZeros);
 }

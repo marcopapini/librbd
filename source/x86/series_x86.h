@@ -34,6 +34,8 @@ void *rbdSeriesIdenticalWorkerSse2(struct rbdSeriesData *data);
 
 void rbdSeriesGenericStepV2dSse2(struct rbdSeriesData *data, unsigned int time);
 void rbdSeriesIdenticalStepV2dSse2(struct rbdSeriesData *data, unsigned int time);
+void rbdSeriesGenericStepV1dSse2(struct rbdSeriesData *data, unsigned int time);
+void rbdSeriesIdenticalStepV1dSse2(struct rbdSeriesData *data, unsigned int time);
 #endif /* (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0) */
 
 

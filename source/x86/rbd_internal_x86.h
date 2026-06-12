@@ -71,7 +71,8 @@ FUNCTION_TARGET("sse2") __m128d capReliabilityV2dSse2(__m128d v2dR);
  * Parameters:
  *      data: RBD KooN Recursive Data to be initialized
  */
-static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data) {
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data)
+{
     unsigned long alignAddr;
     memset(data, 0, sizeof(struct rbdKooNGenericShannonRecursionData));
     alignAddr = ((unsigned long)(&data->buff) + sizeof(__m128d) - 1) & ~(sizeof(__m128d) - 1);
