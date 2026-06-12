@@ -68,7 +68,7 @@ HIDDEN void *rbdBridgeGenericWorkerNeon(struct rbdBridgeData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
+        rbdBridgeGenericStepV1dNeon(data, time);
     }
 
     return NULL;
@@ -108,7 +108,7 @@ HIDDEN void *rbdBridgeIdenticalWorkerNeon(struct rbdBridgeData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Bridge RBD at current time instant */
-                rbdBridgeIdenticalStepS1d(data, time);
+                rbdBridgeIdenticalStepV1dNeon(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -127,7 +127,7 @@ HIDDEN void *rbdBridgeIdenticalWorkerNeon(struct rbdBridgeData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
+        rbdBridgeIdenticalStepV1dNeon(data, time);
     }
 
     return NULL;
@@ -239,6 +239,114 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeIdenticalStepV2dNeon(struct rbdBri
 
     /* Cap the computed reliability and set it into output array */
     vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
+}
+
+/**
+ * rbdBridgeGenericStepV1dNeon
+ *
+ * Generic Bridge RBD step function with AArch64 NEON 64bit
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Bridge RBD step exploiting AArch64 NEON 64bit.
+ *  It is responsible to compute the reliability of a Bridge block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *      time: current time instant over which Bridge RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeGenericStepV1dNeon(struct rbdBridgeData *data, unsigned int time)
+{
+    float64x1_t v1dR1, v1dR2, v1dR3, v1dR4, v1dR5;
+    float64x1_t v1dTmp1, v1dTmp2;
+    float64x1_t v1dRes;
+
+    /* Load reliabilities */
+    v1dR1 = vld1_f64(&data->reliabilities[(0 * data->numTimes) + time]);
+    v1dR2 = vld1_f64(&data->reliabilities[(1 * data->numTimes) + time]);
+    v1dR3 = vld1_f64(&data->reliabilities[(2 * data->numTimes) + time]);
+    v1dR4 = vld1_f64(&data->reliabilities[(3 * data->numTimes) + time]);
+    v1dR5 = vld1_f64(&data->reliabilities[(4 * data->numTimes) + time]);
+
+    /**
+     * Formula:
+     *   R = R5 * (1 - (F1 * F3)) * (1 - (F2 * F4)) + F5 * (1 - (1 - (R1 * R2)) * (1 - (R3 * R4)))
+     *
+     * Optimized formula:
+     *   VAL1 = (R1 + R3 - (R1 * R3)) * (R2 + R4 - (R2 * R4))
+     *   VAL2 = (R1 * R2) + (R3 * R4) - (R1 * R2 * R3 * R4)
+     *   R = R5 * (VAL1 - VAL2) + VAL2
+     */
+
+    /* Compute reliability of Bridge block */
+    v1dTmp1 = vadd_f64(v1dR1, v1dR3);
+    v1dTmp2 = vadd_f64(v1dR2, v1dR4);
+    v1dTmp1 = vfms_f64(v1dTmp1, v1dR1, v1dR3);
+    v1dTmp2 = vfms_f64(v1dTmp2, v1dR2, v1dR4);
+    v1dRes = vmul_f64(v1dTmp1, v1dTmp2);
+    /* At this point v2dRes vector contains VAL1 value */
+    v1dTmp1 = vmul_f64(v1dR3, v1dR4);
+    v1dTmp2 = vmul_f64(v1dR1, v1dR2);
+    v1dTmp1 = vfms_f64(v1dTmp1, v1dTmp1, v1dTmp2);
+    v1dTmp1 = vadd_f64(v1dTmp1, v1dTmp2);
+    /* At this point v2dTmp1 vector contains VAL2 value */
+    v1dRes = vsub_f64(v1dRes, v1dTmp1);
+    v1dRes = vfma_f64(v1dTmp1, v1dR5, v1dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    vst1_f64(&data->output[time], capReliabilityV1dNeon(v1dRes));
+}
+
+/**
+ * rbdBridgeIdenticalStepV1dNeon
+ *
+ * Identical Bridge RBD step function with AArch64 NEON 64bit
+ *
+ * Input:
+ *      struct rbdBridgeData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Bridge RBD step exploiting AArch64 NEON 64bit.
+ *  It is responsible to compute the reliability of a Bridge block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Bridge RBD data structure
+ *      time: current time instant over which Bridge RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeIdenticalStepV1dNeon(struct rbdBridgeData *data, unsigned int time)
+{
+    float64x1_t v1dR, v1dU;
+    float64x1_t v1dTmp;
+    float64x1_t v1dRes;
+
+    /* Load reliability */
+    v1dR = vld1_f64(&data->reliabilities[time]);
+
+    /* Compute unreliability */
+    v1dU = vsub_f64(v1dOnes, v1dR);
+
+    /* Compute reliability of Bridge block */
+    v1dRes = vfms_f64(v1dTwos, v1dR, v1dR);
+    v1dTmp = vfma_f64(v1dMinusTwos, v1dU, v1dU);
+    v1dRes = vmul_f64(v1dRes, v1dR);
+    v1dTmp = vfma_f64(v1dRes, v1dTmp, v1dU);
+    v1dTmp = vfma_f64(v1dOnes, v1dTmp, v1dU);
+    v1dRes = vmul_f64(v1dTmp, v1dR);
+
+    /* Cap the computed reliability and set it into output array */
+    vst1_f64(&data->output[time], capReliabilityV1dNeon(v1dRes));
 }
 
 

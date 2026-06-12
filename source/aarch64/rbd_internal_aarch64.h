@@ -51,6 +51,7 @@ struct rbdKooNGenericShannonRecursionData
     unsigned char buff[(UCHAR_MAX + 1) * sizeof(float64x2_t)];  /* Temporary buffer */
 #endif
     double      *s1dR;                      /* Pointer to array of reliabilities - Scalar 1 double */
+    float64x1_t *v1dR;                      /* Pointer to array of reliabilities - Vector 1 double */
     float64x2_t *v2dR;                      /* Pointer to array of reliabilities - Vector 2 double */
 };
 
@@ -59,9 +60,14 @@ VARIABLE_TARGET("+simd") extern const float64x2_t v2dZeros;
 VARIABLE_TARGET("+simd") extern const float64x2_t v2dOnes;
 VARIABLE_TARGET("+simd") extern const float64x2_t v2dTwos;
 VARIABLE_TARGET("+simd") extern const float64x2_t v2dMinusTwos;
+VARIABLE_TARGET("+simd") extern const float64x1_t v1dZeros;
+VARIABLE_TARGET("+simd") extern const float64x1_t v1dOnes;
+VARIABLE_TARGET("+simd") extern const float64x1_t v1dTwos;
+VARIABLE_TARGET("+simd") extern const float64x1_t v1dMinusTwos;
 
 
 float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);
+float64x1_t capReliabilityV1dNeon(float64x1_t v1dR);
 #if !defined(COMPILER_VS)
 svfloat64_t capReliabilityVNdSve(svbool_t pg, svfloat64_t vNdR);
 #endif /* !defined(COMPILER_VS) */
@@ -84,11 +90,13 @@ svfloat64_t capReliabilityVNdSve(svbool_t pg, svfloat64_t vNdR);
  * Parameters:
  *      data: RBD KooN Recursive Data to be initialized
  */
-static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data) {
+static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShannonRecursionData *data)
+{
     unsigned long long alignAddr;
     memset(data, 0, sizeof(struct rbdKooNGenericShannonRecursionData));
     alignAddr = ((unsigned long long)(&data->buff) + sizeof(float64x2_t) - 1) & ~(sizeof(float64x2_t) - 1);
     data->s1dR = (double *)alignAddr;
+    data->v1dR = (float64x1_t *)alignAddr;
     data->v2dR = (float64x2_t *)alignAddr;
 }
 

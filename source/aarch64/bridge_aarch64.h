@@ -34,6 +34,8 @@ void *rbdBridgeIdenticalWorkerNeon(struct rbdBridgeData *data);
 
 void rbdBridgeGenericStepV2dNeon(struct rbdBridgeData *data, unsigned int time);
 void rbdBridgeIdenticalStepV2dNeon(struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeGenericStepV1dNeon(struct rbdBridgeData *data, unsigned int time);
+void rbdBridgeIdenticalStepV1dNeon(struct rbdBridgeData *data, unsigned int time);
 
 /* Platform-specific functions for AArch64 SVE instruction set */
 void *rbdBridgeGenericWorkerSve(struct rbdBridgeData *data);

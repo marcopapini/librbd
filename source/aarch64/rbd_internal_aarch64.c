@@ -34,6 +34,10 @@ VARIABLE_TARGET("+simd") const float64x2_t v2dZeros = {0.0, 0.0};
 VARIABLE_TARGET("+simd") const float64x2_t v2dOnes = {1.0, 1.0};
 VARIABLE_TARGET("+simd") const float64x2_t v2dTwos = {2.0, 2.0};
 VARIABLE_TARGET("+simd") const float64x2_t v2dMinusTwos = {-2.0, -2.0};
+VARIABLE_TARGET("+simd") const float64x1_t v1dZeros = {0.0};
+VARIABLE_TARGET("+simd") const float64x1_t v1dOnes = {1.0};
+VARIABLE_TARGET("+simd") const float64x1_t v1dTwos = {2.0};
+VARIABLE_TARGET("+simd") const float64x1_t v1dMinusTwos = {-2.0};
 
 
 /**
@@ -57,9 +61,37 @@ VARIABLE_TARGET("+simd") const float64x2_t v2dMinusTwos = {-2.0, -2.0};
  * Return (float64x2_t):
  *  Reliability within accepted bounds
  */
-HIDDEN FUNCTION_TARGET("+simd") float64x2_t capReliabilityV2dNeon(float64x2_t v2dR) {
+HIDDEN FUNCTION_TARGET("+simd") float64x2_t capReliabilityV2dNeon(float64x2_t v2dR)
+{
     /* Cap computed reliability to accepted bounds [0, 1] */
     return vminnmq_f64(vmaxnmq_f64(v2dZeros, v2dR), v2dOnes);
+}
+
+/**
+ * capReliabilityV1dNeon
+ *
+ * Cap reliability to accepted bounds [0.0, 1.0] with AArch64 NEON 64bit
+ *
+ * Input:
+ *      float64_t v2dR
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function caps the provided reliability (vector of 1 value, double-precision FP)
+ *      to the accepted bounds exploiting AArch64 NEON 64bit
+ *
+ * Parameters:
+ *      v1dR: Reliability
+ *
+ * Return (float64_t):
+ *  Reliability within accepted bounds
+ */
+HIDDEN FUNCTION_TARGET("+simd") float64x1_t capReliabilityV1dNeon(float64x1_t v1dR)
+{
+    /* Cap computed reliability to accepted bounds [0, 1] */
+    return vminnm_f64(vmaxnm_f64(v1dZeros, v1dR), v1dOnes);
 }
 
 #if !defined(COMPILER_VS)
@@ -86,7 +118,8 @@ HIDDEN FUNCTION_TARGET("+simd") float64x2_t capReliabilityV2dNeon(float64x2_t v2
  * Return (svfloat64_t):
  *  Reliability within accepted bounds
  */
-HIDDEN FUNCTION_TARGET("+sve") svfloat64_t capReliabilityVNdSve(svbool_t pg, svfloat64_t vNdR) {
+HIDDEN FUNCTION_TARGET("+sve") svfloat64_t capReliabilityVNdSve(svbool_t pg, svfloat64_t vNdR)
+{
     /* Cap computed reliability to accepted bounds [0, 1] */
     return svminnm_f64_x(pg, svmaxnm_f64_x(pg, vNdR, svdup_f64(0.0)), svdup_f64(1.0));
 }

@@ -68,7 +68,7 @@ HIDDEN void *rbdSeriesGenericWorkerNeon(struct rbdSeriesData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepS1d(data, time);
+        rbdSeriesGenericStepV1dNeon(data, time);
     }
 
     return NULL;
@@ -108,7 +108,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerNeon(struct rbdSeriesData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Series RBD at current time instant */
-                rbdSeriesIdenticalStepS1d(data, time);
+                rbdSeriesIdenticalStepV1dNeon(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -127,7 +127,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerNeon(struct rbdSeriesData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepS1d(data, time);
+        rbdSeriesIdenticalStepV1dNeon(data, time);
     }
 
     return NULL;
@@ -209,6 +209,84 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesIdenticalStepV2dNeon(struct rbdSer
 
     /* Cap the computed reliability and set it into output array */
     vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
+}
+
+/**
+ * rbdSeriesGenericStepV1dNeon
+ *
+ * Generic Series RBD step function with AArch64 NEON 64bit
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Series RBD step exploiting AArch64 NEON 64bit.
+ *  It is responsible to compute the reliability of a Series block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesGenericStepV1dNeon(struct rbdSeriesData *data, unsigned int time)
+{
+    unsigned char component;
+    float64x1_t v1dTmp;
+    float64x1_t v1dRes;
+
+    /* Compute reliability of Series RBD at current time instant */
+    v1dRes = vld1_f64(&data->reliabilities[(0 * data->numTimes) + time]);
+    for (component = 1; component < data->numComponents; ++component) {
+        v1dTmp = vld1_f64(&data->reliabilities[(component * data->numTimes) + time]);
+        v1dRes = vmul_f64(v1dRes, v1dTmp);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    vst1_f64(&data->output[time], capReliabilityV1dNeon(v1dRes));
+}
+
+/**
+ * rbdSeriesIdenticalStepV1dNeon
+ *
+ * Identical Series RBD step function with AArch64 NEON 64bit
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Series RBD step exploiting AArch64 NEON 64bit.
+ *  It is responsible to compute the reliability of a Series block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesIdenticalStepV1dNeon(struct rbdSeriesData *data, unsigned int time)
+{
+    unsigned char component;
+    float64x1_t v1dTmp;
+    float64x1_t v1dRes;
+
+    /* Load reliability */
+    v1dTmp = vld1_f64(&data->reliabilities[time]);
+
+    /* Compute reliability of Series RBD at current time instant */
+    v1dRes = v1dTmp;
+    for (component = (data->numComponents - 1); component > 0; --component) {
+        v1dRes = vmul_f64(v1dRes, v1dTmp);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    vst1_f64(&data->output[time], capReliabilityV1dNeon(v1dRes));
 }
 
 

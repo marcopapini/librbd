@@ -68,7 +68,7 @@ HIDDEN void *rbdParallelGenericWorkerNeon(struct rbdParallelData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepS1d(data, time);
+        rbdParallelGenericStepV1dNeon(data, time);
     }
 
     return NULL;
@@ -108,7 +108,7 @@ HIDDEN void *rbdParallelIdenticalWorkerNeon(struct rbdParallelData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Parallel RBD at current time instant */
-                rbdParallelIdenticalStepS1d(data, time);
+                rbdParallelIdenticalStepV1dNeon(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -127,7 +127,7 @@ HIDDEN void *rbdParallelIdenticalWorkerNeon(struct rbdParallelData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelIdenticalStepS1d(data, time);
+        rbdParallelIdenticalStepV1dNeon(data, time);
     }
 
     return NULL;
@@ -213,6 +213,88 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdParallelIdenticalStepV2dNeon(struct rbdP
 
     /* Cap the computed reliability and set it into output array */
     vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
+}
+
+/**
+ * rbdParallelGenericStepV1dNeon
+ *
+ * Generic Parallel RBD step function with AArch64 NEON 64bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Parallel RBD step exploiting AArch64 NEON 64bit.
+ *  It is responsible to compute the reliability of a Parallel block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("+simd") void rbdParallelGenericStepV1dNeon(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    float64x1_t v1dTmp;
+    float64x1_t v1dRes;
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v1dRes = vld1_f64(&data->reliabilities[(0 * data->numTimes) + time]);
+    v1dRes = vsub_f64(v1dOnes, v1dRes);
+    for (component = 1; component < data->numComponents; ++component) {
+        v1dTmp = vld1_f64(&data->reliabilities[(component * data->numTimes) + time]);
+        v1dRes = vfms_f64(v1dRes, v1dRes, v1dTmp);
+    }
+    v1dRes = vsub_f64(v1dOnes, v1dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    vst1_f64(&data->output[time], capReliabilityV1dNeon(v1dRes));
+}
+
+/**
+ * rbdParallelIdenticalStepV1dNeon
+ *
+ * Identical Parallel RBD step function with AArch64 NEON 64bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Parallel RBD step exploiting AArch64 NEON 64bit.
+ *  It is responsible to compute the reliability of a Parallel block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("+simd") void rbdParallelIdenticalStepV1dNeon(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    float64x1_t v1dU;
+    float64x1_t v1dRes;
+
+    /* Load unreliability */
+    v1dU = vld1_f64(&data->reliabilities[time]);
+    v1dU = vsub_f64(v1dOnes, v1dU);
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v1dRes = v1dU;
+    for (component = (data->numComponents - 1); component > 0; --component) {
+        v1dRes = vmul_f64(v1dRes, v1dU);
+    }
+    v1dRes = vsub_f64(v1dOnes, v1dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    vst1_f64(&data->output[time], capReliabilityV1dNeon(v1dRes));
 }
 
 

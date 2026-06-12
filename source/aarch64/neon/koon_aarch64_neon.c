@@ -29,6 +29,7 @@
 
 
 static float64x2_t rbdKooNGenericShannonStepV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
+static float64x1_t rbdKooNGenericShannonStepV1dNeon(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static double *rbdKooNBddNeon(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 
 
@@ -119,7 +120,7 @@ HIDDEN void *rbdKooNGenericShannonWorkerNeon(struct rbdKooNGenericShannonData *d
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNGenericShannonS1d(data, time);
+        rbdKooNGenericShannonV1dNeon(data, time);
     }
 
     return NULL;
@@ -218,7 +219,7 @@ HIDDEN void *rbdKooNIdenticalWorkerNeon(struct rbdKooNIdenticalData *data)
             if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
                 if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                     /* Compute reliability of KooN RBD at current time instant from working components */
-                    rbdKooNIdenticalSuccessStepS1d(data, time);
+                    rbdKooNIdenticalSuccessStepV1dNeon(data, time);
                     /* Increment current time instant */
                     time += S1D;
                 }
@@ -237,7 +238,7 @@ HIDDEN void *rbdKooNIdenticalWorkerNeon(struct rbdKooNIdenticalData *data)
         /* Is 1 time instant remaining? */
         if (time < data->numTimes) {
             /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepS1d(data, time);
+            rbdKooNIdenticalSuccessStepV1dNeon(data, time);
         }
     }
     else {
@@ -247,7 +248,7 @@ HIDDEN void *rbdKooNIdenticalWorkerNeon(struct rbdKooNIdenticalData *data)
             if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
                 if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                     /* Compute reliability of KooN RBD at current time instant from failed components */
-                    rbdKooNIdenticalFailStepS1d(data, time);
+                    rbdKooNIdenticalFailStepV1dNeon(data, time);
                     /* Increment current time instant */
                     time += S1D;
                 }
@@ -266,7 +267,7 @@ HIDDEN void *rbdKooNIdenticalWorkerNeon(struct rbdKooNIdenticalData *data)
         /* Is 1 time instant remaining? */
         if (time < data->numTimes) {
             /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepS1d(data, time);
+            rbdKooNIdenticalFailStepV1dNeon(data, time);
         }
     }
 
@@ -479,6 +480,211 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalFailStepV2dNeon(struct rbdK
 }
 
 /**
+ * rbdKooNGenericShannonV1dNeon
+ *
+ * Compute KooN RBD through Shannon Decomposition method with AArch64 NEON 64bit
+ *
+ * Input:
+ *      struct rbdKooNGenericShannonData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function computes the reliability of KooN RBD system through Shannon Decomposition
+ *  exploiting AArch64 NEON 64bit
+ *
+ * Parameters:
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("+simd") void rbdKooNGenericShannonV1dNeon(struct rbdKooNGenericShannonData *data, unsigned int time)
+{
+    float64x1_t v1dRes;
+
+    /* Recursively compute reliability of KooN RBD at current time instant */
+    v1dRes = rbdKooNGenericShannonStepV1dNeon(data, time, data->numComponents, data->minComponents);
+    /* Cap the computed reliability and set it into output array */
+    vst1_f64(&data->output[time], capReliabilityV1dNeon(v1dRes));
+}
+
+/**
+ * rbdKooNBddStepV1dNeon
+ *
+ * Compute the Reliability value for a BDD Node with AArch64 NEON 64bit
+ *
+ * Input:
+ *      double *r
+ *      double *h
+ *      double *l
+ *
+ * Output:
+ *      double *o
+ *
+ * Description:
+ *  This function computes the reliability value of KooN RBD system through BDD Evaluation
+ *  using AArch64 NEON 64bit
+ *
+ * Parameters:
+ *      r: reliability value of BDD Variable under analysis
+ *      h: reliability value of BDD High Node, i.e., the BDD Variable is working
+ *      l: reliability value of BDD Low Node, i.e., the BDD Variable is failed
+ *      o: output reliability value
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("+simd") void rbdKooNBddStepV1dNeon(double *r, double *h, double *l, double *o)
+{
+    float64x1_t v1dR;
+    float64x1_t v1dH;
+    float64x1_t v1dL;
+    float64x1_t v1dRes;
+
+    /* Compute the reliability of the BDD Node NODE = R * H + (1 - R) * L */
+    v1dR = vld1_f64(r);
+    v1dL = vld1_f64(l);
+    v1dRes = vfms_f64(v1dL, v1dR, v1dL);
+    v1dH = vld1_f64(h);
+    v1dRes = vfma_f64(v1dRes, v1dR, v1dH);
+    vst1_f64(o, capReliabilityV1dNeon(v1dRes));
+}
+
+/**
+ * rbdKooNIdenticalSuccessStepV1dNeon
+ *
+ * Identical KooN RBD Step function from working components with AArch64 NEON 64bit
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD function exploiting AArch64 NEON 64bit.
+ *  It is responsible to compute the reliability of a KooN RBD system
+ *  taking into account the working components
+ *
+ * Parameters:
+ *      data: Identical KooN RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalSuccessStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
+{
+    float64x1_t v1dR;
+    float64x1_t v1dTmp1, v1dTmp2;
+    float64x1_t v1dRes;
+    int numWork, numFail;
+    int ii, jj;
+
+    /* Retrieve reliability */
+    v1dR = vld1_f64(&data->reliabilities[time]);
+    /* Initialize reliability to 0 */
+    v1dRes = v1dZeros;
+    /* Compute product between reliability and unreliability */
+    v1dTmp2 = vfms_f64(v1dR, v1dR, v1dR);
+
+    /* For each iteration... */
+    for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
+        /* Initialize step reliability to nCi */
+        v1dTmp1 = vdup_n_f64((double)data->nCi[ii]);
+        /* Compute number of working and failed components */
+        numWork = data->minComponents + ii;
+        numFail = data->numComponents - data->minComponents - ii;
+        /* For each failed component... */
+        for (jj = (numFail - 1); jj >= 0; --jj) {
+            /* Multiply step reliability for product of reliability and unreliability of component */
+            v1dTmp1 = vmul_f64(v1dTmp1, v1dTmp2);
+        }
+        /* For each non-considered working component... */
+        for (jj = (numWork - numFail - 1); jj >= 0; --jj) {
+            /* Multiply step reliability for reliability of component */
+            v1dTmp1 = vmul_f64(v1dTmp1, v1dR);
+        }
+        /* Add reliability of current iteration */
+        v1dRes = vadd_f64(v1dRes, v1dTmp1);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    vst1_f64(&data->output[time], capReliabilityV1dNeon(v1dRes));
+}
+
+/**
+ * rbdKooNIdenticalFailStepV1dNeon
+ *
+ * Identical KooN RBD Step function from failed components with AArch64 NEON 64bit
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD function exploiting AArch64 NEON 64bit.
+ *  It is responsible to compute the reliability of a KooN RBD system
+ *  taking into account the failed components
+ *
+ * Parameters:
+ *      data: Identical KooN RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *
+ * Return:
+ *  None
+ */
+HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalFailStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
+{
+    float64x1_t v1dU;
+    float64x1_t v1dTmp1, v1dTmp2;
+    float64x1_t v1dRes;
+    int numWork, numFail;
+    int ii, jj;
+
+    /* Retrieve reliability */
+    v1dTmp2 = vld1_f64(&data->reliabilities[time]);
+    /* Compute unreliability */
+    v1dU = vsub_f64(v1dOnes, v1dTmp2);
+    /* Initialize reliability to 1 */
+    v1dRes = v1dOnes;
+    /* Compute product between reliability and unreliability */
+    v1dTmp2 = vmul_f64(v1dTmp2, v1dU);
+
+    /* For each iteration... */
+    for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
+        /* Initialize step reliability to nCi */
+        v1dTmp1 = vdup_n_f64((double)data->nCi[ii]);
+        /* Compute number of working and failed components */
+        numWork = data->numComponents - data->minComponents - ii;
+        numFail = data->minComponents + ii;
+        /* For each working component... */
+        for (jj = (numWork - 1); jj >= 0; --jj) {
+            /* Multiply step unreliability for product of reliability and unreliability of component */
+            v1dTmp1 = vmul_f64(v1dTmp1, v1dTmp2);
+        }
+        /* For each non-considered failed component... */
+        for (jj = (numFail - numWork - 1); jj >= 0; --jj) {
+            /* Multiply step unreliability for unreliability of component */
+            v1dTmp1 = vmul_f64(v1dTmp1, v1dU);
+        }
+        /* Subtract unreliability of current iteration */
+        v1dRes = vsub_f64(v1dRes, v1dTmp1);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    vst1_f64(&data->output[time], capReliabilityV1dNeon(v1dRes));
+}
+
+/**
  * rbdKooNGenericShannonStepV2dNeon
  *
  * Recursive KooN RBD Shannon Decomposition function with AArch64 NEON 128bit
@@ -632,6 +838,159 @@ static FUNCTION_TARGET("+simd") float64x2_t rbdKooNGenericShannonStepV2dNeon(str
 }
 
 /**
+ * rbdKooNGenericShannonStepV1dNeon
+ *
+ * Recursive KooN RBD Shannon Decomposition function with AArch64 NEON 64bit
+ *
+ * Input:
+ *      struct rbdKooNGenericShannonData *data
+ *      unsigned int time
+ *      unsigned char n
+ *      unsigned char k
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the recursive KooN RBD function through Shannon Decomposition method
+ *  exploiting AArch64 NEON 64bit.
+ *  It is responsible to recursively compute the reliability of a KooN RBD system
+ *
+ * Parameters:
+ *      data: Generic KooN for Shannon Decomposition RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *      n: current number of components in KooN RBD
+ *      k: minimum number of working components in KooN RBD
+ *
+ * Return (float64x1_t):
+ *  Computed reliability
+ */
+static FUNCTION_TARGET("+simd") float64x1_t rbdKooNGenericShannonStepV1dNeon(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k)
+{
+    unsigned char best;
+    unsigned char offset;
+    unsigned char idx;
+    unsigned char ii, jj;
+    float64x1_t *v1dR;
+    float64x1_t v1dRes;
+    float64x1_t v1dTmpRec;
+    float64x1_t v1dTmp1, v1dTmp2;
+    float64x1_t v1dStepTmp1, v1dStepTmp2;
+    int nextCombs;
+
+    if (k == n) {
+        /* Compute the Reliability as Series block */
+        v1dRes = v1dOnes;
+        while (n > 0) {
+            v1dTmp1 = vld1_f64(&data->reliabilities[(--n * data->numTimes) + time]);
+            v1dRes = vmul_f64(v1dRes, v1dTmp1);
+        }
+        return v1dRes;
+    }
+    if (k == 1) {
+        /* Compute the Reliability as Parallel block */
+        v1dRes = v1dOnes;
+        while (n > 0) {
+            v1dTmp1 = vld1_f64(&data->reliabilities[(--n * data->numTimes) + time]);
+            v1dRes = vfms_f64(v1dRes, v1dTmp1, v1dRes);
+        }
+        return vsub_f64(v1dOnes, v1dRes);
+    }
+
+    best = (unsigned char)minimum(((int)k-1), ((int)n-(int)k));
+    if (best > 1) {
+        /* Recursively compute the Reliability - Minimize number of recursive calls */
+        offset = n - best;
+        v1dTmp1 = v1dOnes;
+        v1dTmp2 = v1dOnes;
+        v1dR = &data->recur.v1dR[offset];
+        for (idx = 0; idx < best; idx++) {
+            v1dR[idx] = vld1_f64(&data->reliabilities[(--n * data->numTimes) + time]);
+            v1dTmp1 = vmul_f64(v1dTmp1, v1dR[idx]);
+            v1dTmp2 = vfms_f64(v1dTmp2, v1dR[idx], v1dTmp2);
+        }
+        v1dTmpRec = rbdKooNGenericShannonStepV1dNeon(data, time, n, k-best);
+        v1dRes = vmul_f64(v1dTmp1, v1dTmpRec);
+        v1dTmpRec = rbdKooNGenericShannonStepV1dNeon(data, time, n, k);
+        v1dRes = vfma_f64(v1dRes, v1dTmp2, v1dTmpRec);
+        for (idx = 1; idx < ceilDivision(best, 2); ++idx) {
+            v1dTmp1 = v1dZeros;
+            v1dTmp2 = v1dZeros;
+            firstCombination((unsigned char)idx, data->recur.comb);
+            do {
+                v1dStepTmp1 = v1dOnes;
+                v1dStepTmp2 = v1dOnes;
+                ii = 0;
+                jj = 0;
+                while (ii < idx) {
+                    if (data->recur.comb[ii] == jj) {
+                        v1dStepTmp1 = vfms_f64(v1dStepTmp1, v1dR[jj], v1dStepTmp1);
+                        v1dStepTmp2 = vmul_f64(v1dStepTmp2, v1dR[jj]);
+                        ++ii;
+                    }
+                    else {
+                        v1dStepTmp1 = vmul_f64(v1dStepTmp1, v1dR[jj]);
+                        v1dStepTmp2 = vfms_f64(v1dStepTmp2, v1dR[jj], v1dStepTmp2);
+                    }
+                    ++jj;
+                }
+                while (jj < best) {
+                    v1dStepTmp1 = vmul_f64(v1dStepTmp1, v1dR[jj]);
+                    v1dStepTmp2 = vfms_f64(v1dStepTmp2, v1dR[jj], v1dStepTmp2);
+                    ++jj;
+                }
+                v1dTmp1 = vadd_f64(v1dTmp1, v1dStepTmp1);
+                v1dTmp2 = vadd_f64(v1dTmp2, v1dStepTmp2);
+                nextCombs = nextCombination(best, idx, data->recur.comb);
+            } while(nextCombs == 0);
+            v1dTmpRec = rbdKooNGenericShannonStepV1dNeon(data, time, n, k-best+idx);
+            v1dRes = vfma_f64(v1dRes, v1dTmp1, v1dTmpRec);
+            v1dTmpRec = rbdKooNGenericShannonStepV1dNeon(data, time, n, k-idx);
+            v1dRes = vfma_f64(v1dRes, v1dTmp2, v1dTmpRec);
+        }
+        if ((best & 1) == 0) {
+            idx = best / 2;
+            v1dTmp1 = v1dZeros;
+            firstCombination((unsigned char)idx, data->recur.comb);
+            do {
+                v1dStepTmp1 = v1dOnes;
+                ii = 0;
+                jj = 0;
+                while (ii < idx) {
+                    if (data->recur.comb[ii] == jj) {
+                        v1dStepTmp1 = vfms_f64(v1dStepTmp1, v1dR[jj], v1dStepTmp1);
+                        ++ii;
+                    }
+                    else {
+                        v1dStepTmp1 = vmul_f64(v1dStepTmp1, v1dR[jj]);
+                    }
+                    ++jj;
+                }
+                while (jj < best) {
+                    v1dStepTmp1 = vmul_f64(v1dStepTmp1, v1dR[jj]);
+                    ++jj;
+                }
+                v1dTmp1 = vadd_f64(v1dTmp1, v1dStepTmp1);
+                nextCombs = nextCombination(best, idx, data->recur.comb);
+            } while(nextCombs == 0);
+            v1dTmpRec = rbdKooNGenericShannonStepV1dNeon(data, time, n, k-best+idx);
+            v1dRes = vfma_f64(v1dRes, v1dTmp1, v1dTmpRec);
+        }
+
+        return v1dRes;
+    }
+
+    /* Recursively compute the Reliability */
+    v1dTmp1 = vld1_f64(&data->reliabilities[(--n * data->numTimes) + time]);
+    v1dTmpRec = rbdKooNGenericShannonStepV1dNeon(data, time, n, k-1);
+    v1dRes = vmul_f64(v1dTmp1, v1dTmpRec);
+    v1dTmp1 = vsub_f64(v1dOnes, v1dTmp1);
+    v1dTmpRec = rbdKooNGenericShannonStepV1dNeon(data, time, n, k);
+    v1dRes = vfma_f64(v1dRes, v1dTmp1, v1dTmpRec);
+    return v1dRes;
+}
+
+/**
  * rbdKooNBddNeon
  *
  * Recursively compute the Reliability curve of a BDD Node with AArch64 NEON instruction set
@@ -699,7 +1058,7 @@ static FUNCTION_TARGET("+simd") double *rbdKooNBddNeon(struct rbdKooNBddData *da
     /* Is 1 time instant remaining? */
     if (tIdx < numSteps) {
         /* Compute the (cached) reliability curve associated with the current BDD Node */
-        rbdKooNBddStepS1d(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+        rbdKooNBddStepV1dNeon(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
     }
 
     /* Set the BDD Node as already evaluated */

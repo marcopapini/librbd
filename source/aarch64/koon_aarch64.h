@@ -38,6 +38,10 @@ void rbdKooNGenericShannonV2dNeon(struct rbdKooNGenericShannonData *data, unsign
 void rbdKooNBddStepV2dNeon(double *r, double *h, double *l, double *o);
 void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
 void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNGenericShannonV1dNeon(struct rbdKooNGenericShannonData *data, unsigned int time);
+void rbdKooNBddStepV1dNeon(double *r, double *h, double *l, double *o);
+void rbdKooNIdenticalSuccessStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNIdenticalFailStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
 
 /* Platform-specific functions for AArch64 SVE instruction set */
 void *rbdKooNFillWorkerSve(struct rbdKooNFillData *data);
