@@ -75,7 +75,7 @@ HIDDEN void *rbdParallelGenericWorkerFma3(struct rbdParallelData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepS1d(data, time);
+        rbdParallelGenericStepV1dFma3(data, time);
     }
 
     return NULL;
@@ -159,6 +159,46 @@ HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV2dFma3(struct rbdParal
 
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+}
+
+/**
+ * rbdParallelGenericStepV1dFma3
+ *
+ * Generic Parallel RBD step function with amd64 FMA3 64bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Parallel RBD step exploiting amd64 FMA3 64bit.
+ *  It is responsible to compute the reliability of a Parallel block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV1dFma3(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dTmp;
+    __m128d v2dRes;
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v2dRes = _mm_load_sd(&data->reliabilities[(0 * data->numTimes) + time]);
+    v2dRes = _mm_sub_sd(v2dOnes, v2dRes);
+    for (component = 1; component < data->numComponents; ++component) {
+        v2dTmp = _mm_load_sd(&data->reliabilities[(component * data->numTimes) + time]);
+        v2dRes = _mm_fnmadd_sd(v2dRes, v2dTmp, v2dRes);
+    }
+    v2dRes = _mm_sub_sd(v2dOnes, v2dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
 }
 
 

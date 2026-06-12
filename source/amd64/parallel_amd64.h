@@ -40,6 +40,7 @@ void *rbdParallelGenericWorkerFma3(struct rbdParallelData *data);
 
 void rbdParallelGenericStepV4dFma3(struct rbdParallelData *data, unsigned int time);
 void rbdParallelGenericStepV2dFma3(struct rbdParallelData *data, unsigned int time);
+void rbdParallelGenericStepV1dFma3(struct rbdParallelData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void *rbdParallelGenericWorkerAvx512f(struct rbdParallelData *data);

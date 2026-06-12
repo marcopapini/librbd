@@ -50,6 +50,9 @@ void rbdKooNIdenticalSuccessStepV4dFma3(struct rbdKooNIdenticalData *data, unsig
 void rbdKooNGenericShannonV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time);
 void rbdKooNBddStepV2dFma3(double *r, double *h, double *l, double *o);
 void rbdKooNIdenticalSuccessStepV2dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
+void rbdKooNGenericShannonV1dFma3(struct rbdKooNGenericShannonData *data, unsigned int time);
+void rbdKooNBddStepV1dFma3(double *r, double *h, double *l, double *o);
+void rbdKooNIdenticalSuccessStepV1dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void *rbdKooNFillWorkerAvx512f(struct rbdKooNFillData *data);
