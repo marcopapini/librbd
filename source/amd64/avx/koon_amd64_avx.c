@@ -136,7 +136,7 @@ HIDDEN void *rbdKooNGenericShannonWorkerAvx(struct rbdKooNGenericShannonData *da
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Recursively compute reliability of KooN RBD at current time instant */
-        rbdKooNGenericShannonS1d(data, time);
+        rbdKooNGenericShannonV1dSse2(data, time);
     }
 
     return NULL;
@@ -235,7 +235,7 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data)
             if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
                 if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                     /* Compute reliability of KooN RBD at current time instant from working components */
-                    rbdKooNIdenticalSuccessStepS1d(data, time);
+                    rbdKooNIdenticalSuccessStepV1dSse2(data, time);
                     /* Increment current time instant */
                     time += S1D;
                 }
@@ -267,7 +267,7 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data)
         /* Is 1 time instant remaining? */
         if (time < data->numTimes) {
             /* Compute reliability of KooN RBD at current time instant from working components */
-            rbdKooNIdenticalSuccessStepS1d(data, time);
+            rbdKooNIdenticalSuccessStepV1dSse2(data, time);
         }
     }
     else {
@@ -277,7 +277,7 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data)
             if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
                 if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                     /* Compute reliability of KooN RBD at current time instant from failed components */
-                    rbdKooNIdenticalFailStepS1d(data, time);
+                    rbdKooNIdenticalFailStepV1dSse2(data, time);
                     /* Increment current time instant */
                     time += S1D;
                 }
@@ -309,7 +309,7 @@ HIDDEN void *rbdKooNIdenticalWorkerAvx(struct rbdKooNIdenticalData *data)
         /* Is 1 time instant remaining? */
         if (time < data->numTimes) {
             /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepS1d(data, time);
+            rbdKooNIdenticalFailStepV1dSse2(data, time);
         }
     }
 
@@ -761,7 +761,7 @@ static FUNCTION_TARGET("avx") double *rbdKooNBddAvx(struct rbdKooNBddData *data,
     /* Is 1 time instant remaining? */
     if (tIdx < numSteps) {
         /* Compute the (cached) reliability curve associated with the current BDD Node */
-        rbdKooNBddStepS1d(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
+        rbdKooNBddStepV1dSse2(&rel[tIdx], &high[tIdx], &low[tIdx], &nodeValues[tIdx]);
     }
 
     /* Set the BDD Node as already evaluated */

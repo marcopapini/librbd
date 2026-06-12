@@ -76,7 +76,7 @@ HIDDEN void *rbdBridgeGenericWorkerAvx(struct rbdBridgeData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeGenericStepS1d(data, time);
+        rbdBridgeGenericStepV1dSse2(data, time);
     }
 
     return NULL;
@@ -116,7 +116,7 @@ HIDDEN void *rbdBridgeIdenticalWorkerAvx(struct rbdBridgeData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Bridge RBD at current time instant */
-                rbdBridgeIdenticalStepS1d(data, time);
+                rbdBridgeIdenticalStepV1dSse2(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -148,7 +148,7 @@ HIDDEN void *rbdBridgeIdenticalWorkerAvx(struct rbdBridgeData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Bridge RBD at current time instant */
-        rbdBridgeIdenticalStepS1d(data, time);
+        rbdBridgeIdenticalStepV1dSse2(data, time);
     }
 
     return NULL;

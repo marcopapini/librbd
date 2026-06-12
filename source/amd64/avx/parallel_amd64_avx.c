@@ -76,7 +76,7 @@ HIDDEN void *rbdParallelGenericWorkerAvx(struct rbdParallelData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepS1d(data, time);
+        rbdParallelGenericStepV1dSse2(data, time);
     }
 
     return NULL;
@@ -119,7 +119,7 @@ HIDDEN void *rbdParallelIdenticalWorkerAvx(void *arg)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Parallel RBD at current time instant */
-                rbdParallelIdenticalStepS1d(data, time);
+                rbdParallelIdenticalStepV1dSse2(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -151,7 +151,7 @@ HIDDEN void *rbdParallelIdenticalWorkerAvx(void *arg)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelIdenticalStepS1d(data, time);
+        rbdParallelIdenticalStepV1dSse2(data, time);
     }
 
     return NULL;

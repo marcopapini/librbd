@@ -76,7 +76,7 @@ HIDDEN void *rbdSeriesGenericWorkerAvx(struct rbdSeriesData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepS1d(data, time);
+        rbdSeriesGenericStepV1dSse2(data, time);
     }
 
     return NULL;
@@ -116,7 +116,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerAvx(struct rbdSeriesData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Series RBD at current time instant */
-                rbdSeriesIdenticalStepS1d(data, time);
+                rbdSeriesIdenticalStepV1dSse2(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
@@ -148,7 +148,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerAvx(struct rbdSeriesData *data)
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepS1d(data, time);
+        rbdSeriesIdenticalStepV1dSse2(data, time);
     }
 
     return NULL;

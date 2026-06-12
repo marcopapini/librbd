@@ -55,7 +55,8 @@ VARIABLE_TARGET("avx512f") const __m512d v8dTwos = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0
  * Return (__m256d):
  *  Reliability within accepted bounds
  */
-HIDDEN FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR) {
+HIDDEN FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR)
+{
     /* Cap computed reliability to accepted bounds [0, 1] */
     return _mm256_max_pd(_mm256_min_pd(v4dOnes, v4dR), v4dZeros);
 }
@@ -81,7 +82,8 @@ HIDDEN FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR) {
  * Return (__m512d):
  *  Reliability within accepted bounds
  */
-HIDDEN FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR) {
+HIDDEN FUNCTION_TARGET("avx512f") __m512d capReliabilityV8dAvx512f(__m512d v8dR)
+{
     /* Cap computed reliability to accepted bounds [0, 1] */
     return _mm512_max_pd(_mm512_min_pd(v8dOnes, v8dR), v8dZeros);
 }
