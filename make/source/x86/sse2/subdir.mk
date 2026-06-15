@@ -1,24 +1,28 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/x86/sse2/bridge_x86_sse2.c \
+../source/x86/sse2/hot_standby_x86_sse2.c \
 ../source/x86/sse2/koon_x86_sse2.c \
 ../source/x86/sse2/parallel_x86_sse2.c \
 ../source/x86/sse2/series_x86_sse2.c 
 
 C_DEPS += \
 ./source/x86/sse2/bridge_x86_sse2.d \
+./source/x86/sse2/hot_standby_x86_sse2.d \
 ./source/x86/sse2/koon_x86_sse2.d \
 ./source/x86/sse2/parallel_x86_sse2.d \
 ./source/x86/sse2/series_x86_sse2.d 
 
 OBJS_AR += \
 ./source/x86/sse2/bridge_x86_sse2.ar.o \
+./source/x86/sse2/hot_standby_x86_sse2.ar.o \
 ./source/x86/sse2/koon_x86_sse2.ar.o \
 ./source/x86/sse2/parallel_x86_sse2.ar.o \
 ./source/x86/sse2/series_x86_sse2.ar.o 
 
 OBJS_SO += \
 ./source/x86/sse2/bridge_x86_sse2.so.o \
+./source/x86/sse2/hot_standby_x86_sse2.so.o \
 ./source/x86/sse2/koon_x86_sse2.so.o \
 ./source/x86/sse2/parallel_x86_sse2.so.o \
 ./source/x86/sse2/series_x86_sse2.so.o 

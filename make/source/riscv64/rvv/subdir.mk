@@ -1,6 +1,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/riscv64/rvv/bridge_riscv64_rvv.c \
+../source/riscv64/rvv/hot_standby_riscv64_rvv.c \
 ../source/riscv64/rvv/koon_riscv64_rvv.c \
 ../source/riscv64/rvv/parallel_riscv64_rvv.c \
 ../source/riscv64/rvv/processor_riscv64_rvv.c \
@@ -8,6 +9,7 @@ C_SRCS += \
 
 C_DEPS += \
 ./source/riscv64/rvv/bridge_riscv64_rvv.d \
+./source/riscv64/rvv/hot_standby_riscv64_rvv.d \
 ./source/riscv64/rvv/koon_riscv64_rvv.d \
 ./source/riscv64/rvv/parallel_riscv64_rvv.d \
 ./source/riscv64/rvv/processor_riscv64_rvv.d \
@@ -15,6 +17,7 @@ C_DEPS += \
 
 OBJS_AR += \
 ./source/riscv64/rvv/bridge_riscv64_rvv.ar.o \
+./source/riscv64/rvv/hot_standby_riscv64_rvv.ar.o \
 ./source/riscv64/rvv/koon_riscv64_rvv.ar.o \
 ./source/riscv64/rvv/parallel_riscv64_rvv.ar.o \
 ./source/riscv64/rvv/processor_riscv64_rvv.ar.o \
@@ -22,6 +25,7 @@ OBJS_AR += \
 
 OBJS_SO += \
 ./source/riscv64/rvv/bridge_riscv64_rvv.so.o \
+./source/riscv64/rvv/hot_standby_riscv64_rvv.so.o \
 ./source/riscv64/rvv/koon_riscv64_rvv.so.o \
 ./source/riscv64/rvv/parallel_riscv64_rvv.so.o \
 ./source/riscv64/rvv/processor_riscv64_rvv.so.o \

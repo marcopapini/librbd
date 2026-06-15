@@ -1,24 +1,28 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/aarch64/neon/bridge_aarch64_neon.c \
+../source/aarch64/neon/hot_standby_aarch64_neon.c \
 ../source/aarch64/neon/koon_aarch64_neon.c \
 ../source/aarch64/neon/parallel_aarch64_neon.c \
 ../source/aarch64/neon/series_aarch64_neon.c 
 
 C_DEPS += \
 ./source/aarch64/neon/bridge_aarch64_neon.d \
+./source/aarch64/neon/hot_standby_aarch64_neon.d \
 ./source/aarch64/neon/koon_aarch64_neon.d \
 ./source/aarch64/neon/parallel_aarch64_neon.d \
 ./source/aarch64/neon/series_aarch64_neon.d 
 
 OBJS_AR += \
 ./source/aarch64/neon/bridge_aarch64_neon.ar.o \
+./source/aarch64/neon/hot_standby_aarch64_neon.ar.o \
 ./source/aarch64/neon/koon_aarch64_neon.ar.o \
 ./source/aarch64/neon/parallel_aarch64_neon.ar.o \
 ./source/aarch64/neon/series_aarch64_neon.ar.o 
 
 OBJS_SO += \
 ./source/aarch64/neon/bridge_aarch64_neon.so.o \
+./source/aarch64/neon/hot_standby_aarch64_neon.so.o \
 ./source/aarch64/neon/koon_aarch64_neon.so.o \
 ./source/aarch64/neon/parallel_aarch64_neon.so.o \
 ./source/aarch64/neon/series_aarch64_neon.so.o 

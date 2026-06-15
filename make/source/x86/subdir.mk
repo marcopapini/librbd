@@ -1,6 +1,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/x86/bridge_x86.c \
+../source/x86/hot_standby_x86.c \
 ../source/x86/koon_x86.c \
 ../source/x86/parallel_x86.c \
 ../source/x86/processor_x86.c \
@@ -9,6 +10,7 @@ C_SRCS += \
 
 C_DEPS += \
 ./source/x86/bridge_x86.d \
+./source/x86/hot_standby_x86.d \
 ./source/x86/koon_x86.d \
 ./source/x86/parallel_x86.d \
 ./source/x86/processor_x86.d \
@@ -17,6 +19,7 @@ C_DEPS += \
 
 OBJS_AR += \
 ./source/x86/bridge_x86.ar.o \
+./source/x86/hot_standby_x86.ar.o \
 ./source/x86/koon_x86.ar.o \
 ./source/x86/parallel_x86.ar.o \
 ./source/x86/processor_x86.ar.o \
@@ -25,6 +28,7 @@ OBJS_AR += \
 
 OBJS_SO += \
 ./source/x86/bridge_x86.so.o \
+./source/x86/hot_standby_x86.so.o \
 ./source/x86/koon_x86.so.o \
 ./source/x86/parallel_x86.so.o \
 ./source/x86/processor_x86.so.o \

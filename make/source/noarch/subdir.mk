@@ -1,6 +1,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/noarch/bridge_noarch.c \
+../source/noarch/hot_standby_noarch.c \
 ../source/noarch/koon_noarch.c \
 ../source/noarch/parallel_noarch.c \
 ../source/noarch/rbd_internal_noarch.c \
@@ -8,6 +9,7 @@ C_SRCS += \
 
 C_DEPS += \
 ./source/noarch/bridge_noarch.d \
+./source/noarch/hot_standby_noarch.d \
 ./source/noarch/koon_noarch.d \
 ./source/noarch/parallel_noarch.d \
 ./source/noarch/rbd_internal_noarch.d \
@@ -15,6 +17,7 @@ C_DEPS += \
 
 OBJS_AR += \
 ./source/noarch/bridge_noarch.ar.o \
+./source/noarch/hot_standby_noarch.ar.o \
 ./source/noarch/koon_noarch.ar.o \
 ./source/noarch/parallel_noarch.ar.o \
 ./source/noarch/rbd_internal_noarch.ar.o \
@@ -22,6 +25,7 @@ OBJS_AR += \
 
 OBJS_SO += \
 ./source/noarch/bridge_noarch.so.o \
+./source/noarch/hot_standby_noarch.so.o \
 ./source/noarch/koon_noarch.so.o \
 ./source/noarch/parallel_noarch.so.o \
 ./source/noarch/rbd_internal_noarch.so.o \

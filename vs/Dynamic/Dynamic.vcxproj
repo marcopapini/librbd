@@ -45,11 +45,13 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\rbd.h" />
     <ClInclude Include="..\..\source\aarch64\bridge_aarch64.h" />
+    <ClInclude Include="..\..\source\aarch64\hot_standby_aarch64.h" />
     <ClInclude Include="..\..\source\aarch64\koon_aarch64.h" />
     <ClInclude Include="..\..\source\aarch64\parallel_aarch64.h" />
     <ClInclude Include="..\..\source\aarch64\rbd_internal_aarch64.h" />
     <ClInclude Include="..\..\source\aarch64\series_aarch64.h" />
     <ClInclude Include="..\..\source\amd64\bridge_amd64.h" />
+    <ClInclude Include="..\..\source\amd64\hot_standby_amd64.h" />
     <ClInclude Include="..\..\source\amd64\koon_amd64.h" />
     <ClInclude Include="..\..\source\amd64\parallel_amd64.h" />
     <ClInclude Include="..\..\source\amd64\rbd_internal_amd64.h" />
@@ -65,16 +67,19 @@
     <ClInclude Include="..\..\source\generic\binomial.h" />
     <ClInclude Include="..\..\source\generic\combinations.h" />
     <ClInclude Include="..\..\source\generic\rbd_internal_generic.h" />
+    <ClInclude Include="..\..\source\hot_standby.h" />
     <ClInclude Include="..\..\source\koon.h" />
     <ClInclude Include="..\..\source\noarch\rbd_internal_noarch.h" />
     <ClInclude Include="..\..\source\os\os.h" />
     <ClInclude Include="..\..\source\parallel.h" />
     <ClInclude Include="..\..\source\power8\bridge_power8.h" />
+    <ClInclude Include="..\..\source\power8\hot_standby_power8.h" />
     <ClInclude Include="..\..\source\power8\koon_power8.h" />
     <ClInclude Include="..\..\source\power8\parallel_power8.h" />
     <ClInclude Include="..\..\source\power8\rbd_internal_power8.h" />
     <ClInclude Include="..\..\source\power8\series_power8.h" />
     <ClInclude Include="..\..\source\riscv64\bridge_riscv64.h" />
+    <ClInclude Include="..\..\source\riscv64\hot_standby_riscv64.h" />
     <ClInclude Include="..\..\source\riscv64\koon_riscv64.h" />
     <ClInclude Include="..\..\source\riscv64\parallel_riscv64.h" />
     <ClInclude Include="..\..\source\riscv64\rbd_internal_riscv64.h" />
@@ -82,6 +87,7 @@
     <ClInclude Include="..\..\source\riscv64\series_riscv64.h" />
     <ClInclude Include="..\..\source\series.h" />
     <ClInclude Include="..\..\source\x86\bridge_x86.h" />
+    <ClInclude Include="..\..\source\x86\hot_standby_x86.h" />
     <ClInclude Include="..\..\source\x86\koon_x86.h" />
     <ClInclude Include="..\..\source\x86\parallel_x86.h" />
     <ClInclude Include="..\..\source\x86\rbd_internal_x86.h" />
@@ -89,6 +95,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\aarch64\bridge_aarch64.c" />
+    <ClCompile Include="..\..\source\aarch64\hot_standby_aarch64.c" />
     <ClCompile Include="..\..\source\aarch64\koon_aarch64.c" />
     <ClCompile Include="..\..\source\aarch64\neon\bridge_aarch64_neon.c">
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CPUExtensionRequirementsARMv80</EnableEnhancedInstructionSet>
@@ -97,6 +104,9 @@
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">CPUExtensionRequirementsARMv80</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CPUExtensionRequirementsARMv80</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'">CPUExtensionRequirementsARMv80</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\neon\hot_standby_aarch64_neon.c">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CPUExtensionRequirementsARMv80</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="..\..\source\aarch64\neon\koon_aarch64_neon.c">
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CPUExtensionRequirementsARMv80</EnableEnhancedInstructionSet>
@@ -134,6 +144,9 @@
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CPUExtensionRequirementsARMv82</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'">CPUExtensionRequirementsARMv82</EnableEnhancedInstructionSet>
     </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\sve\hot_standby_aarch64_sve.c">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CPUExtensionRequirementsARMv82</EnableEnhancedInstructionSet>
+    </ClCompile>
     <ClCompile Include="..\..\source\aarch64\sve\koon_aarch64_sve.c">
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CPUExtensionRequirementsARMv82</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'">CPUExtensionRequirementsARMv82</EnableEnhancedInstructionSet>
@@ -170,6 +183,9 @@
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
     </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx512f\hot_standby_amd64_avx512f.c">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
+    </ClCompile>
     <ClCompile Include="..\..\source\amd64\avx512f\koon_amd64_avx512f.c">
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'">AdvancedVectorExtensions512</EnableEnhancedInstructionSet>
@@ -201,6 +217,9 @@
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx\hot_standby_amd64_avx.c">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
     <ClCompile Include="..\..\source\amd64\avx\koon_amd64_avx.c">
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AdvancedVectorExtensions</EnableEnhancedInstructionSet>
@@ -235,6 +254,9 @@
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
+    <ClCompile Include="..\..\source\amd64\fma3\hot_standby_amd64_fma3.c">
+      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
+    </ClCompile>
     <ClCompile Include="..\..\source\amd64\fma3\koon_amd64_fma3.c">
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
@@ -251,6 +273,7 @@
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
+    <ClCompile Include="..\..\source\amd64\hot_standby_amd64.c" />
     <ClCompile Include="..\..\source\amd64\koon_amd64.c" />
     <ClCompile Include="..\..\source\amd64\parallel_amd64.c" />
     <ClCompile Include="..\..\source\amd64\processor_amd64.c" />
@@ -266,8 +289,10 @@
     <ClCompile Include="..\..\source\generic\combinations.c" />
     <ClCompile Include="..\..\source\generic\processor_generic.c" />
     <ClCompile Include="..\..\source\generic\rbd_internal_generic.c" />
+    <ClCompile Include="..\..\source\hot_standby.c" />
     <ClCompile Include="..\..\source\koon.c" />
     <ClCompile Include="..\..\source\noarch\bridge_noarch.c" />
+    <ClCompile Include="..\..\source\noarch\hot_standby_noarch.c" />
     <ClCompile Include="..\..\source\noarch\koon_noarch.c" />
     <ClCompile Include="..\..\source\noarch\parallel_noarch.c" />
     <ClCompile Include="..\..\source\noarch\rbd_internal_noarch.c" />
@@ -278,20 +303,24 @@
     <ClCompile Include="..\..\source\os\windows.c" />
     <ClCompile Include="..\..\source\parallel.c" />
     <ClCompile Include="..\..\source\power8\bridge_power8.c" />
+    <ClCompile Include="..\..\source\power8\hot_standby_power8.c" />
     <ClCompile Include="..\..\source\power8\koon_power8.c" />
     <ClCompile Include="..\..\source\power8\parallel_power8.c" />
     <ClCompile Include="..\..\source\power8\rbd_internal_power8.c" />
     <ClCompile Include="..\..\source\power8\series_power8.c" />
     <ClCompile Include="..\..\source\power8\vsx\bridge_power8_vsx.c" />
+    <ClCompile Include="..\..\source\power8\vsx\hot_standby_power8_vsx.c" />
     <ClCompile Include="..\..\source\power8\vsx\koon_power8_vsx.c" />
     <ClCompile Include="..\..\source\power8\vsx\parallel_power8_vsx.c" />
     <ClCompile Include="..\..\source\power8\vsx\series_power8_vsx.c" />
     <ClCompile Include="..\..\source\riscv64\bridge_riscv64.c" />
+    <ClCompile Include="..\..\source\riscv64\hot_standby_riscv64.c" />
     <ClCompile Include="..\..\source\riscv64\koon_riscv64.c" />
     <ClCompile Include="..\..\source\riscv64\parallel_riscv64.c" />
     <ClCompile Include="..\..\source\riscv64\processor_riscv64.c" />
     <ClCompile Include="..\..\source\riscv64\rbd_internal_riscv64.c" />
     <ClCompile Include="..\..\source\riscv64\rvv\bridge_riscv64_rvv.c" />
+    <ClCompile Include="..\..\source\riscv64\rvv\hot_standby_riscv64_rvv.c" />
     <ClCompile Include="..\..\source\riscv64\rvv\koon_riscv64_rvv.c" />
     <ClCompile Include="..\..\source\riscv64\rvv\parallel_riscv64_rvv.c" />
     <ClCompile Include="..\..\source\riscv64\rvv\processor_riscv64_rvv.c" />
@@ -299,6 +328,7 @@
     <ClCompile Include="..\..\source\riscv64\series_riscv64.c" />
     <ClCompile Include="..\..\source\series.c" />
     <ClCompile Include="..\..\source\x86\bridge_x86.c" />
+    <ClCompile Include="..\..\source\x86\hot_standby_x86.c" />
     <ClCompile Include="..\..\source\x86\koon_x86.c" />
     <ClCompile Include="..\..\source\x86\parallel_x86.c" />
     <ClCompile Include="..\..\source\x86\processor_x86.c" />
@@ -312,6 +342,7 @@
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64EC'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
+    <ClCompile Include="..\..\source\x86\sse2\hot_standby_x86_sse2.c" />
     <ClCompile Include="..\..\source\x86\sse2\koon_x86_sse2.c">
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|ARM64EC'">StreamingSIMDExtensions2</EnableEnhancedInstructionSet>

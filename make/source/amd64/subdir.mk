@@ -1,6 +1,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/amd64/bridge_amd64.c \
+../source/amd64/hot_standby_amd64.c \
 ../source/amd64/koon_amd64.c \
 ../source/amd64/parallel_amd64.c \
 ../source/amd64/processor_amd64.c \
@@ -9,6 +10,7 @@ C_SRCS += \
 
 C_DEPS += \
 ./source/amd64/bridge_amd64.d \
+./source/amd64/hot_standby_amd64.d \
 ./source/amd64/koon_amd64.d \
 ./source/amd64/parallel_amd64.d \
 ./source/amd64/processor_amd64.d \
@@ -17,6 +19,7 @@ C_DEPS += \
 
 OBJS_AR += \
 ./source/amd64/bridge_amd64.ar.o \
+./source/amd64/hot_standby_amd64.ar.o \
 ./source/amd64/koon_amd64.ar.o \
 ./source/amd64/parallel_amd64.ar.o \
 ./source/amd64/processor_amd64.ar.o \
@@ -25,6 +28,7 @@ OBJS_AR += \
 
 OBJS_SO += \
 ./source/amd64/bridge_amd64.so.o \
+./source/amd64/hot_standby_amd64.so.o \
 ./source/amd64/koon_amd64.so.o \
 ./source/amd64/parallel_amd64.so.o \
 ./source/amd64/processor_amd64.so.o \

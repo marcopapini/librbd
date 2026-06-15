@@ -1,6 +1,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/aarch64/sve/bridge_aarch64_sve.c \
+../source/aarch64/sve/hot_standby_aarch64_sve.c \
 ../source/aarch64/sve/koon_aarch64_sve.c \
 ../source/aarch64/sve/parallel_aarch64_sve.c \
 ../source/aarch64/sve/processor_aarch64_sve.c \
@@ -8,6 +9,7 @@ C_SRCS += \
 
 C_DEPS += \
 ./source/aarch64/sve/bridge_aarch64_sve.d \
+./source/aarch64/sve/hot_standby_aarch64_sve.d \
 ./source/aarch64/sve/koon_aarch64_sve.d \
 ./source/aarch64/sve/parallel_aarch64_sve.d \
 ./source/aarch64/sve/processor_aarch64_sve.d \
@@ -15,6 +17,7 @@ C_DEPS += \
 
 OBJS_AR += \
 ./source/aarch64/sve/bridge_aarch64_sve.ar.o \
+./source/aarch64/sve/hot_standby_aarch64_sve.ar.o \
 ./source/aarch64/sve/koon_aarch64_sve.ar.o \
 ./source/aarch64/sve/parallel_aarch64_sve.ar.o \
 ./source/aarch64/sve/processor_aarch64_sve.ar.o \
@@ -22,6 +25,7 @@ OBJS_AR += \
 
 OBJS_SO += \
 ./source/aarch64/sve/bridge_aarch64_sve.so.o \
+./source/aarch64/sve/hot_standby_aarch64_sve.so.o \
 ./source/aarch64/sve/koon_aarch64_sve.so.o \
 ./source/aarch64/sve/parallel_aarch64_sve.so.o \
 ./source/aarch64/sve/processor_aarch64_sve.so.o \

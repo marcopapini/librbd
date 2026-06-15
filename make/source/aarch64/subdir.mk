@@ -1,6 +1,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/aarch64/bridge_aarch64.c \
+../source/aarch64/hot_standby_aarch64.c \
 ../source/aarch64/koon_aarch64.c \
 ../source/aarch64/parallel_aarch64.c \
 ../source/aarch64/processor_aarch64.c \
@@ -9,6 +10,7 @@ C_SRCS += \
 
 C_DEPS += \
 ./source/aarch64/bridge_aarch64.d \
+./source/aarch64/hot_standby_aarch64.d \
 ./source/aarch64/koon_aarch64.d \
 ./source/aarch64/parallel_aarch64.d \
 ./source/aarch64/processor_aarch64.d \
@@ -17,6 +19,7 @@ C_DEPS += \
 
 OBJS_AR += \
 ./source/aarch64/bridge_aarch64.ar.o \
+./source/aarch64/hot_standby_aarch64.ar.o \
 ./source/aarch64/koon_aarch64.ar.o \
 ./source/aarch64/parallel_aarch64.ar.o \
 ./source/aarch64/processor_aarch64.ar.o \
@@ -25,6 +28,7 @@ OBJS_AR += \
 
 OBJS_SO += \
 ./source/aarch64/bridge_aarch64.so.o \
+./source/aarch64/hot_standby_aarch64.so.o \
 ./source/aarch64/koon_aarch64.so.o \
 ./source/aarch64/parallel_aarch64.so.o \
 ./source/aarch64/processor_aarch64.so.o \
