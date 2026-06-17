@@ -329,6 +329,40 @@ EXTERN int rbdBridgeGeneric(double *reliabilities, double *output, unsigned char
  */
 EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability, double pSwitch, double *output, unsigned int numTimes);
 
+/**
+ * rbdColdStandby
+ *
+ * Compute reliability of a Cold Stand-by RBD system
+ *
+ * Input:
+ *      double *primaryReliability
+ *      double *standbyReliability
+ *      double pSwitch
+ *      unsigned int numTimes
+ *      double deltaT
+ *
+ * Output:
+ *      double *output
+ *
+ * Description:
+ *  This function computes the reliabilities over time of a Cold Stand-by RBD system
+ *
+ * Parameters:
+ *      primaryReliability: this array contains the input reliability of the primary
+ *                      component at the provided time instants
+ *      standbyReliability: this array contains the input reliability of the stand-by
+ *                      component at the provided time instants
+ *      pSwitch: probability that the switch is correctly performed
+ *      output: this array contains the reliabilities of Cold Stand-by RBD system computed at
+ *                      the provided time instants
+ *      numTimes: number of time instants over which Cold Stand-by RBD shall be computed (T)
+ *      deltaT: time difference between two consecutive time instants
+ *
+ * Return (int):
+ *  0 in case of successful computation, < 0 otherwise
+ */
+EXTERN int rbdColdStandby(double *primaryReliability, double *standbyReliability, double pSwitch, double *output, unsigned int numTimes, double deltaT);
+
 
 #ifdef  __cplusplus
 }

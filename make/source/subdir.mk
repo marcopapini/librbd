@@ -1,6 +1,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/bridge.c \
+../source/cold_standby.c \
 ../source/hot_standby.c \
 ../source/koon.c \
 ../source/parallel.c \
@@ -8,6 +9,7 @@ C_SRCS += \
 
 C_DEPS += \
 ./source/bridge.d \
+./source/cold_standby.d \
 ./source/hot_standby.d \
 ./source/koon.d \
 ./source/parallel.d \
@@ -15,6 +17,7 @@ C_DEPS += \
 
 OBJS_AR += \
 ./source/bridge.ar.o \
+./source/cold_standby.ar.o \
 ./source/hot_standby.ar.o \
 ./source/koon.ar.o \
 ./source/parallel.ar.o \
@@ -22,6 +25,7 @@ OBJS_AR += \
 
 OBJS_SO += \
 ./source/bridge.so.o \
+./source/cold_standby.so.o \
 ./source/hot_standby.so.o \
 ./source/koon.so.o \
 ./source/parallel.so.o \

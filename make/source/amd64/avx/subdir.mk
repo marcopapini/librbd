@@ -1,31 +1,46 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/amd64/avx/bridge_amd64_avx.c \
+../source/amd64/avx/cold_standby_amd64_avx.c \
+../source/amd64/avx/failure_density_amd64_avx.c \
 ../source/amd64/avx/hot_standby_amd64_avx.c \
 ../source/amd64/avx/koon_amd64_avx.c \
+../source/amd64/avx/integral_amd64_avx.c \
 ../source/amd64/avx/parallel_amd64_avx.c \
 ../source/amd64/avx/series_amd64_avx.c 
 
 C_DEPS += \
 ./source/amd64/avx/bridge_amd64_avx.d \
+./source/amd64/avx/cold_standby_amd64_avx.d \
+./source/amd64/avx/failure_density_amd64_avx.d \
 ./source/amd64/avx/hot_standby_amd64_avx.d \
 ./source/amd64/avx/koon_amd64_avx.d \
+./source/amd64/avx/integral_amd64_avx.d \
 ./source/amd64/avx/parallel_amd64_avx.d \
 ./source/amd64/avx/series_amd64_avx.d 
 
 OBJS_AR += \
 ./source/amd64/avx/bridge_amd64_avx.ar.o \
+./source/amd64/avx/cold_standby_amd64_avx.ar.o \
+./source/amd64/avx/failure_density_amd64_avx.ar.o \
 ./source/amd64/avx/hot_standby_amd64_avx.ar.o \
 ./source/amd64/avx/koon_amd64_avx.ar.o \
+./source/amd64/avx/integral_amd64_avx.ar.o \
 ./source/amd64/avx/parallel_amd64_avx.ar.o \
 ./source/amd64/avx/series_amd64_avx.ar.o 
 
 OBJS_SO += \
 ./source/amd64/avx/bridge_amd64_avx.so.o \
+./source/amd64/avx/cold_standby_amd64_avx.so.o \
+./source/amd64/avx/failure_density_amd64_avx.so.o \
 ./source/amd64/avx/hot_standby_amd64_avx.so.o \
 ./source/amd64/avx/koon_amd64_avx.so.o \
+./source/amd64/avx/integral_amd64_avx.so.o \
 ./source/amd64/avx/parallel_amd64_avx.so.o \
 ./source/amd64/avx/series_amd64_avx.so.o 
+
+./source/amd64/avx/integral_amd64_avx.ar.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)
+./source/amd64/avx/integral_amd64_avx.so.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)
 
 
 # Each subdirectory must supply rules for building sources it contributes

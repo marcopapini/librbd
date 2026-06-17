@@ -1,31 +1,46 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/x86/sse2/bridge_x86_sse2.c \
+../source/x86/sse2/cold_standby_x86_sse2.c \
+../source/x86/sse2/failure_density_x86_sse2.c \
 ../source/x86/sse2/hot_standby_x86_sse2.c \
 ../source/x86/sse2/koon_x86_sse2.c \
+../source/x86/sse2/integral_x86_sse2.c \
 ../source/x86/sse2/parallel_x86_sse2.c \
 ../source/x86/sse2/series_x86_sse2.c 
 
 C_DEPS += \
 ./source/x86/sse2/bridge_x86_sse2.d \
+./source/x86/sse2/cold_standby_x86_sse2.d \
+./source/x86/sse2/failure_density_x86_sse2.d \
 ./source/x86/sse2/hot_standby_x86_sse2.d \
 ./source/x86/sse2/koon_x86_sse2.d \
+./source/x86/sse2/integral_x86_sse2.d \
 ./source/x86/sse2/parallel_x86_sse2.d \
 ./source/x86/sse2/series_x86_sse2.d 
 
 OBJS_AR += \
 ./source/x86/sse2/bridge_x86_sse2.ar.o \
+./source/x86/sse2/cold_standby_x86_sse2.ar.o \
+./source/x86/sse2/failure_density_x86_sse2.ar.o \
 ./source/x86/sse2/hot_standby_x86_sse2.ar.o \
 ./source/x86/sse2/koon_x86_sse2.ar.o \
+./source/x86/sse2/integral_x86_sse2.ar.o \
 ./source/x86/sse2/parallel_x86_sse2.ar.o \
 ./source/x86/sse2/series_x86_sse2.ar.o 
 
 OBJS_SO += \
 ./source/x86/sse2/bridge_x86_sse2.so.o \
+./source/x86/sse2/cold_standby_x86_sse2.so.o \
+./source/x86/sse2/failure_density_x86_sse2.so.o \
 ./source/x86/sse2/hot_standby_x86_sse2.so.o \
 ./source/x86/sse2/koon_x86_sse2.so.o \
+./source/x86/sse2/integral_x86_sse2.so.o \
 ./source/x86/sse2/parallel_x86_sse2.so.o \
 ./source/x86/sse2/series_x86_sse2.so.o 
+
+./source/x86/sse2/integral_x86_sse2.ar.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)
+./source/x86/sse2/integral_x86_sse2.so.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)
 
 
 # Each subdirectory must supply rules for building sources it contributes

@@ -47,9 +47,11 @@ struct rbdKooNGenericShannonRecursionData
 VARIABLE_TARGET("avx") extern const __m256d v4dZeros;
 VARIABLE_TARGET("avx") extern const __m256d v4dOnes;
 VARIABLE_TARGET("avx") extern const __m256d v4dTwos;
+VARIABLE_TARGET("avx") extern const __m256d v4dHalfs;
 VARIABLE_TARGET("avx512f") extern const __m512d v8dZeros;
 VARIABLE_TARGET("avx512f") extern const __m512d v8dOnes;
 VARIABLE_TARGET("avx512f") extern const __m512d v8dTwos;
+VARIABLE_TARGET("avx512f") extern const __m512d v8dHalfs;
 
 
 FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR);

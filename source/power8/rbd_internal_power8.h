@@ -50,6 +50,7 @@ struct rbdKooNGenericShannonRecursionData
 VARIABLE_TARGET("vsx") extern const double64x2 v2dZeros;
 VARIABLE_TARGET("vsx") extern const double64x2 v2dOnes;
 VARIABLE_TARGET("vsx") extern const double64x2 v2dTwos;
+VARIABLE_TARGET("vsx") extern const double64x2 v2dHalfs;
 
 
 /**

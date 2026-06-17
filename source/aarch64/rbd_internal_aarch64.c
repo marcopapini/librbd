@@ -34,10 +34,12 @@ VARIABLE_TARGET("+simd") const float64x2_t v2dZeros = {0.0, 0.0};
 VARIABLE_TARGET("+simd") const float64x2_t v2dOnes = {1.0, 1.0};
 VARIABLE_TARGET("+simd") const float64x2_t v2dTwos = {2.0, 2.0};
 VARIABLE_TARGET("+simd") const float64x2_t v2dMinusTwos = {-2.0, -2.0};
+VARIABLE_TARGET("+simd") const float64x2_t v2dHalfs = {0.5, 0.5};
 VARIABLE_TARGET("+simd") const float64x1_t v1dZeros = {0.0};
 VARIABLE_TARGET("+simd") const float64x1_t v1dOnes = {1.0};
 VARIABLE_TARGET("+simd") const float64x1_t v1dTwos = {2.0};
 VARIABLE_TARGET("+simd") const float64x1_t v1dMinusTwos = {-2.0};
+VARIABLE_TARGET("+simd") const float64x1_t v1dHalfs = {0.5};
 
 
 /**

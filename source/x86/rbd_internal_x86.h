@@ -45,6 +45,7 @@ struct rbdKooNGenericShannonRecursionData
 VARIABLE_TARGET("sse2") extern const __m128d v2dZeros;
 VARIABLE_TARGET("sse2") extern const __m128d v2dOnes;
 VARIABLE_TARGET("sse2") extern const __m128d v2dTwos;
+VARIABLE_TARGET("sse2") extern const __m128d v2dHalfs;
 
 
 FUNCTION_TARGET("sse2") __m128d capReliabilityV2dSse2(__m128d v2dR);

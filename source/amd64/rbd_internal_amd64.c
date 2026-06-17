@@ -29,9 +29,11 @@
 VARIABLE_TARGET("avx") const __m256d v4dZeros = {0.0, 0.0, 0.0, 0.0};
 VARIABLE_TARGET("avx") const __m256d v4dOnes = {1.0, 1.0, 1.0, 1.0};
 VARIABLE_TARGET("avx") const __m256d v4dTwos = {2.0, 2.0, 2.0, 2.0};
+VARIABLE_TARGET("avx") const __m256d v4dHalfs = {0.5, 0.5, 0.5, 0.5};
 VARIABLE_TARGET("avx512f") const __m512d v8dZeros = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 VARIABLE_TARGET("avx512f") const __m512d v8dOnes = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
 VARIABLE_TARGET("avx512f") const __m512d v8dTwos = {2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0};
+VARIABLE_TARGET("avx512f") const __m512d v8dHalfs = {0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5};
 
 
 /**

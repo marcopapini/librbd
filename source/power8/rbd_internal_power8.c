@@ -30,6 +30,7 @@
 VARIABLE_TARGET("vsx") const double64x2 v2dZeros = {0.0, 0.0};
 VARIABLE_TARGET("vsx") const double64x2 v2dOnes = {1.0, 1.0};
 VARIABLE_TARGET("vsx") const double64x2 v2dTwos = {2.0, 2.0};
+VARIABLE_TARGET("vsx") const double64x2 v2dHalfs = {0.5, 0.5};
 
 
 /**

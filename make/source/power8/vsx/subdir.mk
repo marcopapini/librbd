@@ -1,31 +1,46 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/power8/vsx/bridge_power8_vsx.c \
+../source/power8/vsx/cold_standby_power8_vsx.c \
+../source/power8/vsx/failure_density_power8_vsx.c \
 ../source/power8/vsx/hot_standby_power8_vsx.c \
 ../source/power8/vsx/koon_power8_vsx.c \
+../source/power8/vsx/integral_power8_vsx.c \
 ../source/power8/vsx/parallel_power8_vsx.c \
 ../source/power8/vsx/series_power8_vsx.c 
 
 C_DEPS += \
 ./source/power8/vsx/bridge_power8_vsx.d \
+./source/power8/vsx/cold_standby_power8_vsx.d \
+./source/power8/vsx/failure_density_power8_vsx.d \
 ./source/power8/vsx/hot_standby_power8_vsx.d \
 ./source/power8/vsx/koon_power8_vsx.d \
+./source/power8/vsx/integral_power8_vsx.d \
 ./source/power8/vsx/parallel_power8_vsx.d \
 ./source/power8/vsx/series_power8_vsx.d 
 
 OBJS_AR += \
 ./source/power8/vsx/bridge_power8_vsx.ar.o \
+./source/power8/vsx/cold_standby_power8_vsx.ar.o \
+./source/power8/vsx/failure_density_power8_vsx.ar.o \
 ./source/power8/vsx/hot_standby_power8_vsx.ar.o \
 ./source/power8/vsx/koon_power8_vsx.ar.o \
+./source/power8/vsx/integral_power8_vsx.ar.o \
 ./source/power8/vsx/parallel_power8_vsx.ar.o \
 ./source/power8/vsx/series_power8_vsx.ar.o 
 
 OBJS_SO += \
 ./source/power8/vsx/bridge_power8_vsx.so.o \
+./source/power8/vsx/cold_standby_power8_vsx.so.o \
+./source/power8/vsx/failure_density_power8_vsx.so.o \
 ./source/power8/vsx/hot_standby_power8_vsx.so.o \
 ./source/power8/vsx/koon_power8_vsx.so.o \
+./source/power8/vsx/integral_power8_vsx.so.o \
 ./source/power8/vsx/parallel_power8_vsx.so.o \
 ./source/power8/vsx/series_power8_vsx.so.o 
+
+./source/power8/vsx/integral_power8_vsx.ar.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)
+./source/power8/vsx/integral_power8_vsx.so.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)
 
 
 # Each subdirectory must supply rules for building sources it contributes

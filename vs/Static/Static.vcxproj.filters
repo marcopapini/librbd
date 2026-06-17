@@ -243,6 +243,60 @@
     <ClInclude Include="..\..\source\hot_standby.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\aarch64\cold_standby_aarch64.h">
+      <Filter>Header Files\aarch64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\aarch64\failure_density_aarch64.h">
+      <Filter>Header Files\aarch64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\aarch64\integral_aarch64.h">
+      <Filter>Header Files\aarch64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\amd64\cold_standby_amd64.h">
+      <Filter>Header Files\amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\amd64\failure_density_amd64.h">
+      <Filter>Header Files\amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\amd64\integral_amd64.h">
+      <Filter>Header Files\amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\power8\cold_standby_power8.h">
+      <Filter>Header Files\power8</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\power8\failure_density_power8.h">
+      <Filter>Header Files\power8</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\power8\integral_power8.h">
+      <Filter>Header Files\power8</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\riscv64\cold_standby_riscv64.h">
+      <Filter>Header Files\riscv64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\riscv64\failure_density_riscv64.h">
+      <Filter>Header Files\riscv64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\riscv64\integral_riscv64.h">
+      <Filter>Header Files\riscv64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\x86\cold_standby_x86.h">
+      <Filter>Header Files\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\x86\failure_density_x86.h">
+      <Filter>Header Files\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\x86\integral_x86.h">
+      <Filter>Header Files\x86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\cold_standby.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\failure_density.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\integral.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\bridge.c">
@@ -541,6 +595,117 @@
     </ClCompile>
     <ClCompile Include="..\..\source\aarch64\hot_standby_aarch64.c">
       <Filter>Source Files\aarch64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\neon\cold_standby_aarch64_neon.c">
+      <Filter>Source Files\aarch64\neon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\neon\failure_density_aarch64_neon.c">
+      <Filter>Source Files\aarch64\neon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\neon\integral_aarch64_neon.c">
+      <Filter>Source Files\aarch64\neon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\sve\cold_standby_aarch64_sve.c">
+      <Filter>Source Files\aarch64\sve</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\sve\failure_density_aarch64_sve.c">
+      <Filter>Source Files\aarch64\sve</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\sve\integral_aarch64_sve.c">
+      <Filter>Source Files\aarch64\sve</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\cold_standby_aarch64.c">
+      <Filter>Source Files\aarch64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\failure_density_aarch64.c">
+      <Filter>Source Files\aarch64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx\cold_standby_amd64_avx.c">
+      <Filter>Source Files\amd64\avx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx\failure_density_amd64_avx.c">
+      <Filter>Source Files\amd64\avx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx\integral_amd64_avx.c">
+      <Filter>Source Files\amd64\avx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx512f\cold_standby_amd64_avx512f.c">
+      <Filter>Source Files\amd64\avx512f</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx512f\failure_density_amd64_avx512f.c">
+      <Filter>Source Files\amd64\avx512f</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx512f\integral_amd64_avx512f.c">
+      <Filter>Source Files\amd64\avx512f</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\fma3\cold_standby_amd64_fma3.c">
+      <Filter>Source Files\amd64\fma3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\fma3\integral_amd64_fma3.c">
+      <Filter>Source Files\amd64\fma3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\cold_standby_amd64.c">
+      <Filter>Source Files\amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\failure_density_amd64.c">
+      <Filter>Source Files\amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\noarch\cold_standby_noarch.c">
+      <Filter>Source Files\noarch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\noarch\failure_density_noarch.c">
+      <Filter>Source Files\noarch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\noarch\integral_noarch.c">
+      <Filter>Source Files\noarch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\vsx\cold_standby_power8_vsx.c">
+      <Filter>Source Files\power8\vsx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\vsx\failure_density_power8_vsx.c">
+      <Filter>Source Files\power8\vsx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\vsx\integral_power8_vsx.c">
+      <Filter>Source Files\power8\vsx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\cold_standby_power8.c">
+      <Filter>Source Files\power8</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\failure_density_power8.c">
+      <Filter>Source Files\power8</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\rvv\cold_standby_riscv64_rvv.c">
+      <Filter>Source Files\riscv64\rvv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\rvv\failure_density_riscv64_rvv.c">
+      <Filter>Source Files\riscv64\rvv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\rvv\integral_riscv64_rvv.c">
+      <Filter>Source Files\riscv64\rvv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\cold_standby_riscv64.c">
+      <Filter>Source Files\riscv64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\failure_density_riscv64.c">
+      <Filter>Source Files\riscv64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\sse2\cold_standby_x86_sse2.c">
+      <Filter>Source Files\x86\sse2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\sse2\failure_density_x86_sse2.c">
+      <Filter>Source Files\x86\sse2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\sse2\integral_x86_sse2.c">
+      <Filter>Source Files\x86\sse2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\cold_standby_x86.c">
+      <Filter>Source Files\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\failure_density_x86.c">
+      <Filter>Source Files\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\cold_standby.c">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

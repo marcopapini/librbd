@@ -60,10 +60,12 @@ VARIABLE_TARGET("+simd") extern const float64x2_t v2dZeros;
 VARIABLE_TARGET("+simd") extern const float64x2_t v2dOnes;
 VARIABLE_TARGET("+simd") extern const float64x2_t v2dTwos;
 VARIABLE_TARGET("+simd") extern const float64x2_t v2dMinusTwos;
+VARIABLE_TARGET("+simd") extern const float64x2_t v2dHalfs;
 VARIABLE_TARGET("+simd") extern const float64x1_t v1dZeros;
 VARIABLE_TARGET("+simd") extern const float64x1_t v1dOnes;
 VARIABLE_TARGET("+simd") extern const float64x1_t v1dTwos;
 VARIABLE_TARGET("+simd") extern const float64x1_t v1dMinusTwos;
+VARIABLE_TARGET("+simd") extern const float64x1_t v1dHalfs;
 
 
 float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);

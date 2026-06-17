@@ -1,6 +1,8 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../source/power8/bridge_power8.c \
+../source/power8/cold_standby_power8.c \
+../source/power8/failure_density_power8.c \
 ../source/power8/hot_standby_power8.c \
 ../source/power8/koon_power8.c \
 ../source/power8/parallel_power8.c \
@@ -9,6 +11,8 @@ C_SRCS += \
 
 C_DEPS += \
 ./source/power8/bridge_power8.d \
+./source/power8/cold_standby_power8.d \
+./source/power8/failure_density_power8.d \
 ./source/power8/hot_standby_power8.d \
 ./source/power8/koon_power8.d \
 ./source/power8/parallel_power8.d \
@@ -17,6 +21,8 @@ C_DEPS += \
 
 OBJS_AR += \
 ./source/power8/bridge_power8.ar.o \
+./source/power8/cold_standby_power8.ar.o \
+./source/power8/failure_density_power8.ar.o \
 ./source/power8/hot_standby_power8.ar.o \
 ./source/power8/koon_power8.ar.o \
 ./source/power8/parallel_power8.ar.o \
@@ -25,6 +31,8 @@ OBJS_AR += \
 
 OBJS_SO += \
 ./source/power8/bridge_power8.so.o \
+./source/power8/cold_standby_power8.so.o \
+./source/power8/failure_density_power8.so.o \
 ./source/power8/hot_standby_power8.so.o \
 ./source/power8/koon_power8.so.o \
 ./source/power8/parallel_power8.so.o \
