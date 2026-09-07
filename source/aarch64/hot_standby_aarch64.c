@@ -3,7 +3,7 @@
  *  Hot Stand-by RBD management - AArch64 platform-specific implementation
  *
  *  librbd - Reliability Block Diagrams evaluation library
- *  Copyright (C) 2020-2024 by Marco Papini <papini.m@gmail.com>
+ *  Copyright (C) 2020-2026 by Marco Papini <papini.m@gmail.com>
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as published
