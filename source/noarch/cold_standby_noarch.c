@@ -124,8 +124,7 @@ HIDDEN void rbdColdStandbyStepS1d(struct rbdColdStandbyData *data, unsigned int 
     double s1dRes;
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
-    s1dRes = data->primaryReliability[time] +
-             (data->pSwitch * rbdIntegralColdStandbyS1d(data, time));
+    s1dRes = data->primaryReliability[time] + rbdIntegralColdStandbyS1d(data, time);
 
     /* Cap the computed reliability and set it into output array */
     data->output[time] = capReliabilityS1d(s1dRes);

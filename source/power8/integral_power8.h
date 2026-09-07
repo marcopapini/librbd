@@ -31,6 +31,8 @@
 /* Platform-specific functions for POWER8 VSX instruction set */
 double64x2 rbdIntegralColdStandbyV2dVsx(struct rbdColdStandbyData *data, unsigned int time);
 double64x2 rbdIntegralColdStandbyV1dVsx(struct rbdColdStandbyData *data, unsigned int time);
+double64x2 rbdIntegralHotStandbyV2dVsx(struct rbdHotStandbyData *data, unsigned int time);
+double64x2 rbdIntegralHotStandbyV1dVsx(struct rbdHotStandbyData *data, unsigned int time);
 #endif /* defined(ARCH_POWER8) && (CPU_ENABLE_SIMD != 0) */
 
 

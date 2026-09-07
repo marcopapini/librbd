@@ -118,9 +118,8 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdColdStandbyStepVNdSve(svbool_t pg, struct
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     vNdPri = svld1(pg, &data->primaryReliability[time]);
-    vNdRes = svdup_f64(data->pSwitch);
     vNdTmp = rbdIntegralColdStandbyVNdSve(pg, data, time);
-    vNdRes = svmla_f64_x(pg, vNdPri, vNdRes, vNdTmp);
+    vNdRes = svadd_f64_x(pg, vNdPri, vNdTmp);
 
     /* Cap the computed reliability and set it into output array */
     svst1(pg, &data->output[time], capReliabilityVNdSve(pg, vNdRes));

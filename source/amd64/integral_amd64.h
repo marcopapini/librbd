@@ -31,14 +31,20 @@
 /* Platform-specific functions for amd64 AVX instruction set */
 __m256d rbdIntegralColdStandbyV4dAvx(struct rbdColdStandbyData *data, unsigned int time);
 __m256d rbdIntegralColdStandbyV1dAvx(struct rbdColdStandbyData *data, unsigned int time);
+__m256d rbdIntegralHotStandbyV4dAvx(struct rbdHotStandbyData *data, unsigned int time);
+__m256d rbdIntegralHotStandbyV1dAvx(struct rbdHotStandbyData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 FMA3 instruction set */
 __m256d rbdIntegralColdStandbyV4dFma3(struct rbdColdStandbyData *data, unsigned int time);
 __m128d rbdIntegralColdStandbyV2dFma3(struct rbdColdStandbyData *data, unsigned int time);
 __m256d rbdIntegralColdStandbyV1dFma3(struct rbdColdStandbyData *data, unsigned int time);
+__m256d rbdIntegralHotStandbyV4dFma3(struct rbdHotStandbyData *data, unsigned int time);
+__m128d rbdIntegralHotStandbyV2dFma3(struct rbdHotStandbyData *data, unsigned int time);
+__m256d rbdIntegralHotStandbyV1dFma3(struct rbdHotStandbyData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 AVX512F instruction set */
 __m512d rbdIntegralColdStandbyVNdAvx512f(__mmask8 mask, struct rbdColdStandbyData *data, unsigned int time);
+__m512d rbdIntegralHotStandbyVNdAvx512f(__mmask8 mask, struct rbdHotStandbyData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 

@@ -97,9 +97,9 @@ static const rbdDim rbdBridgeTests[] = {
 
 #if defined(TEST_HOT_STANDBY) || defined(TEST_COLD_STANDBY)
 static const rbdDim rbdStandbyTests[] = {
-        {2, 1}, {2, 2}, {2, 3}, {2, 4}, {2, 7}, {2, 10},
-        {2, 1000}, {2, 1607}, {2, 5000}, {2, 10000}, {2, 20000}, {2, 50000},
-        {2, 50001}, {2, 50002}, {2, 50003}, {2, 100000}, {2, 200000},
+        {3, 1}, {3, 2}, {3, 3}, {3, 4}, {3, 7}, {3, 10},
+        {3, 1000}, {3, 1607}, {3, 5000}, {3, 10000}, {3, 20000}, {3, 50000},
+        {3, 50001}, {3, 50002}, {3, 50003}, {3, 100000}, {3, 200000},
 };
 
 #define STANDBY_PSWITCH         0.95
@@ -201,11 +201,9 @@ static resultExperiment resultBridgeIdentical[NUM_BRIDGE_EXPERIMENTS];
 #endif
 #if defined(TEST_HOT_STANDBY)
 static resultExperiment resultHotStandbyGeneric[NUM_STANDBY_EXPERIMENTS];
-static resultExperiment resultHotStandbyIdentical[NUM_STANDBY_EXPERIMENTS];
 #endif
 #if defined(TEST_COLD_STANDBY)
 static resultExperiment resultColdStandbyGeneric[NUM_STANDBY_EXPERIMENTS];
-static resultExperiment resultColdStandbyIdentical[NUM_STANDBY_EXPERIMENTS];
 #endif
 
 
@@ -893,12 +891,11 @@ int main(int argc, char **argv)
 #endif
 
         resultHotStandbyGeneric[ii].rbdDim = rbdStandbyTests[ii];
-        resultHotStandbyIdentical[ii].rbdDim = rbdStandbyTests[ii];
 
         for (jj = 0; jj < NUM_RUNS; ++jj) {
             printf("Hot Standby experiment %d (%d/%lu) - Times %d\n", jj+1, ii+1, (unsigned long)NUM_STANDBY_EXPERIMENTS, rbdStandbyTests[ii].numTimes);
             clock_gettime(CLOCK_MONOTONIC, &start);
-            rbdHotStandby(&relMat[0], &relMat[rbdStandbyTests[ii].numTimes], STANDBY_PSWITCH, output, rbdStandbyTests[ii].numTimes);
+            rbdHotStandby(&relMat[0], output, RBD_HOT_STANDBY_COMPONENTS, rbdStandbyTests[ii].numTimes, DELTA_T);
             clock_gettime(CLOCK_MONOTONIC, &now);
             if (jj == 0) {
                 snprintf(filename, sizeof(filename), "out_hot_standby_gen_%dx%d.txt", rbdStandbyTests[ii].numComponents, rbdStandbyTests[ii].numTimes);
@@ -906,27 +903,12 @@ int main(int argc, char **argv)
             }
             timeDiff(&start, &now, &diff);
             resultHotStandbyGeneric[ii].time[jj] = diff;
-
-            clock_gettime(CLOCK_MONOTONIC, &start);
-            rbdHotStandby(&relArr[0], &relArr[0], STANDBY_PSWITCH, output, rbdStandbyTests[ii].numTimes);
-            clock_gettime(CLOCK_MONOTONIC, &now);
-            if (jj == 0) {
-                snprintf(filename, sizeof(filename), "out_hot_standby_id_%dx%d.txt", rbdStandbyTests[ii].numComponents, rbdStandbyTests[ii].numTimes);
-                printLog(filename, output, rbdStandbyTests[ii].numTimes);
-            }
-            timeDiff(&start, &now, &diff);
-            resultHotStandbyIdentical[ii].time[jj] = diff;
         }
 
         sortTimes(&resultHotStandbyGeneric[ii].time[0], NUM_RUNS);
         getMedianTime(&resultHotStandbyGeneric[ii].time[0], NUM_RUNS, &resultHotStandbyGeneric[ii].medianTime);
         resultHotStandbyGeneric[ii].minTime = resultHotStandbyGeneric[ii].time[0];
         resultHotStandbyGeneric[ii].maxTime = resultHotStandbyGeneric[ii].time[NUM_RUNS - 1];
-
-        sortTimes(&resultHotStandbyIdentical[ii].time[0], NUM_RUNS);
-        getMedianTime(&resultHotStandbyIdentical[ii].time[0], NUM_RUNS, &resultHotStandbyIdentical[ii].medianTime);
-        resultHotStandbyIdentical[ii].minTime = resultHotStandbyIdentical[ii].time[0];
-        resultHotStandbyIdentical[ii].maxTime = resultHotStandbyIdentical[ii].time[NUM_RUNS - 1];
 
         free(relMat);
         free(relArr);
@@ -982,12 +964,11 @@ int main(int argc, char **argv)
 #endif
 
         resultColdStandbyGeneric[ii].rbdDim = rbdStandbyTests[ii];
-        resultColdStandbyIdentical[ii].rbdDim = rbdStandbyTests[ii];
 
         for (jj = 0; jj < NUM_RUNS; ++jj) {
             printf("Cold Standby experiment %d (%d/%lu) - Times %d\n", jj+1, ii+1, (unsigned long)NUM_STANDBY_EXPERIMENTS, rbdStandbyTests[ii].numTimes);
             clock_gettime(CLOCK_MONOTONIC, &start);
-            rbdColdStandby(&relMat[0], &relMat[rbdStandbyTests[ii].numTimes], STANDBY_PSWITCH, output, rbdStandbyTests[ii].numTimes, DELTA_T);
+            rbdColdStandby(&relMat[0], output, RBD_HOT_STANDBY_COMPONENTS, rbdStandbyTests[ii].numTimes, DELTA_T);
             clock_gettime(CLOCK_MONOTONIC, &now);
             if (jj == 0) {
                 snprintf(filename, sizeof(filename), "out_cold_standby_gen_%dx%d.txt", rbdStandbyTests[ii].numComponents, rbdStandbyTests[ii].numTimes);
@@ -995,27 +976,12 @@ int main(int argc, char **argv)
             }
             timeDiff(&start, &now, &diff);
             resultColdStandbyGeneric[ii].time[jj] = diff;
-
-            clock_gettime(CLOCK_MONOTONIC, &start);
-            rbdColdStandby(&relArr[0], &relArr[0], STANDBY_PSWITCH, output, rbdStandbyTests[ii].numTimes, DELTA_T);
-            clock_gettime(CLOCK_MONOTONIC, &now);
-            if (jj == 0) {
-                snprintf(filename, sizeof(filename), "out_cold_standby_id_%dx%d.txt", rbdStandbyTests[ii].numComponents, rbdStandbyTests[ii].numTimes);
-                printLog(filename, output, rbdStandbyTests[ii].numTimes);
-            }
-            timeDiff(&start, &now, &diff);
-            resultColdStandbyIdentical[ii].time[jj] = diff;
         }
 
         sortTimes(&resultColdStandbyGeneric[ii].time[0], NUM_RUNS);
         getMedianTime(&resultColdStandbyGeneric[ii].time[0], NUM_RUNS, &resultColdStandbyGeneric[ii].medianTime);
         resultColdStandbyGeneric[ii].minTime = resultColdStandbyGeneric[ii].time[0];
         resultColdStandbyGeneric[ii].maxTime = resultColdStandbyGeneric[ii].time[NUM_RUNS - 1];
-
-        sortTimes(&resultColdStandbyIdentical[ii].time[0], NUM_RUNS);
-        getMedianTime(&resultColdStandbyIdentical[ii].time[0], NUM_RUNS, &resultColdStandbyIdentical[ii].medianTime);
-        resultColdStandbyIdentical[ii].minTime = resultColdStandbyIdentical[ii].time[0];
-        resultColdStandbyIdentical[ii].maxTime = resultColdStandbyIdentical[ii].time[NUM_RUNS - 1];
 
         free(relMat);
         free(relArr);
@@ -1145,16 +1111,6 @@ int main(int argc, char **argv)
         fprintf(pFile, "%ld.%06ld\n", (long)resultHotStandbyGeneric[ii].medianTime.tv_sec, (resultHotStandbyGeneric[ii].medianTime.tv_nsec / 1000));
     }
     fclose(pFile);
-
-    pFile = fopen("log_hot_standby_identical.txt", "w");
-    fprintf(pFile, "Blocks, Times, Min, Max, Median\n");
-    for (ii = 0; ii < NUM_STANDBY_EXPERIMENTS; ++ii) {
-        fprintf(pFile, "%u, %u, ", resultHotStandbyIdentical[ii].rbdDim.numComponents, resultHotStandbyIdentical[ii].rbdDim.numTimes);
-        fprintf(pFile, "%ld.%06ld, ", (long)resultHotStandbyIdentical[ii].minTime.tv_sec, (resultHotStandbyIdentical[ii].minTime.tv_nsec / 1000));
-        fprintf(pFile, "%ld.%06ld, ", (long)resultHotStandbyIdentical[ii].maxTime.tv_sec, (resultHotStandbyIdentical[ii].maxTime.tv_nsec / 1000));
-        fprintf(pFile, "%ld.%06ld\n", (long)resultHotStandbyIdentical[ii].medianTime.tv_sec, (resultHotStandbyIdentical[ii].medianTime.tv_nsec / 1000));
-    }
-    fclose(pFile);
 #endif
 
 #if defined(TEST_COLD_STANDBY)
@@ -1165,16 +1121,6 @@ int main(int argc, char **argv)
         fprintf(pFile, "%ld.%06ld, ", (long)resultColdStandbyGeneric[ii].minTime.tv_sec, (resultColdStandbyGeneric[ii].minTime.tv_nsec / 1000));
         fprintf(pFile, "%ld.%06ld, ", (long)resultColdStandbyGeneric[ii].maxTime.tv_sec, (resultColdStandbyGeneric[ii].maxTime.tv_nsec / 1000));
         fprintf(pFile, "%ld.%06ld\n", (long)resultColdStandbyGeneric[ii].medianTime.tv_sec, (resultColdStandbyGeneric[ii].medianTime.tv_nsec / 1000));
-    }
-    fclose(pFile);
-
-    pFile = fopen("log_cold_standby_identical.txt", "w");
-    fprintf(pFile, "Blocks, Times, Min, Max, Median\n");
-    for (ii = 0; ii < NUM_STANDBY_EXPERIMENTS; ++ii) {
-        fprintf(pFile, "%u, %u, ", resultColdStandbyIdentical[ii].rbdDim.numComponents, resultColdStandbyIdentical[ii].rbdDim.numTimes);
-        fprintf(pFile, "%ld.%06ld, ", (long)resultColdStandbyIdentical[ii].minTime.tv_sec, (resultColdStandbyIdentical[ii].minTime.tv_nsec / 1000));
-        fprintf(pFile, "%ld.%06ld, ", (long)resultColdStandbyIdentical[ii].maxTime.tv_sec, (resultColdStandbyIdentical[ii].maxTime.tv_nsec / 1000));
-        fprintf(pFile, "%ld.%06ld\n", (long)resultColdStandbyIdentical[ii].medianTime.tv_sec, (resultColdStandbyIdentical[ii].medianTime.tv_nsec / 1000));
     }
     fclose(pFile);
 #endif

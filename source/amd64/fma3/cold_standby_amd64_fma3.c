@@ -112,9 +112,8 @@ HIDDEN FUNCTION_TARGET("fma") void rbdColdStandbyStepV4dFma3(struct rbdColdStand
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     v4dPri = _mm256_loadu_pd(&data->primaryReliability[time]);
-    v4dRes = _mm256_set1_pd(data->pSwitch);
     v4dTmp = rbdIntegralColdStandbyV4dFma3(data, time);
-    v4dRes = _mm256_fmadd_pd(v4dRes, v4dTmp, v4dPri);
+    v4dRes = _mm256_add_pd(v4dTmp, v4dPri);
 
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
@@ -148,9 +147,8 @@ HIDDEN FUNCTION_TARGET("fma") void rbdColdStandbyStepV2dFma3(struct rbdColdStand
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     v2dPri = _mm_loadu_pd(&data->primaryReliability[time]);
-    v2dRes = _mm_set1_pd(data->pSwitch);
     v2dTmp = rbdIntegralColdStandbyV2dFma3(data, time);
-    v2dRes = _mm_fmadd_pd(v2dRes, v2dTmp, v2dPri);
+    v2dRes = _mm_add_pd(v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
@@ -184,9 +182,8 @@ HIDDEN FUNCTION_TARGET("fma") void rbdColdStandbyStepV1dFma3(struct rbdColdStand
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     v2dPri = _mm_load_sd(&data->primaryReliability[time]);
-    v2dRes = _mm_set_sd(data->pSwitch);
     v2dTmp = _mm256_castpd256_pd128(rbdIntegralColdStandbyV1dFma3(data, time));
-    v2dRes = _mm_fmadd_sd(v2dRes, v2dTmp, v2dPri);
+    v2dRes = _mm_add_pd(v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
     _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));

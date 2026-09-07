@@ -25,6 +25,7 @@
 #if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_aarch64.h"
 #include "../hot_standby_aarch64.h"
+#include "../integral_aarch64.h"
 
 
 /**
@@ -103,9 +104,8 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdHotStandbyStepV2dNeon(struct rbdHotStand
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     v2dPri = vld1q_f64(&data->primaryReliability[time]);
-    v2dRes = vdupq_n_f64(data->pSwitch);
-    v2dRes = vfmsq_f64(v2dRes, v2dRes, v2dPri);
     v2dTmp = vld1q_f64(&data->standbyReliability[time]);
+    v2dRes = rbdIntegralHotStandbyV2dNeon(data, time);
     v2dRes = vfmaq_f64(v2dPri, v2dRes, v2dTmp);
 
     /* Cap the computed reliability and set it into output array */
@@ -140,9 +140,8 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdHotStandbyStepV1dNeon(struct rbdHotStand
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     v1dPri = vld1_f64(&data->primaryReliability[time]);
-    v1dRes = vdup_n_f64(data->pSwitch);
-    v1dRes = vfms_f64(v1dRes, v1dRes, v1dPri);
     v1dTmp = vld1_f64(&data->standbyReliability[time]);
+    v1dRes = rbdIntegralHotStandbyV1dNeon(data, time);
     v1dRes = vfma_f64(v1dPri, v1dRes, v1dTmp);
 
     /* Cap the computed reliability and set it into output array */

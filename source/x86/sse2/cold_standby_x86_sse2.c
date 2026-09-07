@@ -105,10 +105,8 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdColdStandbyStepV2dSse2(struct rbdColdStan
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     v2dPri = _mm_loadu_pd(&data->primaryReliability[time]);
-    v2dRes = _mm_set1_pd(data->pSwitch);
     v2dTmp = rbdIntegralColdStandbyV2dSse2(data, time);
-    v2dRes = _mm_mul_pd(v2dRes, v2dTmp);
-    v2dRes = _mm_add_pd(v2dRes, v2dPri);
+    v2dRes = _mm_add_pd(v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
     _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
@@ -142,10 +140,8 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdColdStandbyStepV1dSse2(struct rbdColdStan
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     v2dPri = _mm_load_sd(&data->primaryReliability[time]);
-    v2dRes = _mm_set_sd(data->pSwitch);
     v2dTmp = rbdIntegralColdStandbyV1dSse2(data, time);
-    v2dRes = _mm_mul_sd(v2dRes, v2dTmp);
-    v2dRes = _mm_add_sd(v2dRes, v2dPri);
+    v2dRes = _mm_add_sd(v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
     _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));

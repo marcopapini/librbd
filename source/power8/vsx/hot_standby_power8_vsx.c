@@ -25,6 +25,7 @@
 #if defined(ARCH_POWER8) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_power8.h"
 #include "../hot_standby_power8.h"
+#include "../integral_power8.h"
 
 
 /**
@@ -103,9 +104,8 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdHotStandbyStepV2dVsx(struct rbdHotStandbyD
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     v2dPri = vectorLoad(&data->primaryReliability[time]);
-    v2dRes = vec_splats(data->pSwitch);
-    v2dRes = vec_nmsub(v2dRes, v2dPri, v2dRes);
     v2dTmp = vectorLoad(&data->standbyReliability[time]);
+    v2dRes = rbdIntegralHotStandbyV2dVsx(data, time);
     v2dRes = vec_madd(v2dRes, v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
@@ -140,9 +140,8 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdHotStandbyStepV1dVsx(struct rbdHotStandbyD
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     v2dPri = vec_promote(data->primaryReliability[time], 0);
-    v2dRes = vec_promote(data->pSwitch, 0);
-    v2dRes = vec_nmsub(v2dRes, v2dPri, v2dRes);
     v2dTmp = vec_promote(data->standbyReliability[time], 0);
+    v2dRes = rbdIntegralHotStandbyV1dVsx(data, time);
     v2dRes = vec_madd(v2dRes, v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */

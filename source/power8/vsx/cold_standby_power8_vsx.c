@@ -105,9 +105,8 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdColdStandbyStepV2dVsx(struct rbdColdStandb
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     v2dPri = vectorLoad(&data->primaryReliability[time]);
-    v2dRes = vec_splats(data->pSwitch);
     v2dTmp = rbdIntegralColdStandbyV2dVsx(data, time);
-    v2dRes = vec_madd(v2dRes, v2dTmp, v2dPri);
+    v2dRes = vec_add(v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
     vectorStore(&data->output[time], capReliabilityV2dVsx(v2dRes));
@@ -141,9 +140,8 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdColdStandbyStepV1dVsx(struct rbdColdStandb
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     v2dPri = vec_promote(data->primaryReliability[time], 0);
-    v2dRes = vec_promote(data->pSwitch, 0);
     v2dTmp = rbdIntegralColdStandbyV1dVsx(data, time);
-    v2dRes = vec_madd(v2dRes, v2dTmp, v2dPri);
+    v2dRes = vec_add(v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
     data->output[time] = vec_extract(capReliabilityV2dVsx(v2dRes), 0);

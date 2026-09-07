@@ -29,6 +29,8 @@ extern "C" {
 
 
 #define RBD_BRIDGE_COMPONENTS       5       /* Number of components in Bridge RBD block */
+#define RBD_HOT_STANDBY_COMPONENTS  3       /* Number of components in Hot Stand-by RBD block */
+#define RBD_COLD_STANDBY_COMPONENTS 3       /* Number of components in Cold Stand-by RBD block */
 
 
 /* Declare extern symbols */
@@ -305,10 +307,10 @@ EXTERN int rbdBridgeGeneric(double *reliabilities, double *output, unsigned char
  * Compute reliability of a Hot Stand-by RBD system
  *
  * Input:
- *      double *primaryReliability
- *      double *standbyReliability
- *      double pSwitch
+ *      double *reliabilities
+ *      unsigned char numComponents
  *      unsigned int numTimes
+ *      double deltaT
  *
  * Output:
  *      double *output
@@ -317,19 +319,23 @@ EXTERN int rbdBridgeGeneric(double *reliabilities, double *output, unsigned char
  *  This function computes the reliabilities over time of a Hot Stand-by RBD system
  *
  * Parameters:
- *      primaryReliability: this array contains the input reliability of the primary
- *                      component at the provided time instants
- *      standbyReliability: this array contains the input reliability of the stand-by
- *                      component at the provided time instants
- *      pSwitch: probability that the switch is correctly performed
+ *      reliabilities: this matrix contains the input reliabilities of all components
+ *                      at the provided time instants. The matrix shall be provided as
+ *                      a NxT one, where N is the number of components of Hot Stand-by RBD
+ *                      system and T is the number of time instants. The first component
+ *                      identifies the primary, the second one is the reserve and the third
+ *                      one is the switch unit
  *      output: this array contains the reliabilities of Hot Stand-by RBD system computed at
  *                      the provided time instants
+ *      numComponents: number of components in Hot Stand-by RBD system (N). The number of
+ *                      components in a Hot Stand-by RBD block must be equal to 3
  *      numTimes: number of time instants over which Hot Stand-by RBD shall be computed (T)
+ *      deltaT: time difference between two consecutive time instants
  *
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability, double pSwitch, double *output, unsigned int numTimes);
+EXTERN int rbdHotStandby(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes, double deltaT);
 
 /**
  * rbdColdStandby
@@ -337,9 +343,8 @@ EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability,
  * Compute reliability of a Cold Stand-by RBD system
  *
  * Input:
- *      double *primaryReliability
- *      double *standbyReliability
- *      double pSwitch
+ *      double *reliabilities
+ *      unsigned char numComponents
  *      unsigned int numTimes
  *      double deltaT
  *
@@ -350,20 +355,23 @@ EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability,
  *  This function computes the reliabilities over time of a Cold Stand-by RBD system
  *
  * Parameters:
- *      primaryReliability: this array contains the input reliability of the primary
- *                      component at the provided time instants
- *      standbyReliability: this array contains the input reliability of the stand-by
- *                      component at the provided time instants
- *      pSwitch: probability that the switch is correctly performed
+ *      reliabilities: this matrix contains the input reliabilities of all components
+ *                      at the provided time instants. The matrix shall be provided as
+ *                      a NxT one, where N is the number of components of Cold Stand-by RBD
+ *                      system and T is the number of time instants. The first component
+ *                      identifies the primary, the second one is the reserve and the third
+ *                      one is the switch unit
  *      output: this array contains the reliabilities of Cold Stand-by RBD system computed at
  *                      the provided time instants
+ *      numComponents: number of components in Cold Stand-by RBD system (N). The number of
+ *                      components in a Cold Stand-by RBD block must be equal to 3
  *      numTimes: number of time instants over which Cold Stand-by RBD shall be computed (T)
  *      deltaT: time difference between two consecutive time instants
  *
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-EXTERN int rbdColdStandby(double *primaryReliability, double *standbyReliability, double pSwitch, double *output, unsigned int numTimes, double deltaT);
+EXTERN int rbdColdStandby(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes, double deltaT);
 
 
 #ifdef  __cplusplus

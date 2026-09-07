@@ -31,6 +31,8 @@
 /* Platform-specific functions for x86 SSE2 instruction set */
 __m128d rbdIntegralColdStandbyV2dSse2(struct rbdColdStandbyData *data, unsigned int time);
 __m128d rbdIntegralColdStandbyV1dSse2(struct rbdColdStandbyData *data, unsigned int time);
+__m128d rbdIntegralHotStandbyV2dSse2(struct rbdHotStandbyData *data, unsigned int time);
+__m128d rbdIntegralHotStandbyV1dSse2(struct rbdHotStandbyData *data, unsigned int time);
 #endif /* (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0) */
 
 

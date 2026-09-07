@@ -25,6 +25,7 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../hot_standby_amd64.h"
+#include "../integral_amd64.h"
 
 
 /**
@@ -110,9 +111,8 @@ HIDDEN FUNCTION_TARGET("fma") void rbdHotStandbyStepV4dFma3(struct rbdHotStandby
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     v4dPri = _mm256_loadu_pd(&data->primaryReliability[time]);
-    v4dRes = _mm256_set1_pd(data->pSwitch);
-    v4dRes = _mm256_fnmadd_pd(v4dRes, v4dPri, v4dRes);
     v4dTmp = _mm256_loadu_pd(&data->standbyReliability[time]);
+    v4dRes = rbdIntegralHotStandbyV4dFma3(data, time);
     v4dRes = _mm256_fmadd_pd(v4dRes, v4dTmp, v4dPri);
 
     /* Cap the computed reliability and set it into output array */
@@ -147,9 +147,8 @@ HIDDEN FUNCTION_TARGET("fma") void rbdHotStandbyStepV2dFma3(struct rbdHotStandby
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     v2dPri = _mm_loadu_pd(&data->primaryReliability[time]);
-    v2dRes = _mm_set1_pd(data->pSwitch);
-    v2dRes = _mm_fnmadd_pd(v2dRes, v2dPri, v2dRes);
     v2dTmp = _mm_loadu_pd(&data->standbyReliability[time]);
+    v2dRes = rbdIntegralHotStandbyV2dFma3(data, time);
     v2dRes = _mm_fmadd_pd(v2dRes, v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
@@ -184,9 +183,8 @@ HIDDEN FUNCTION_TARGET("fma") void rbdHotStandbyStepV1dFma3(struct rbdHotStandby
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     v2dPri = _mm_load_sd(&data->primaryReliability[time]);
-    v2dRes = _mm_set_sd(data->pSwitch);
-    v2dRes = _mm_fnmadd_sd(v2dRes, v2dPri, v2dRes);
     v2dTmp = _mm_load_sd(&data->standbyReliability[time]);
+    v2dRes = _mm256_castpd256_pd128(rbdIntegralHotStandbyV1dFma3(data, time));
     v2dRes = _mm_fmadd_sd(v2dRes, v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */

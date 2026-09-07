@@ -25,6 +25,207 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../integral_amd64.h"
+#include "../../x86/integral_x86.h"
+
+
+/**
+ * rbdIntegralHotStandbyCommonAvx
+ *
+ * Compute the common part of the integral for Hot Stand-by functions with amd64 AVX 256bit
+ *
+ * Input:
+ *      struct rbdHotStandbyData *data
+ *      unsigned int time
+ *      __m256d *v4dOutC
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function computes the common part of the integral for a Hot Stand-by RBD step
+ *  exploiting amd64 AVX 256bit.
+ *  It computes the common part of $\int_0^t{f_{pri}(\tau) R_{swi}(\tau) d\tau}$
+ *  where f_{pri} is the failure density of the primary component and R_{swi} is the
+ *  reliability of the switch component.
+ *  To minimize the numerical error, this function uses the Kahan's method.
+ *
+ * Parameters:
+ *      data: Hot Stand-by RBD data structure
+ *      time: current time instant over which Hot Stand-by RBD shall be computed
+ *      v4dOutC: filled with the Kahan's method compensation value
+ *
+ * Return (__m256d):
+ *  The common part of the integral for Hot Stand-by computation
+ */
+static inline ALWAYS_INLINE FUNCTION_TARGET("avx") __m256d rbdIntegralHotStandbyCommonAvx(
+        struct rbdHotStandbyData *data,
+        unsigned int time,
+        __m256d *v4dOutC)
+{
+    __m256d v4dSum;
+    __m256d v4dC;
+    __m256d v4dRelS;
+    __m256d v4dFailP;
+    __m256d v4dProd;
+    __m256d v4dY;
+    __m256d v4dTSum;
+    unsigned int idx;
+
+    v4dSum  = v4dZeros;
+    v4dC = v4dZeros;
+
+    /* For each quadruple of internal time instants... */
+    idx = 1;
+    while ((idx + V4D) <= time) {
+        /* Load $f_{pri}(\tau)$ to $f_{pri}(\tau+3)$ */
+        v4dFailP = _mm256_loadu_pd(&data->primaryFailureDensity[idx]);
+        /* Load $R_{swi}(\tau)$ to $R_{swi}(\tau+3)$ */
+        v4dRelS = _mm256_loadu_pd(&data->switchReliability[idx]);
+
+        /**
+         * Compute $R_{swi}(\tau) \cdot f_{pri}(\tau)$ for four steps at once
+         * Weight is 1.0 (internal trapezoidal nodes)
+         */
+        v4dProd = _mm256_mul_pd(v4dRelS, v4dFailP);
+
+        /* Add the current products to the result using the SIMD Kahan's method */
+        v4dY = _mm256_sub_pd(v4dProd, v4dC);
+        v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+        v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+        v4dSum = v4dTSum;
+
+        /* Increment index (tau) */
+        idx += V4D;
+    }
+
+    switch (time - idx) {
+        case 1:
+            /**
+             * Lane 0 gets the tail node f_{pri}(\tau) * R_{swi}(\tau)
+             * Lane 1 gets the external left time instant 0.5 * f_{pri}(0) * R_{swi}(0) * R_{sec}(t)
+             * Lanes 2 and 3 get 0.0 so they don't alter their accumulator
+             */
+            v4dFailP = _mm256_set_pd(0.0,
+                    0.0,
+                    0.5 * data->primaryFailureDensity[0],
+                    data->primaryFailureDensity[idx]);
+            v4dRelS = _mm256_set_pd(0.0,
+                    0.0,
+                    data->switchReliability[0],
+                    data->switchReliability[idx]);
+            break;
+        case 2:
+            /**
+             * Lanes 0 and 1 get the tail nodes f_{pri}(\tau) * R_{swi}(\tau)
+             * Lane 2 gets the external left time instant 0.5 * f_{pri}(0) * R_{swi}(0)
+             * Lane 3 gets 0.0 so it doesn't alter its accumulator
+             */
+            v4dFailP = _mm256_set_pd(0.0,
+                    0.5 * data->primaryFailureDensity[0],
+                    data->primaryFailureDensity[idx + 1],
+                    data->primaryFailureDensity[idx]);
+            v4dRelS = _mm256_set_pd(0.0,
+                    data->switchReliability[0],
+                    data->switchReliability[idx + 1],
+                    data->switchReliability[idx]);
+            break;
+        case 3:
+            /**
+             * Lanes 0, 1 and 2 get the tail nodes f_{pri}(\tau) * R_{swi}(\tau)
+             * Lane 3 gets the external left time instant 0.5 * f_{pri}(0) * R_{swi}(0)
+             */
+            v4dFailP = _mm256_set_pd(0.5 * data->primaryFailureDensity[0],
+                    data->primaryFailureDensity[idx + 2],
+                    data->primaryFailureDensity[idx + 1],
+                    data->primaryFailureDensity[idx]);
+            v4dRelS = _mm256_set_pd(data->switchReliability[0],
+                    data->switchReliability[idx + 2],
+                    data->switchReliability[idx + 1],
+                    data->switchReliability[idx]);
+            break;
+        case 0:
+        default:
+            /**
+             * Lane 0 gets the external left time instant 0.5 * f_{pri}(0) * R_{swi}(0)
+             * Lanes 1, 2 and 3 get 0.0 so they don't alter their accumulator
+             */
+            v4dFailP = _mm256_set_pd(0.0,
+                    0.0,
+                    0.0,
+                    0.5 * data->primaryFailureDensity[0]);
+            v4dRelS = _mm256_set_pd(0.0,
+                    0.0,
+                    0.0,
+                    data->switchReliability[0]);
+            break;
+    }
+
+    /**
+     * Compute $R_{swi}(\tau) \cdot f_{pri}(\tau)$ for up to four steps at once
+     */
+    v4dProd = _mm256_mul_pd(v4dRelS, v4dFailP);
+
+    /* Add the current products to the result using the SIMD Kahan's method */
+    v4dY = _mm256_sub_pd(v4dProd, v4dC);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+    v4dSum = v4dTSum;
+
+    /**
+     * First horizontal reduction to merge the four lanes
+     * - Swap Lanes 0 and 1 and swap Lanes 2 and 3
+     * - Add Lane 1 to Lane 0, add Lane 3 to Lane 2 (and viceversa) using Kahan's method
+     * - Compensate the result using Kahan's method with the swapped compensation value
+     */
+
+    /* Swap Lanes 0 and 1 and swap Lanes 2 and 3 */
+    v4dRelS = _mm256_shuffle_pd(v4dSum, v4dSum, 0x05);
+    v4dFailP = _mm256_shuffle_pd(v4dC, v4dC, 0x05);
+
+    /* Add Lane 1 to Lane 0, add Lane 3 to Lane 2 (and viceversa) using Kahan's method */
+    v4dY = _mm256_sub_pd(v4dRelS, v4dC);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+    v4dSum = v4dTSum;
+
+    /* Compensate the result using Kahan's method with the swapped compensation value */
+    v4dY = _mm256_sub_pd(_mm256_sub_pd(v4dZeros, v4dFailP), v4dC);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+    v4dSum = v4dTSum;
+
+    /**
+     * Second horizontal reduction to merge the four lanes
+     * - Swap Lanes 0 and 2 and swap Lanes 1 and 3
+     * - Add Lane 2 to Lane 0, add Lane 3 to Lane 1 (and viceversa) using Kahan's method
+     * - Compensate the result using Kahan's method with the swapped compensation value
+     * - Ensure that the result and the compensation values among the four lanes are identical
+     */
+
+    /* Swap Lanes 0 and 2 and swap Lanes 1 and 3 */
+    v4dRelS = _mm256_permute2f128_pd(v4dSum, v4dSum, 0x01);
+    v4dFailP = _mm256_permute2f128_pd(v4dC, v4dC, 0x01);
+
+    /* Add Lane 2 to Lane 0, add Lane 3 to Lane 1 (and viceversa) using Kahan's method */
+    v4dY = _mm256_sub_pd(v4dRelS, v4dC);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+    v4dSum = v4dTSum;
+
+    /* Compensate the result using Kahan's method with the swapped compensation value */
+    v4dY = _mm256_sub_pd(_mm256_sub_pd(v4dZeros, v4dFailP), v4dC);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+    v4dSum = v4dTSum;
+
+    /* Ensure that the result and the compensation values among the four lanes are identical */
+    v4dSum = _mm256_permute2f128_pd(v4dSum, v4dSum, 0x00);
+    v4dC = _mm256_permute2f128_pd(v4dC, v4dC, 0x00);
+    v4dSum  = _mm256_shuffle_pd(v4dSum, v4dSum, 0x00);
+    *v4dOutC = _mm256_shuffle_pd(v4dC, v4dC, 0x00);
+
+    return v4dSum;
+}
 
 
 /**
@@ -43,12 +244,13 @@
  *  This function computes four integrals for a Cold Stand-by RBD step
  *  exploiting amd64 AVX 256bit.
  *  It is responsible to compute:
- *  - $\int_0^t{f_P(\tau) R_S(t-\tau) d\tau}$
- *  - $\int_0^{t+1}{f_P(\tau) R_S(t+1-\tau) d\tau}$
- *  - $\int_0^{t+2}{f_P(\tau) R_S(t+2-\tau) d\tau}$
- *  - $\int_0^{t+3}{f_P(\tau) R_S(t+3-\tau) d\tau}$
- *  where f_P is the failure density of the primary component and R_S is
- *  the reliability of the stand-by component.
+ *  - $\int_0^t{f_{pri}(\tau) R_{swi}(\tau) R_{sec}(t-\tau) d\tau}$
+ *  - $\int_0^{t+1}{f_{pri}(\tau) R_{swi}(\tau) R_{sec}(t+1-\tau) d\tau}$
+ *  - $\int_0^{t+2}{f_{pri}(\tau) R_{swi}(\tau) R_{sec}(t+2-\tau) d\tau}$
+ *  - $\int_0^{t+3}{f_{pri}(\tau) R_{swi}(\tau) R_{sec}(t+3-\tau) d\tau}$
+ *  where f_{pri} is the failure density of the primary component, R_{swi} is the
+ *  reliability of the switch component and R_{sec} is the reliability of
+ *  the stand-by component.
  *  To minimize the numerical error, this function uses the Kahan's method.
  *
  * Parameters:
@@ -74,11 +276,11 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV4dAvx(struct rbdCol
     /* Manage the case when the first integral is computed over the empty time domain */
     if (time == 0) {
         v4dSum = rbdIntegralColdStandbyV1dAvx(data, 1);
-        v4dC = rbdIntegralColdStandbyV1dAvx(data, 2);
-        v4dY = rbdIntegralColdStandbyV1dAvx(data, 3);
-        v4dTSum = _mm256_unpacklo_pd(v4dZeros, v4dSum);
-        v4dFailP = _mm256_unpacklo_pd(v4dC, v4dY);
-        return _mm256_permute2f128_pd(v4dTSum, v4dFailP, 0x20);
+        v4dC = _mm256_castpd128_pd256(rbdIntegralColdStandbyV2dSse2(data, 2));
+        return _mm256_insertf128_pd(
+                    _mm256_castpd128_pd256(
+                            _mm_shuffle_pd(v2dZeros, _mm256_castpd256_pd128(v4dSum), 0x00)),
+                    _mm256_castpd256_pd128(v4dC), 1);
     }
 
     v4dSum = v4dZeros;
@@ -91,14 +293,16 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV4dAvx(struct rbdCol
     /* For each internal time instant... */
     for (idx = 1; idx < time; ++idx) {
         v4dFailP = _mm256_broadcast_sd(&data->primaryFailureDensity[idx]);
+        v4dTmp = _mm256_broadcast_sd(&data->switchReliability[idx]);
         v4dRelS = _mm256_loadu_pd(&data->standbyReliabilityRev[startRevIdxT3 + idx]);
         v4dRelS = _mm256_permute2f128_pd(v4dRelS, v4dRelS, 1);
         v4dRelS = _mm256_permute_pd(v4dRelS, 0x5);
         /**
-         * Compute $f_P(\tau) \cdot R_S(t-\tau)$
+         * Compute $R_{swi}(\tau) \cdot f_{pri}(\tau) \cdot R_{sec}(t-\tau)$
          * The weight is 1.0 (trapezoidal rule for internal time instants)
          */
-        v4dTmp = _mm256_mul_pd(v4dFailP, v4dRelS);
+        v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+        v4dTmp = _mm256_mul_pd(v4dTmp, v4dRelS);
 
         /* Add the current product to the result using the Kahan's method */
         v4dY = _mm256_sub_pd(v4dTmp, v4dC);
@@ -108,14 +312,16 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV4dAvx(struct rbdCol
     }
 
     /**
-     * First step - Compute $f_P(0) \cdot R_S(currIdx)$
+     * First step - Compute $f_{pri}(0) \cdot R_{swi}(0) \cdot R_{sec}(currIdx)$
      * The weight is 0.5 (trapezoidal rule for external left instant)
      */
     v4dFailP = _mm256_broadcast_sd(&data->primaryFailureDensity[0]);
+    v4dTmp = _mm256_broadcast_sd(&data->switchReliability[0]);
     v4dRelS = _mm256_loadu_pd(&data->standbyReliabilityRev[startRevIdxT3]);
     v4dRelS = _mm256_permute2f128_pd(v4dRelS, v4dRelS, 1);
     v4dRelS = _mm256_permute_pd(v4dRelS, 0x5);
-    v4dTmp = _mm256_mul_pd(v4dFailP, v4dRelS);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+    v4dTmp = _mm256_mul_pd(v4dTmp, v4dRelS);
     v4dTmp = _mm256_mul_pd(v4dTmp, v4dHalfs);
 
     /* Add the current product to the result using the Kahan's method */
@@ -138,11 +344,16 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV4dAvx(struct rbdCol
                              data->primaryFailureDensity[time],
                              data->primaryFailureDensity[time],
                              0.0);
+    v4dTmp = _mm256_set_pd(data->switchReliability[time],
+                           data->switchReliability[time],
+                           data->switchReliability[time],
+                           0.0);
     v4dRelS = _mm256_set_pd(data->standbyReliabilityRev[data->numTimes - 4],
                             data->standbyReliabilityRev[data->numTimes - 3],
                             data->standbyReliabilityRev[data->numTimes - 2],
                             0.0);
-    v4dTmp = _mm256_mul_pd(v4dFailP, v4dRelS);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+    v4dTmp = _mm256_mul_pd(v4dTmp, v4dRelS);
 
     /* Add the current product to the result using the Kahan's method */
     v4dY = _mm256_sub_pd(v4dTmp, v4dC);
@@ -155,11 +366,16 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV4dAvx(struct rbdCol
                              data->primaryFailureDensity[time + 1],
                              0.0,
                              0.0);
+    v4dTmp = _mm256_set_pd(data->switchReliability[time + 1],
+                           data->switchReliability[time + 1],
+                           0.0,
+                           0.0);
     v4dRelS = _mm256_set_pd(data->standbyReliabilityRev[data->numTimes - 3],
                             data->standbyReliabilityRev[data->numTimes - 2],
                             0.0,
                             0.0);
-    v4dTmp = _mm256_mul_pd(v4dFailP, v4dRelS);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+    v4dTmp = _mm256_mul_pd(v4dTmp, v4dRelS);
 
     /* Add the current product to the result using the Kahan's method */
     v4dY = _mm256_sub_pd(v4dTmp, v4dC);
@@ -172,11 +388,16 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV4dAvx(struct rbdCol
                              0.0,
                              0.0,
                              0.0);
+    v4dTmp = _mm256_set_pd(data->switchReliability[time + 2],
+                           0.0,
+                           0.0,
+                           0.0);
     v4dRelS = _mm256_set_pd(data->standbyReliabilityRev[data->numTimes - 2],
                             0.0,
                             0.0,
                             0.0);
-    v4dTmp = _mm256_mul_pd(v4dFailP, v4dRelS);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+    v4dTmp = _mm256_mul_pd(v4dTmp, v4dRelS);
 
     /* Add the current product to the result using the Kahan's method */
     v4dY = _mm256_sub_pd(v4dTmp, v4dC);
@@ -185,17 +406,23 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV4dAvx(struct rbdCol
     v4dSum = v4dTSum;
 
     /**
-     * Third step - Compute $f_P(currIdx) \cdot R_S(0)$
+     * Third step - Compute $f_{pri}(currIdx) \cdot R_{swi}(currIdx) \cdot R_{sec}(0)$
      * The weight is 0.5 (trapezoidal rule for external right instant)
      */
     v4dFailP = _mm256_loadu_pd(&data->primaryFailureDensity[time]);
+    v4dTmp = _mm256_loadu_pd(&data->switchReliability[time]);
     v4dRelS = _mm256_broadcast_sd(&data->standbyReliabilityRev[data->numTimes - 1]);
-    v4dTmp = _mm256_mul_pd(v4dFailP, v4dRelS);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+    v4dTmp = _mm256_mul_pd(v4dTmp, v4dRelS);
     v4dTmp = _mm256_mul_pd(v4dTmp, v4dHalfs);
 
     /* Add the current product to the result using the Kahan's method */
     v4dY = _mm256_sub_pd(v4dTmp, v4dC);
-    v4dSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+
+    /* Apply Kahan compensation to clean the accumulated sums */
+    v4dSum = _mm256_sub_pd(v4dTSum, v4dC);
 
     /* Multiply the partial result with the delta time */
     v4dTmp = _mm256_broadcast_sd(&data->deltaT);
@@ -219,9 +446,10 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV4dAvx(struct rbdCol
  * Description:
  *  This function computes the integral for a Cold Stand-by RBD step
  *  exploiting amd64 AVX 256bit.
- *  It is responsible to compute $\int_0^t{f_P(\tau) R_S(t-\tau) d\tau}$,
- *  where f_P is the failure density of the primary component and R_S is
- *  the reliability of the stand-by component.
+ *  It is responsible to compute $\int_0^t{f_{pri}(\tau) R_{swi}(\tau) R_{sec}(t-\tau) d\tau}$,
+ *  where f_{pri} is the failure density of the primary component, R_{swi} is the
+ *  reliability of the switch component and R_{sec} is the reliability of
+ *  the stand-by component.
  *  To minimize the numerical error, this function uses the Kahan's method.
  *
  * Parameters:
@@ -254,19 +482,22 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV1dAvx(struct rbdCol
     v4dSum = v4dZeros;
     v4dC = v4dZeros;
 
-    /* For each pair of internal time instants... */
+    /* For each quadruple of internal time instants... */
     idx = 1;
     while ((idx + V4D) <= time) {
-        /* Load $f_P(\tau)$ and $f_P(\tau+1)$ */
+        /* Load $f_{pri}(\tau)$ to $f_{pri}(\tau+3)$ */
         v4dFailP = _mm256_loadu_pd(&data->primaryFailureDensity[idx]);
-        /* Load $R_S(t-\tau)$ and $R_S(t-\tau-1)$ */
+        /* Load $R_{swi}(\tau)$ to $R_{swi}(\tau+3)$ */
+        v4dTmp = _mm256_loadu_pd(&data->switchReliability[idx]);
+        /* Load $R_{sec}(t-\tau)$ to $R_{sec}(t-\tau-3)$ */
         v4dRelS = _mm256_loadu_pd(&data->standbyReliabilityRev[startRevIdx + idx]);
 
         /**
-         * Compute $f_P(\tau) \cdot R_S(t-\tau)$ for four steps at once
+         * Compute $R_{swi}(\tau) \cdot f_{pri}(\tau) \cdot R_{sec}(t-\tau)$ for four steps at once
          * Weight is 1.0 (internal trapezoidal nodes)
          */
-        v4dTmp = _mm256_mul_pd(v4dFailP, v4dRelS);
+        v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+        v4dTmp = _mm256_mul_pd(v4dTmp, v4dRelS);
 
         /* Add the current products to the result using the SIMD Kahan's method */
         v4dY = _mm256_sub_pd(v4dTmp, v4dC);
@@ -281,15 +512,19 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV1dAvx(struct rbdCol
     switch (time - idx) {
         case 1:
             /**
-             * Lane 0 gets the tail node $f_P(\tau) * R_S(t-\tau)
-             * Lane 1 gets the external left time instant 0.5 * f_P(0) * R_S(t)
-             * Lane 2 gets the external right time instant 0.5 * f_P(t) * R_S(0)
+             * Lane 0 gets the tail node f_{pri}(\tau) * R_{swi}(\tau) * R_{sec}(t-\tau)
+             * Lane 1 gets the external left time instant 0.5 * f_{pri}(0) * R_{swi}(0) * R_{sec}(t)
+             * Lane 2 gets the external right time instant 0.5 * f_{pri}(t) * R_{swi}(t) * R_{sec}(0)
              * Lane 3 gets 0.0 so it doesn't alter its accumulator
              */
             v4dFailP = _mm256_set_pd(0.0,
                     0.5 * data->primaryFailureDensity[time],
                     0.5 * data->primaryFailureDensity[0],
                     data->primaryFailureDensity[idx]);
+            v4dTmp = _mm256_set_pd(0.0,
+                    data->switchReliability[time],
+                    data->switchReliability[0],
+                    data->switchReliability[idx]);
             v4dRelS = _mm256_set_pd(0.0,
                     data->standbyReliabilityRev[startRevIdx + time],
                     data->standbyReliabilityRev[startRevIdx],
@@ -297,14 +532,18 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV1dAvx(struct rbdCol
             break;
         case 2:
             /**
-             * Lanes 0 and 1 get the tail nodes $f_P(\tau) * R_S(t-\tau)
-             * Lane 2 gets the external left time instant 0.5 * f_P(0) * R_S(t)
-             * Lane 3 gets the external right time instant 0.5 * f_P(t) * R_S(0)
+             * Lanes 0 and 1 get the tail nodes f_{pri}(\tau) * R_{swi}(\tau) * R_{sec}(t-\tau)
+             * Lane 2 gets the external left time instant 0.5 * f_{pri}(0) * R_{swi}(0) * R_{sec}(t)
+             * Lane 3 gets the external right time instant 0.5 * f_{pri}(t) * R_{swi}(t) * R_{sec}(0)
              */
             v4dFailP = _mm256_set_pd(0.5 * data->primaryFailureDensity[time],
                     0.5 * data->primaryFailureDensity[0],
                     data->primaryFailureDensity[idx + 1],
                     data->primaryFailureDensity[idx]);
+            v4dTmp = _mm256_set_pd(data->switchReliability[time],
+                    data->switchReliability[0],
+                    data->switchReliability[idx + 1],
+                    data->switchReliability[idx]);
             v4dRelS = _mm256_set_pd(data->standbyReliabilityRev[startRevIdx + time],
                     data->standbyReliabilityRev[startRevIdx],
                     data->standbyReliabilityRev[startRevIdx + idx + 1],
@@ -312,23 +551,28 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV1dAvx(struct rbdCol
             break;
         case 3:
             /**
-             * Lanes 0, 1 and 2 get the tail nodes ($f_P(\tau)$ and $R_S(t-\tau)$)
+             * Lanes 0, 1 and 2 get the tail nodes f_{pri}(\tau) * R_{swi}(\tau) * R_{sec}(t-\tau)
              * Lane 3 gets 0.0 so it doesn't alter its accumulator
              */
             v4dFailP = _mm256_set_pd(0.0,
                     data->primaryFailureDensity[idx + 2],
                     data->primaryFailureDensity[idx + 1],
                     data->primaryFailureDensity[idx]);
+            v4dTmp = _mm256_set_pd(0.0,
+                    data->switchReliability[idx + 2],
+                    data->switchReliability[idx + 1],
+                    data->switchReliability[idx]);
             v4dRelS = _mm256_set_pd(0.0,
                     data->standbyReliabilityRev[startRevIdx + idx + 2],
                     data->standbyReliabilityRev[startRevIdx + idx + 1],
                     data->standbyReliabilityRev[startRevIdx + idx]);
 
             /**
-             * Compute $f_P(\tau) \cdot R_S(t-\tau)$ for four steps at once
+             * Compute $R_{swi}(\tau) \cdot f_{pri}(\tau) \cdot R_{sec}(t-\tau)$ for three steps at once
              * Weight is 1.0 (internal trapezoidal nodes)
              */
-            v4dTmp = _mm256_mul_pd(v4dFailP, v4dRelS);
+            v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+            v4dTmp = _mm256_mul_pd(v4dTmp, v4dRelS);
 
             /* Add the current products to the result using the SIMD Kahan's method */
             v4dY = _mm256_sub_pd(v4dTmp, v4dC);
@@ -338,14 +582,18 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV1dAvx(struct rbdCol
 
             /**
              * Compute external time instants (Left and Right) at once
-             * Lane 0: 0.5 * f_P(0) * R_S(t)
-             * Lane 1: 0.5 * f_P(t) * R_S(0)
+             * Lane 0 gets the external left time instant 0.5 * f_{pri}(0) * R_{swi}(0) * R_{sec}(t)
+             * Lane 1 gets the external right time instant 0.5 * f_{pri}(t) * R_{swi}(t) * R_{sec}(0)
              * Lanes 2 and 3: 0
              */
             v4dFailP = _mm256_set_pd(0.0,
                     0.0,
                     0.5 * data->primaryFailureDensity[time],
                     0.5 * data->primaryFailureDensity[0]);
+            v4dTmp = _mm256_set_pd(0.0,
+                    0.0,
+                    data->switchReliability[time],
+                    data->switchReliability[0]);
             v4dRelS = _mm256_set_pd(0.0,
                     0.0,
                     data->standbyReliabilityRev[startRevIdx + time],
@@ -355,14 +603,18 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV1dAvx(struct rbdCol
         default:
             /**
              * Compute external time instants (Left and Right) at once
-             * Lane 0: 0.5 * f_P(0) * R_S(t)
-             * Lane 1: 0.5 * f_P(t) * R_S(0)
+             * Lane 0 gets the external left time instant 0.5 * f_{pri}(0) * R_{swi}(0) * R_{sec}(t)
+             * Lane 1 gets the external right time instant 0.5 * f_{pri}(t) * R_{swi}(t) * R_{sec}(0)
              * Lanes 2 and 3: 0
              */
             v4dFailP = _mm256_set_pd(0.0,
                     0.0,
                     0.5 * data->primaryFailureDensity[time],
                     0.5 * data->primaryFailureDensity[0]);
+            v4dTmp = _mm256_set_pd(0.0,
+                    0.0,
+                    data->switchReliability[time],
+                    data->switchReliability[0]);
             v4dRelS = _mm256_set_pd(0.0,
                     0.0,
                     data->standbyReliabilityRev[startRevIdx + time],
@@ -371,36 +623,244 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV1dAvx(struct rbdCol
     }
 
     /**
-     * Compute $f_P(\tau) \cdot R_S(t-\tau)$ for four steps at once
-     * Weight is 1.0 (internal trapezoidal nodes)
+     * Compute $R_{swi}(\tau) \cdot f_{pri}(\tau) \cdot R_{sec}(t-\tau)$ for (up to) four steps at once
+     * Weight is already integrated in f_{pri}(\tau)
      */
-    v4dTmp = _mm256_mul_pd(v4dFailP, v4dRelS);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+    v4dTmp = _mm256_mul_pd(v4dTmp, v4dRelS);
 
-    /* Add the current products to the result using the SIMD Kahan's method */
+    /* Add the current product to the result using the Kahan's method */
     v4dY = _mm256_sub_pd(v4dTmp, v4dC);
     v4dTSum = _mm256_add_pd(v4dSum, v4dY);
     v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
 
-    /* Apply Kahan compensation to clean the accumulated sums before merging */
+    /* Apply Kahan compensation to clean the accumulated sums */
     v4dSum = _mm256_sub_pd(v4dTSum, v4dC);
 
-    /* Horizontal reduction: Add Lane 1 to Lane 0 (and viceversa to broadcast the result) */
+    /* Horizontal reduction: Add Lane 2 to Lane 0, add Lane 3 to Lane 1 (and viceversa to broadcast the result) */
     v4dTmp = _mm256_permute2f128_pd(v4dSum, v4dSum, 1);
     v4dSum = _mm256_add_pd(v4dSum, v4dTmp);
-    v4dTmp = _mm256_permute_pd(v4dSum, 0x5);
+    /* Horizontal reduction: Add Lane 1 to Lane 0, add Lane 3 to Lane 2 (and viceversa to broadcast the result) */
+    v4dTmp = _mm256_shuffle_pd(v4dSum, v4dSum, 0x5);
     v4dSum = _mm256_add_pd(v4dSum, v4dTmp);
 
-    /**
-     * Force Lanes 1, 2 and 3 to be 0.0 using blend
-     * - Lane 0: taken from 2nd operand (v4dSum)
-     * - Lanes 1, 2, 3: taken from 1st operand (v4dZeros)
-     * Result: [0.0, 0.0, 0.0, v4dSum]
-     */
+    /* Force Lanes 1, 2 and 3 to be 0.0 */
     v4dSum = _mm256_blend_pd(v4dZeros, v4dSum, 0x01);
 
     /**
      * Multiply the final vector result with the delta time.
      * Since Lanes 1, 2 and 3 are 0.0, 0.0 * deltaT remains strictly 0.0
+     */
+    v4dTmp = _mm256_set1_pd(data->deltaT);
+    v4dSum = _mm256_mul_pd(v4dSum, v4dTmp);
+
+    return v4dSum;
+}
+
+/**
+ * rbdIntegralHotStandbyV4dAvx
+ *
+ * Compute integrals for Hot Stand-by function with amd64 AVX 256bit
+ *
+ * Input:
+ *      struct rbdHotStandbyData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function computes four integrals for a Hot Stand-by RBD step
+ *  exploiting amd64 AVX 256bit.
+ *  It is responsible to compute:
+ *  - $\int_0^t{f_{pri}(\tau) R_{swi}(\tau) d\tau}$
+ *  - $\int_0^{t+1}{f_{pri}(\tau) R_{swi}(\tau) d\tau}$
+ *  - $\int_0^{t+2}{f_{pri}(\tau) R_{swi}(\tau) d\tau}$
+ *  - $\int_0^{t+3}{f_{pri}(\tau) R_{swi}(\tau) d\tau}$
+ *  where f_{pri} is the failure density of the primary component and R_{swi} is the
+ *  reliability of the switch component.
+ *  To minimize the numerical error, this function uses the Kahan's method.
+ *
+ * Parameters:
+ *      data: Hot Stand-by RBD data structure
+ *      time: current time instant over which Hot Stand-by RBD shall be computed
+ *
+ * Return (__m256d):
+ *  The result of the four integrals for Hot Stand-by computation
+ */
+HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralHotStandbyV4dAvx(struct rbdHotStandbyData *data, unsigned int time)
+{
+    __m256d v4dSum;
+    __m256d v4dC;
+    __m256d v4dY;
+    __m256d v4dTSum;
+    __m256d v4dTmp;
+    __m256d v4dFailP;
+
+    /* Manage the case when the first integral is computed over the empty time domain */
+    if (time == 0) {
+        v4dSum = rbdIntegralHotStandbyV1dAvx(data, 1);
+        v4dC = _mm256_castpd128_pd256(rbdIntegralHotStandbyV2dSse2(data, 2));
+        return _mm256_insertf128_pd(
+                    _mm256_castpd128_pd256(
+                            _mm_shuffle_pd(v2dZeros, _mm256_castpd256_pd128(v4dSum), 0x00)),
+                    _mm256_castpd256_pd128(v4dC), 1);
+    }
+
+    /* Compute the common part of the integral for Hot Stand-by */
+    v4dSum = rbdIntegralHotStandbyCommonAvx(data, time, &v4dC);
+
+    /**
+     * First step - Compute missing internal nodes in interval [time, time + 3)
+     * The weight is 1.0 (trapezoidal rule for internal time instants)
+     * - Lane 0 does not have missing nodes
+     * - Lane 1 has a single missing node for \tau=time
+     * - Lane 2 has two missing nodes for \tau=time+1 and \tau=time
+     * - Lane 3 has three missing nodes for \tau=time+2, \tau=time+1 and \tau=time
+     */
+
+    /* First sub-step */
+    v4dFailP = _mm256_set_pd(data->primaryFailureDensity[time],
+                             data->primaryFailureDensity[time],
+                             data->primaryFailureDensity[time],
+                             0.0);
+    v4dTmp = _mm256_set_pd(data->switchReliability[time],
+                           data->switchReliability[time],
+                           data->switchReliability[time],
+                           0.0);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+
+    /* Add the current product to the result using the Kahan's method */
+    v4dY = _mm256_sub_pd(v4dTmp, v4dC);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+    v4dSum = v4dTSum;
+
+    /* Second sub-step */
+    v4dFailP = _mm256_set_pd(data->primaryFailureDensity[time + 1],
+                             data->primaryFailureDensity[time + 1],
+                             0.0,
+                             0.0);
+    v4dTmp = _mm256_set_pd(data->switchReliability[time + 1],
+                           data->switchReliability[time + 1],
+                           0.0,
+                           0.0);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+
+    /* Add the current product to the result using the Kahan's method */
+    v4dY = _mm256_sub_pd(v4dTmp, v4dC);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+    v4dSum = v4dTSum;
+
+    /* Third sub-step */
+    v4dFailP = _mm256_set_pd(data->primaryFailureDensity[time + 2],
+                             0.0,
+                             0.0,
+                             0.0);
+    v4dTmp = _mm256_set_pd(data->switchReliability[time + 2],
+                           0.0,
+                           0.0,
+                           0.0);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+
+    /* Add the current product to the result using the Kahan's method */
+    v4dY = _mm256_sub_pd(v4dTmp, v4dC);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+    v4dSum = v4dTSum;
+
+    /**
+     * Second step - Compute $f_{pri}(\tau) \cdot R_{swi}(\tau)$
+     * The weight is 0.5 (trapezoidal rule for external right instant)
+     */
+    v4dFailP = _mm256_loadu_pd(&data->primaryFailureDensity[time]);
+    v4dTmp = _mm256_loadu_pd(&data->switchReliability[time]);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+    v4dTmp = _mm256_mul_pd(v4dTmp, v4dHalfs);
+
+    /* Add the current product to the result using the Kahan's method */
+    v4dY = _mm256_sub_pd(v4dTmp, v4dC);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+
+    /* Apply Kahan compensation to clean the accumulated sums */
+    v4dSum = _mm256_sub_pd(v4dTSum, v4dC);
+
+    /* Multiply the partial result with the delta time */
+    v4dTmp = _mm256_set1_pd(data->deltaT);
+    v4dSum = _mm256_mul_pd(v4dSum, v4dTmp);
+
+    return v4dSum;
+}
+
+/**
+ * rbdIntegralHotStandbyV1dAvx
+ *
+ * Compute integral for Hot Stand-by function with amd64 AVX 256bit
+ *
+ * Input:
+ *      struct rbdHotStandbyData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function computes the integral for a Hot Stand-by RBD step
+ *  exploiting amd64 AVX 256bit.
+ *  It is responsible to compute $\int_0^t{f_{pri}(\tau) R_{swi}(\tau) d\tau}$,
+ *  where f_{pri} is the failure density of the primary component and R_{swi} is the
+ *  reliability of the switch component.
+ *  To minimize the numerical error, this function uses the Kahan's method.
+ *
+ * Parameters:
+ *      data: Hot Stand-by RBD data structure
+ *      time: current time instant over which Hot Stand-by RBD shall be computed
+ *
+ * Return (__m256d):
+ *  The result of the integral for Hot Stand-by computation in Lane 0
+ */
+HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralHotStandbyV1dAvx(struct rbdHotStandbyData *data, unsigned int time)
+{
+    __m256d v4dSum;
+    __m256d v4dC;
+    __m256d v4dTSum;
+    __m256d v4dY;
+    __m256d v4dFailP;
+    __m256d v4dTmp;
+
+    /* The integral is null (0.0) if the time domain is empty */
+    if (time == 0) {
+        return v4dZeros;
+    }
+
+    /* Compute the common part of the integral for Hot Stand-by */
+    v4dSum = rbdIntegralHotStandbyCommonAvx(data, time, &v4dC);
+
+    /**
+     * Compute external time instant (Right)
+     * Lane 0: 0.5 * R_{swi}(t) * f_{pri}(t)
+     * Lanes 1, 2 and 3 get 0.0 so they don't alter their accumulator
+     */
+    v4dFailP = _mm256_set_pd(0.0, 0.0, 0.0, 0.5 * data->primaryFailureDensity[time]);
+    v4dTmp = _mm256_set_pd(0.0, 0.0, 0.0, data->switchReliability[time]);
+    v4dTmp = _mm256_mul_pd(v4dFailP, v4dTmp);
+
+    /* Add the current product to the result using the Kahan's method */
+    v4dY = _mm256_sub_pd(v4dTmp, v4dC);
+    v4dTSum = _mm256_add_pd(v4dSum, v4dY);
+    v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
+
+    /* Apply Kahan compensation to clean the accumulated sums */
+    v4dSum = _mm256_sub_pd(v4dTSum, v4dC);
+
+    /* Force Lanes 1, 2 and 3 to be 0.0 */
+    v4dSum = _mm256_blend_pd(v4dZeros, v4dSum, 0x01);
+
+    /**
+     * Multiply the final vector result with the delta time.
+     * Since Lane 1 is 0.0, 0.0 * deltaT remains strictly 0.0
      */
     v4dTmp = _mm256_set1_pd(data->deltaT);
     v4dSum = _mm256_mul_pd(v4dSum, v4dTmp);

@@ -31,10 +31,13 @@
 /* Platform-specific functions for AArch64 NEON instruction set */
 float64x2_t rbdIntegralColdStandbyV2dNeon(struct rbdColdStandbyData *data, unsigned int time);
 float64x1_t rbdIntegralColdStandbyV1dNeon(struct rbdColdStandbyData *data, unsigned int time);
+float64x2_t rbdIntegralHotStandbyV2dNeon(struct rbdHotStandbyData *data, unsigned int time);
+float64x1_t rbdIntegralHotStandbyV1dNeon(struct rbdHotStandbyData *data, unsigned int time);
 
 /* Platform-specific functions for AArch64 SVE instruction set */
 #if !defined(COMPILER_VS)
 svfloat64_t rbdIntegralColdStandbyVNdSve(svbool_t pg, struct rbdColdStandbyData *data, unsigned int time);
+svfloat64_t rbdIntegralHotStandbyVNdSve(svbool_t pg, struct rbdHotStandbyData *data, unsigned int time);
 #endif /* !defined(COMPILER_VS) */
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 

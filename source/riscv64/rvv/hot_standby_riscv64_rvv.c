@@ -26,6 +26,7 @@
 #include "rbd_internal_riscv64_rvv.h"
 #include "../rbd_internal_riscv64.h"
 #include "../hot_standby_riscv64.h"
+#include "../integral_riscv64.h"
 
 
 /**
@@ -112,9 +113,8 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdHotStandbyStepVNdRvv(struct rbdHotStan
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     vNdPri = __riscv_vle64_v_f64m1(&data->primaryReliability[time], vl);
-    vNdRes = __riscv_vfmv_v_f_f64m1(data->pSwitch, vl);
-    vNdRes = __riscv_vfnmsac_vv_f64m1(vNdRes, vNdRes, vNdPri, vl);
     vNdTmp = __riscv_vle64_v_f64m1(&data->standbyReliability[time], vl);
+    vNdRes = rbdIntegralHotStandbyVNdRvv(data, time, vl);
     vNdRes = __riscv_vfmacc_vv_f64m1(vNdPri, vNdRes, vNdTmp, vl);
 
     /* Cap the computed reliability and set it into output array */

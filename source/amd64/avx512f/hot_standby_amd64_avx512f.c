@@ -25,6 +25,7 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../hot_standby_amd64.h"
+#include "../integral_amd64.h"
 
 
 /**
@@ -108,9 +109,8 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdHotStandbyStepVNdAvx512f(__mmask8 mask
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     vNdPri = _mm512_maskz_loadu_pd(mask, &data->primaryReliability[time]);
-    vNdRes = _mm512_maskz_mov_pd(mask, _mm512_set1_pd(data->pSwitch));
-    vNdRes = _mm512_maskz_fnmadd_pd(mask, vNdRes, vNdPri, vNdRes);
     vNdTmp = _mm512_maskz_loadu_pd(mask, &data->standbyReliability[time]);
+    vNdRes = rbdIntegralHotStandbyVNdAvx512f(mask, data, time);
     vNdRes = _mm512_maskz_fmadd_pd(mask, vNdRes, vNdTmp, vNdPri);
 
     /* Cap the computed reliability and set it into output array */

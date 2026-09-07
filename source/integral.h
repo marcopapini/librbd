@@ -24,10 +24,12 @@
 
 
 #include "cold_standby.h"
+#include "hot_standby.h"
 
 
 /* Platform-generic functions */
 double rbdIntegralColdStandbyS1d(struct rbdColdStandbyData *data, unsigned int time);
+double rbdIntegralHotStandbyS1d(struct rbdHotStandbyData *data, unsigned int time);
 
 
 #endif /* INTEGRAL_H_ */

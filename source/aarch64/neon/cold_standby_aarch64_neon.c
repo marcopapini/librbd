@@ -105,9 +105,8 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdColdStandbyStepV2dNeon(struct rbdColdSta
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     v2dPri = vld1q_f64(&data->primaryReliability[time]);
-    v2dRes = vdupq_n_f64(data->pSwitch);
     v2dTmp = rbdIntegralColdStandbyV2dNeon(data, time);
-    v2dRes = vfmaq_f64(v2dPri, v2dRes, v2dTmp);
+    v2dRes = vaddq_f64(v2dPri, v2dTmp);
 
     /* Cap the computed reliability and set it into output array */
     vst1q_f64(&data->output[time], capReliabilityV2dNeon(v2dRes));
@@ -141,9 +140,8 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdColdStandbyStepV1dNeon(struct rbdColdSta
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     v1dPri = vld1_f64(&data->primaryReliability[time]);
-    v1dRes = vdup_n_f64(data->pSwitch);
     v1dTmp = rbdIntegralColdStandbyV1dNeon(data, time);
-    v1dRes = vfma_f64(v1dPri, v1dRes, v1dTmp);
+    v1dRes = vadd_f64(v1dPri, v1dTmp);
 
     /* Cap the computed reliability and set it into output array */
     vst1_f64(&data->output[time], capReliabilityV1dNeon(v1dRes));

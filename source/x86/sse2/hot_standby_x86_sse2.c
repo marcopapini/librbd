@@ -25,6 +25,7 @@
 #if (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_x86.h"
 #include "../hot_standby_x86.h"
+#include "../integral_x86.h"
 
 
 /**
@@ -103,10 +104,8 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdHotStandbyStepV2dSse2(struct rbdHotStandb
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     v2dPri = _mm_loadu_pd(&data->primaryReliability[time]);
-    v2dRes = _mm_set1_pd(data->pSwitch);
     v2dTmp = _mm_loadu_pd(&data->standbyReliability[time]);
-    v2dRes = _mm_mul_pd(v2dRes, v2dTmp);
-    v2dTmp = _mm_sub_pd(v2dOnes, v2dPri);
+    v2dRes = rbdIntegralHotStandbyV2dSse2(data, time);
     v2dRes = _mm_mul_pd(v2dRes, v2dTmp);
     v2dRes = _mm_add_pd(v2dRes, v2dPri);
 
@@ -142,10 +141,8 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdHotStandbyStepV1dSse2(struct rbdHotStandb
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     v2dPri = _mm_load_sd(&data->primaryReliability[time]);
-    v2dRes = _mm_set_sd(data->pSwitch);
     v2dTmp = _mm_load_sd(&data->standbyReliability[time]);
-    v2dRes = _mm_mul_sd(v2dRes, v2dTmp);
-    v2dTmp = _mm_sub_sd(v2dOnes, v2dPri);
+    v2dRes = rbdIntegralHotStandbyV1dSse2(data, time);
     v2dRes = _mm_mul_sd(v2dRes, v2dTmp);
     v2dRes = _mm_add_sd(v2dRes, v2dPri);
 

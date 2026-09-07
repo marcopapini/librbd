@@ -33,9 +33,8 @@
  * Compute reliability of a Cold Stand-by RBD system
  *
  * Input:
- *      double *primaryReliability
- *      double *standbyReliability
- *      double pSwitch
+ *      double *reliabilities
+ *      unsigned char numComponents
  *      unsigned int numTimes
  *      double deltaT
  *
@@ -46,20 +45,23 @@
  *  This function computes the reliabilities over time of a Cold Stand-by RBD system
  *
  * Parameters:
- *      primaryReliability: this array contains the input reliability of the primary
- *                      component at the provided time instants
- *      standbyReliability: this array contains the input reliability of the stand-by
- *                      component at the provided time instants
- *      pSwitch: probability that the switch is correctly performed
+ *      reliabilities: this matrix contains the input reliabilities of all components
+ *                      at the provided time instants. The matrix shall be provided as
+ *                      a NxT one, where N is the number of components of Cold Stand-by RBD
+ *                      system and T is the number of time instants. The first component
+ *                      identifies the primary, the second one is the reserve and the third
+ *                      one is the switch unit
  *      output: this array contains the reliabilities of Cold Stand-by RBD system computed at
  *                      the provided time instants
+ *      numComponents: number of components in Cold Stand-by RBD system (N). The number of
+ *                      components in a Cold Stand-by RBD block must be equal to 3
  *      numTimes: number of time instants over which Cold Stand-by RBD shall be computed (T)
  *      deltaT: time difference between two consecutive time instants
  *
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-EXTERN int rbdColdStandby(double *primaryReliability, double *standbyReliability, double pSwitch, double *output, unsigned int numTimes, double deltaT)
+EXTERN int rbdColdStandby(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes, double deltaT)
 {
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
     struct rbdColdStandbyData *data;
@@ -72,6 +74,11 @@ EXTERN int rbdColdStandby(double *primaryReliability, double *standbyReliability
     int res;
     double *primaryFailureDensity;
     double *standbyReliabilityRev;
+
+    /* If N is different from RBD_COLD_STANDBY_COMPONENTS return -1 */
+    if (numComponents != RBD_COLD_STANDBY_COMPONENTS) {
+        return -1;
+    }
 
     res = 0;
 
@@ -94,11 +101,11 @@ EXTERN int rbdColdStandby(double *primaryReliability, double *standbyReliability
     }
 
     /* Compute Failure Density of the Primary component */
-    rbdFailureDensityWorker(&primaryReliability[0], &primaryFailureDensity[0], numTimes, deltaT);
+    rbdFailureDensityWorker(&reliabilities[0], &primaryFailureDensity[0], numTimes, deltaT);
 
     /* Compute Reversed Stand-by Reliability */
     for (idx = 0; idx < numTimes; ++idx) {
-        standbyReliabilityRev[numTimes - idx - 1] = standbyReliability[idx];
+        standbyReliabilityRev[numTimes - idx - 1] = reliabilities[numTimes + idx];
     }
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
@@ -129,10 +136,10 @@ EXTERN int rbdColdStandby(double *primaryReliability, double *standbyReliability
             /* Prepare Cold Stand-by RBD data structure */
             data[idx].batchIdx = idx;
             data[idx].numCores = numCores;
-            data[idx].primaryReliability = primaryReliability;
+            data[idx].primaryReliability = &reliabilities[0];
             data[idx].primaryFailureDensity = primaryFailureDensity;
             data[idx].standbyReliabilityRev = standbyReliabilityRev;
-            data[idx].pSwitch = pSwitch;
+            data[idx].switchReliability = &reliabilities[numTimes * 2];
             data[idx].output = output;
             data[idx].numTimes = numTimes;
             data[idx].deltaT = deltaT;
@@ -146,10 +153,10 @@ EXTERN int rbdColdStandby(double *primaryReliability, double *standbyReliability
         /* Prepare Cold Stand-by RBD data structure */
         data[0].batchIdx = 0;
         data[0].numCores = numCores;
-        data[0].primaryReliability = primaryReliability;
+        data[0].primaryReliability = &reliabilities[0];
         data[0].primaryFailureDensity = primaryFailureDensity;
         data[0].standbyReliabilityRev = standbyReliabilityRev;
-        data[0].pSwitch = pSwitch;
+        data[0].switchReliability = &reliabilities[numTimes * 2];
         data[0].output = output;
         data[0].numTimes = numTimes;
         data[0].deltaT = deltaT;
@@ -169,10 +176,10 @@ EXTERN int rbdColdStandby(double *primaryReliability, double *standbyReliability
         /* Prepare Cold Stand-by RBD data structure */
         data[0].batchIdx = 0;
         data[0].numCores = 1;
-        data[0].primaryReliability = primaryReliability;
+        data[0].primaryReliability = &reliabilities[0];
         data[0].primaryFailureDensity = primaryFailureDensity;
         data[0].standbyReliabilityRev = standbyReliabilityRev;
-        data[0].pSwitch = pSwitch;
+        data[0].switchReliability = &reliabilities[numTimes * 2];
         data[0].output = output;
         data[0].numTimes = numTimes;
         data[0].deltaT = deltaT;

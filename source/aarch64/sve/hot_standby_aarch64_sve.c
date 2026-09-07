@@ -25,6 +25,7 @@
 #if defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_aarch64.h"
 #include "../hot_standby_aarch64.h"
+#include "../integral_aarch64.h"
 
 
 /**
@@ -116,9 +117,8 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdHotStandbyStepVNdSve(svbool_t pg, struct 
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     vNdPri = svld1(pg, &data->primaryReliability[time]);
-    vNdRes = svdup_f64(data->pSwitch);
-    vNdRes = svmls_f64_x(pg, vNdRes, vNdRes, vNdPri);
     vNdTmp = svld1(pg, &data->standbyReliability[time]);
+    vNdRes = rbdIntegralHotStandbyVNdSve(pg, data, time);
     vNdRes = svmla_f64_x(pg, vNdPri, vNdRes, vNdTmp);
 
     /* Cap the computed reliability and set it into output array */

@@ -33,10 +33,10 @@ struct rbdColdStandbyData
 {
     unsigned char batchIdx;             /* Index of work batch */
     unsigned int numCores;              /* Number of threads in SMP system */
-    double pSwitch;                     /* Probability that the switch is correctly executed */
     double *primaryReliability;         /* Reliability of Primary RBD system (array) */
     double *primaryFailureDensity;      /* Failure Density of Primary RBD system (array) */
     double *standbyReliabilityRev;      /* Reliability of Stand-by RBD system (reversed array) */
+    double *switchReliability;          /* Reliability of Switch RBD system (array) */
     double *output;                     /* Array of computed reliabilities */
     unsigned int numTimes;              /* Number of time instants to compute T */
     double deltaT;                      /* Time difference between two consecutive time instants */

@@ -24,6 +24,8 @@
 
 #include "hot_standby.h"
 
+#include "failure_density.h"
+
 
 /**
  * rbdHotStandby
@@ -31,10 +33,10 @@
  * Compute reliability of a Hot Stand-by RBD system
  *
  * Input:
- *      double *primaryReliability
- *      double *standbyReliability
- *      double pSwitch
+ *      double *reliabilities
+ *      unsigned char numComponents
  *      unsigned int numTimes
+ *      double deltaT
  *
  * Output:
  *      double *output
@@ -43,19 +45,23 @@
  *  This function computes the reliabilities over time of a Hot Stand-by RBD system
  *
  * Parameters:
- *      primaryReliability: this array contains the input reliability of the primary
- *                      component at the provided time instants
- *      standbyReliability: this array contains the input reliability of the stand-by
- *                      component at the provided time instants
- *      pSwitch: probability that the switch is correctly performed
+ *      reliabilities: this matrix contains the input reliabilities of all components
+ *                      at the provided time instants. The matrix shall be provided as
+ *                      a NxT one, where N is the number of components of Hot Stand-by RBD
+ *                      system and T is the number of time instants. The first component
+ *                      identifies the primary, the second one is the reserve and the third
+ *                      one is the switch unit
  *      output: this array contains the reliabilities of Hot Stand-by RBD system computed at
  *                      the provided time instants
+ *      numComponents: number of components in Hot Stand-by RBD system (N). The number of
+ *                      components in a Hot Stand-by RBD block must be equal to 3
  *      numTimes: number of time instants over which Hot Stand-by RBD shall be computed (T)
+ *      deltaT: time difference between two consecutive time instants
  *
  * Return (int):
  *  0 in case of successful computation, < 0 otherwise
  */
-EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability, double pSwitch, double *output, unsigned int numTimes)
+EXTERN int rbdHotStandby(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes, double deltaT)
 {
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
     struct rbdHotStandbyData *data;
@@ -66,8 +72,28 @@ EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability,
     struct rbdHotStandbyData data[1];
 #endif /* CPU_SMP */
     int res;
+    double *primaryFailureDensity;
+
+    /* If N is different from RBD_HOT_STANDBY_COMPONENTS return -1 */
+    if (numComponents != RBD_HOT_STANDBY_COMPONENTS) {
+        return -1;
+    }
 
     res = 0;
+
+    /* Check validity of time difference between two consecutive time instants */
+    if (deltaT <= 0.0) {
+        return -1;
+    }
+
+    /* Allocate array for Primary Failure Density, return -1 in case of allocation failure */
+    primaryFailureDensity = (double *)malloc(sizeof(double) * numTimes);
+    if (primaryFailureDensity == NULL) {
+        return -1;
+    }
+
+    /* Compute Failure Density of the Primary component */
+    rbdFailureDensityWorker(&reliabilities[0], &primaryFailureDensity[0], numTimes, deltaT);
 
 #if CPU_SMP != 0                                /* Under SMP conditional compiling */
     /* Compute the number of used cores given the number of times */
@@ -76,6 +102,7 @@ EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability,
     /* Allocate Hot Stand-by RBD data array, return -1 in case of allocation failure */
     data = (struct rbdHotStandbyData *)malloc(sizeof(struct rbdHotStandbyData) * numCores);
     if (data == NULL) {
+        free(primaryFailureDensity);
         return -1;
     }
 
@@ -85,6 +112,7 @@ EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability,
         threadHandles = allocateThreadHandles(numCores - 1);
         if (threadHandles == NULL) {
             free(data);
+            free(primaryFailureDensity);
             return -1;
         }
 
@@ -93,11 +121,13 @@ EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability,
             /* Prepare Hot Stand-by RBD data structure */
             data[idx].batchIdx = idx;
             data[idx].numCores = numCores;
-            data[idx].primaryReliability = primaryReliability;
-            data[idx].standbyReliability = standbyReliability;
-            data[idx].pSwitch = pSwitch;
+            data[idx].primaryReliability = &reliabilities[0];
+            data[idx].primaryFailureDensity = primaryFailureDensity;
+            data[idx].standbyReliability = &reliabilities[numTimes];
+            data[idx].switchReliability = &reliabilities[numTimes * 2];
             data[idx].output = output;
             data[idx].numTimes = numTimes;
+            data[idx].deltaT = deltaT;
 
             /* Create the Hot Stand-by RBD Worker thread */
             if (createThread(threadHandles, idx - 1, &rbdHotStandbyWorker, &data[idx]) < 0) {
@@ -108,11 +138,13 @@ EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability,
         /* Prepare Hot Stand-by RBD data structure */
         data[0].batchIdx = 0;
         data[0].numCores = numCores;
-        data[0].primaryReliability = primaryReliability;
-        data[0].standbyReliability = standbyReliability;
-        data[0].pSwitch = pSwitch;
+        data[0].primaryReliability = &reliabilities[0];
+        data[0].primaryFailureDensity = primaryFailureDensity;
+        data[0].standbyReliability = &reliabilities[numTimes];
+        data[0].switchReliability = &reliabilities[numTimes * 2];
         data[0].output = output;
         data[0].numTimes = numTimes;
+        data[0].deltaT = deltaT;
 
         /* Directly invoke the Hot Stand-by RBD Worker */
         (void)rbdHotStandbyWorker(&data[0]);
@@ -129,11 +161,13 @@ EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability,
         /* Prepare Hot Stand-by RBD data structure */
         data[0].batchIdx = 0;
         data[0].numCores = 1;
-        data[0].primaryReliability = primaryReliability;
-        data[0].standbyReliability = standbyReliability;
-        data[0].pSwitch = pSwitch;
+        data[0].primaryReliability = &reliabilities[0];
+        data[0].primaryFailureDensity = primaryFailureDensity;
+        data[0].standbyReliability = &reliabilities[numTimes];
+        data[0].switchReliability = &reliabilities[numTimes * 2];
         data[0].output = output;
         data[0].numTimes = numTimes;
+        data[0].deltaT = deltaT;
 
         /* Directly invoke the Hot Stand-by RBD Worker */
         (void)rbdHotStandbyWorker(&data[0]);
@@ -143,6 +177,9 @@ EXTERN int rbdHotStandby(double *primaryReliability, double *standbyReliability,
     /* Free Parallel RBD data array */
     free(data);
 #endif /* CPU_SMP */
+
+    /* Free Primary Failure Density array */
+    free(primaryFailureDensity);
 
     return res;
 }

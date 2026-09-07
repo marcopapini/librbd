@@ -23,6 +23,7 @@
 #include "../generic/rbd_internal_generic.h"
 
 #include "../hot_standby.h"
+#include "../integral.h"
 
 
 #if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
@@ -120,12 +121,11 @@ HIDDEN void *rbdHotStandbyWorkerNoarch(struct rbdHotStandbyData *data)
  */
 HIDDEN void rbdHotStandbyStepS1d(struct rbdHotStandbyData *data, unsigned int time)
 {
-    double s1dPri;
     double s1dRes;
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
-    s1dPri = data->primaryReliability[time];
-    s1dRes = s1dPri + (data->pSwitch * data->standbyReliability[time] * (1 - s1dPri));
+    s1dRes = data->primaryReliability[time] + data->standbyReliability[time] *
+                                              rbdIntegralHotStandbyS1d(data, time);
 
     /* Cap the computed reliability and set it into output array */
     data->output[time] = capReliabilityS1d(s1dRes);

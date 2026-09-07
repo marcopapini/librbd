@@ -25,6 +25,7 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../hot_standby_amd64.h"
+#include "../integral_amd64.h"
 #include "../../x86/hot_standby_x86.h"
 
 
@@ -111,10 +112,8 @@ HIDDEN FUNCTION_TARGET("avx") void rbdHotStandbyStepV4dAvx(struct rbdHotStandbyD
 
     /* Compute reliability of Hot Stand-by RBD at current time instant */
     v4dPri = _mm256_loadu_pd(&data->primaryReliability[time]);
-    v4dRes = _mm256_set1_pd(data->pSwitch);
     v4dTmp = _mm256_loadu_pd(&data->standbyReliability[time]);
-    v4dRes = _mm256_mul_pd(v4dRes, v4dTmp);
-    v4dTmp = _mm256_sub_pd(v4dOnes, v4dPri);
+    v4dRes = rbdIntegralHotStandbyV4dAvx(data, time);
     v4dRes = _mm256_mul_pd(v4dRes, v4dTmp);
     v4dRes = _mm256_add_pd(v4dRes, v4dPri);
 

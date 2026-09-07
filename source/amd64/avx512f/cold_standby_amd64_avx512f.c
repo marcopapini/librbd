@@ -110,9 +110,8 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdColdStandbyStepVNdAvx512f(__mmask8 mas
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     vNdPri = _mm512_maskz_loadu_pd(mask, &data->primaryReliability[time]);
-    vNdRes = _mm512_maskz_mov_pd(mask, _mm512_set1_pd(data->pSwitch));
     vNdTmp = rbdIntegralColdStandbyVNdAvx512f(mask, data, time);
-    vNdRes = _mm512_maskz_fmadd_pd(mask, vNdRes, vNdTmp, vNdPri);
+    vNdRes = _mm512_maskz_add_pd(mask, vNdTmp, vNdPri);
 
     /* Cap the computed reliability and set it into output array */
     _mm512_mask_storeu_pd(&data->output[time], mask, capReliabilityVNdAvx512f(mask, vNdRes));

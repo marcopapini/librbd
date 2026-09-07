@@ -114,9 +114,8 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdColdStandbyStepVNdRvv(struct rbdColdSt
 
     /* Compute reliability of Cold Stand-by RBD at current time instant */
     vNdPri = __riscv_vle64_v_f64m1(&data->primaryReliability[time], vl);
-    vNdRes = __riscv_vfmv_v_f_f64m1(data->pSwitch, vl);
     vNdTmp = rbdIntegralColdStandbyVNdRvv(data, time, vl);
-    vNdRes = __riscv_vfmacc_vv_f64m1(vNdPri, vNdRes, vNdTmp, vl);
+    vNdRes = __riscv_vfadd_vv_f64m1(vNdPri, vNdTmp, vl);
 
     /* Cap the computed reliability and set it into output array */
     __riscv_vse64_v_f64m1(&data->output[time], capReliabilityVNdRvv(vNdRes, vl), vl);
