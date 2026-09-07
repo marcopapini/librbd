@@ -257,7 +257,8 @@ EXTERN int rbdKooNIdentical(double *reliabilities, double *output, unsigned char
  *                      at the provided time instants
  *      output: this array contains the reliabilities of Bridge RBD system computed at
  *                      the provided time instants
- *      numComponents: number of components in Bridge RBD system
+ *      numComponents: number of components in Bridge RBD system The number of
+ *                      components in a Bridge RBD block must be equal to 5
  *      numTimes: number of time instants over which Bridge RBD shall be computed
  *
  * Return (int):
@@ -289,7 +290,8 @@ EXTERN int rbdBridgeIdentical(double *reliabilities, double *output, unsigned ch
  *                      system and T is the number of time instants
  *      output: this array contains the reliabilities of Bridge RBD system computed at
  *                      the provided time instants
- *      numComponents: number of components in Bridge RBD system (N)
+ *      numComponents: number of components in Bridge RBD system (N) The number of
+ *                      components in a Bridge RBD block must be equal to 5
  *      numTimes: number of time instants over which Bridge RBD shall be computed (T)
  *
  * Return (int):
