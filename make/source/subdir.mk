@@ -5,6 +5,7 @@ C_SRCS += \
 ../source/hot_standby.c \
 ../source/koon.c \
 ../source/parallel.c \
+../source/reliability.c \
 ../source/series.c 
 
 C_DEPS += \
@@ -13,6 +14,7 @@ C_DEPS += \
 ./source/hot_standby.d \
 ./source/koon.d \
 ./source/parallel.d \
+./source/reliability.d \
 ./source/series.d 
 
 OBJS_AR += \
@@ -21,6 +23,7 @@ OBJS_AR += \
 ./source/hot_standby.ar.o \
 ./source/koon.ar.o \
 ./source/parallel.ar.o \
+./source/reliability.ar.o \
 ./source/series.ar.o 
 
 OBJS_SO += \
@@ -29,6 +32,7 @@ OBJS_SO += \
 ./source/hot_standby.so.o \
 ./source/koon.so.o \
 ./source/parallel.so.o \
+./source/reliability.so.o \
 ./source/series.so.o 
 
 

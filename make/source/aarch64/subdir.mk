@@ -8,6 +8,7 @@ C_SRCS += \
 ../source/aarch64/parallel_aarch64.c \
 ../source/aarch64/processor_aarch64.c \
 ../source/aarch64/rbd_internal_aarch64.c \
+../source/aarch64/reliability_aarch64.c \
 ../source/aarch64/series_aarch64.c 
 
 C_DEPS += \
@@ -19,6 +20,7 @@ C_DEPS += \
 ./source/aarch64/parallel_aarch64.d \
 ./source/aarch64/processor_aarch64.d \
 ./source/aarch64/rbd_internal_aarch64.d \
+./source/aarch64/reliability_aarch64.d \
 ./source/aarch64/series_aarch64.d 
 
 OBJS_AR += \
@@ -30,6 +32,7 @@ OBJS_AR += \
 ./source/aarch64/parallel_aarch64.ar.o \
 ./source/aarch64/processor_aarch64.ar.o \
 ./source/aarch64/rbd_internal_aarch64.ar.o \
+./source/aarch64/reliability_aarch64.ar.o \
 ./source/aarch64/series_aarch64.ar.o 
 
 OBJS_SO += \
@@ -41,6 +44,7 @@ OBJS_SO += \
 ./source/aarch64/parallel_aarch64.so.o \
 ./source/aarch64/processor_aarch64.so.o \
 ./source/aarch64/rbd_internal_aarch64.so.o \
+./source/aarch64/reliability_aarch64.so.o \
 ./source/aarch64/series_aarch64.so.o 
 
 

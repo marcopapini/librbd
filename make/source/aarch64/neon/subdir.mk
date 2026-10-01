@@ -7,6 +7,7 @@ C_SRCS += \
 ../source/aarch64/neon/koon_aarch64_neon.c \
 ../source/aarch64/neon/integral_aarch64_neon.c \
 ../source/aarch64/neon/parallel_aarch64_neon.c \
+../source/aarch64/neon/reliability_aarch64_neon.c \
 ../source/aarch64/neon/series_aarch64_neon.c 
 
 C_DEPS += \
@@ -17,6 +18,7 @@ C_DEPS += \
 ./source/aarch64/neon/koon_aarch64_neon.d \
 ./source/aarch64/neon/integral_aarch64_neon.d \
 ./source/aarch64/neon/parallel_aarch64_neon.d \
+./source/aarch64/neon/reliability_aarch64_neon.d \
 ./source/aarch64/neon/series_aarch64_neon.d 
 
 OBJS_AR += \
@@ -27,6 +29,7 @@ OBJS_AR += \
 ./source/aarch64/neon/koon_aarch64_neon.ar.o \
 ./source/aarch64/neon/integral_aarch64_neon.ar.o \
 ./source/aarch64/neon/parallel_aarch64_neon.ar.o \
+./source/aarch64/neon/reliability_aarch64_neon.ar.o \
 ./source/aarch64/neon/series_aarch64_neon.ar.o 
 
 OBJS_SO += \
@@ -37,6 +40,7 @@ OBJS_SO += \
 ./source/aarch64/neon/koon_aarch64_neon.so.o \
 ./source/aarch64/neon/integral_aarch64_neon.so.o \
 ./source/aarch64/neon/parallel_aarch64_neon.so.o \
+./source/aarch64/neon/reliability_aarch64_neon.so.o \
 ./source/aarch64/neon/series_aarch64_neon.so.o 
 
 ./source/aarch64/neon/integral_aarch64_neon.ar.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)

@@ -8,6 +8,7 @@ C_SRCS += \
 ../source/noarch/integral_noarch.c \
 ../source/noarch/parallel_noarch.c \
 ../source/noarch/rbd_internal_noarch.c \
+../source/noarch/reliability_noarch.c \
 ../source/noarch/series_noarch.c 
 
 C_DEPS += \
@@ -19,6 +20,7 @@ C_DEPS += \
 ./source/noarch/integral_noarch.d \
 ./source/noarch/parallel_noarch.d \
 ./source/noarch/rbd_internal_noarch.d \
+./source/noarch/reliability_noarch.d \
 ./source/noarch/series_noarch.d 
 
 OBJS_AR += \
@@ -30,6 +32,7 @@ OBJS_AR += \
 ./source/noarch/integral_noarch.ar.o \
 ./source/noarch/parallel_noarch.ar.o \
 ./source/noarch/rbd_internal_noarch.ar.o \
+./source/noarch/reliability_noarch.ar.o \
 ./source/noarch/series_noarch.ar.o 
 
 OBJS_SO += \
@@ -41,6 +44,7 @@ OBJS_SO += \
 ./source/noarch/integral_noarch.so.o \
 ./source/noarch/parallel_noarch.so.o \
 ./source/noarch/rbd_internal_noarch.so.o \
+./source/noarch/reliability_noarch.so.o \
 ./source/noarch/series_noarch.so.o
 
 ./source/noarch/integral_noarch.ar.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)

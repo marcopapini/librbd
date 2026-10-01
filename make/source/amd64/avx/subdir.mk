@@ -7,6 +7,7 @@ C_SRCS += \
 ../source/amd64/avx/koon_amd64_avx.c \
 ../source/amd64/avx/integral_amd64_avx.c \
 ../source/amd64/avx/parallel_amd64_avx.c \
+../source/amd64/avx/reliability_amd64_avx.c \
 ../source/amd64/avx/series_amd64_avx.c 
 
 C_DEPS += \
@@ -17,6 +18,7 @@ C_DEPS += \
 ./source/amd64/avx/koon_amd64_avx.d \
 ./source/amd64/avx/integral_amd64_avx.d \
 ./source/amd64/avx/parallel_amd64_avx.d \
+./source/amd64/avx/reliability_amd64_avx.d \
 ./source/amd64/avx/series_amd64_avx.d 
 
 OBJS_AR += \
@@ -27,6 +29,7 @@ OBJS_AR += \
 ./source/amd64/avx/koon_amd64_avx.ar.o \
 ./source/amd64/avx/integral_amd64_avx.ar.o \
 ./source/amd64/avx/parallel_amd64_avx.ar.o \
+./source/amd64/avx/reliability_amd64_avx.ar.o \
 ./source/amd64/avx/series_amd64_avx.ar.o 
 
 OBJS_SO += \
@@ -37,6 +40,7 @@ OBJS_SO += \
 ./source/amd64/avx/koon_amd64_avx.so.o \
 ./source/amd64/avx/integral_amd64_avx.so.o \
 ./source/amd64/avx/parallel_amd64_avx.so.o \
+./source/amd64/avx/reliability_amd64_avx.so.o \
 ./source/amd64/avx/series_amd64_avx.so.o 
 
 ./source/amd64/avx/integral_amd64_avx.ar.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)

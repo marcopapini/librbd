@@ -8,6 +8,7 @@ C_SRCS += \
 ../source/x86/parallel_x86.c \
 ../source/x86/processor_x86.c \
 ../source/x86/rbd_internal_x86.c \
+../source/x86/reliability_x86.c \
 ../source/x86/series_x86.c 
 
 C_DEPS += \
@@ -19,6 +20,7 @@ C_DEPS += \
 ./source/x86/parallel_x86.d \
 ./source/x86/processor_x86.d \
 ./source/x86/rbd_internal_x86.d \
+./source/x86/reliability_x86.d \
 ./source/x86/series_x86.d 
 
 OBJS_AR += \
@@ -30,6 +32,7 @@ OBJS_AR += \
 ./source/x86/parallel_x86.ar.o \
 ./source/x86/processor_x86.ar.o \
 ./source/x86/rbd_internal_x86.ar.o \
+./source/x86/reliability_x86.ar.o \
 ./source/x86/series_x86.ar.o 
 
 OBJS_SO += \
@@ -41,6 +44,7 @@ OBJS_SO += \
 ./source/x86/parallel_x86.so.o \
 ./source/x86/processor_x86.so.o \
 ./source/x86/rbd_internal_x86.so.o \
+./source/x86/reliability_x86.so.o \
 ./source/x86/series_x86.so.o 
 
 

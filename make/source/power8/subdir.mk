@@ -7,6 +7,7 @@ C_SRCS += \
 ../source/power8/koon_power8.c \
 ../source/power8/parallel_power8.c \
 ../source/power8/rbd_internal_power8.c \
+../source/power8/reliability_power8.c \
 ../source/power8/series_power8.c 
 
 C_DEPS += \
@@ -17,6 +18,7 @@ C_DEPS += \
 ./source/power8/koon_power8.d \
 ./source/power8/parallel_power8.d \
 ./source/power8/rbd_internal_power8.d \
+./source/power8/reliability_power8.d \
 ./source/power8/series_power8.d 
 
 OBJS_AR += \
@@ -27,6 +29,7 @@ OBJS_AR += \
 ./source/power8/koon_power8.ar.o \
 ./source/power8/parallel_power8.ar.o \
 ./source/power8/rbd_internal_power8.ar.o \
+./source/power8/reliability_power8.ar.o \
 ./source/power8/series_power8.ar.o 
 
 OBJS_SO += \
@@ -37,6 +40,7 @@ OBJS_SO += \
 ./source/power8/koon_power8.so.o \
 ./source/power8/parallel_power8.so.o \
 ./source/power8/rbd_internal_power8.so.o \
+./source/power8/reliability_power8.so.o \
 ./source/power8/series_power8.so.o 
 
 

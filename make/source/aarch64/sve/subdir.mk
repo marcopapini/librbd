@@ -8,6 +8,7 @@ C_SRCS += \
 ../source/aarch64/sve/integral_aarch64_sve.c \
 ../source/aarch64/sve/parallel_aarch64_sve.c \
 ../source/aarch64/sve/processor_aarch64_sve.c \
+../source/aarch64/sve/reliability_aarch64_sve.c \
 ../source/aarch64/sve/series_aarch64_sve.c 
 
 C_DEPS += \
@@ -19,6 +20,7 @@ C_DEPS += \
 ./source/aarch64/sve/integral_aarch64_sve.d \
 ./source/aarch64/sve/parallel_aarch64_sve.d \
 ./source/aarch64/sve/processor_aarch64_sve.d \
+./source/aarch64/sve/reliability_aarch64_sve.d \
 ./source/aarch64/sve/series_aarch64_sve.d 
 
 OBJS_AR += \
@@ -30,6 +32,7 @@ OBJS_AR += \
 ./source/aarch64/sve/integral_aarch64_sve.ar.o \
 ./source/aarch64/sve/parallel_aarch64_sve.ar.o \
 ./source/aarch64/sve/processor_aarch64_sve.ar.o \
+./source/aarch64/sve/reliability_aarch64_sve.ar.o \
 ./source/aarch64/sve/series_aarch64_sve.ar.o 
 
 OBJS_SO += \
@@ -41,6 +44,7 @@ OBJS_SO += \
 ./source/aarch64/sve/integral_aarch64_sve.so.o \
 ./source/aarch64/sve/parallel_aarch64_sve.so.o \
 ./source/aarch64/sve/processor_aarch64_sve.so.o \
+./source/aarch64/sve/reliability_aarch64_sve.so.o \
 ./source/aarch64/sve/series_aarch64_sve.so.o 
 
 ./source/aarch64/sve/integral_aarch64_sve.ar.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)

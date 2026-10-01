@@ -7,6 +7,7 @@ C_SRCS += \
 ../source/amd64/avx512f/koon_amd64_avx512f.c \
 ../source/amd64/avx512f/integral_amd64_avx512f.c \
 ../source/amd64/avx512f/parallel_amd64_avx512f.c \
+../source/amd64/avx512f/reliability_amd64_avx512f.c \
 ../source/amd64/avx512f/series_amd64_avx512f.c 
 
 C_DEPS += \
@@ -17,6 +18,7 @@ C_DEPS += \
 ./source/amd64/avx512f/koon_amd64_avx512f.d \
 ./source/amd64/avx512f/integral_amd64_avx512f.d \
 ./source/amd64/avx512f/parallel_amd64_avx512f.d \
+./source/amd64/avx512f/reliability_amd64_avx512f.d \
 ./source/amd64/avx512f/series_amd64_avx512f.d 
 
 OBJS_AR += \
@@ -27,6 +29,7 @@ OBJS_AR += \
 ./source/amd64/avx512f/koon_amd64_avx512f.ar.o \
 ./source/amd64/avx512f/integral_amd64_avx512f.ar.o \
 ./source/amd64/avx512f/parallel_amd64_avx512f.ar.o \
+./source/amd64/avx512f/reliability_amd64_avx512f.ar.o \
 ./source/amd64/avx512f/series_amd64_avx512f.ar.o 
 
 OBJS_SO += \
@@ -37,6 +40,7 @@ OBJS_SO += \
 ./source/amd64/avx512f/koon_amd64_avx512f.so.o \
 ./source/amd64/avx512f/integral_amd64_avx512f.so.o \
 ./source/amd64/avx512f/parallel_amd64_avx512f.so.o \
+./source/amd64/avx512f/reliability_amd64_avx512f.so.o \
 ./source/amd64/avx512f/series_amd64_avx512f.so.o 
 
 ./source/amd64/avx512f/integral_amd64_avx512f.ar.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)

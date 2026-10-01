@@ -8,6 +8,7 @@ C_SRCS += \
 ../source/riscv64/parallel_riscv64.c \
 ../source/riscv64/processor_riscv64.c \
 ../source/riscv64/rbd_internal_riscv64.c \
+../source/riscv64/reliability_riscv64.c \
 ../source/riscv64/series_riscv64.c 
 
 C_DEPS += \
@@ -19,6 +20,7 @@ C_DEPS += \
 ./source/riscv64/parallel_riscv64.d \
 ./source/riscv64/processor_riscv64.d \
 ./source/riscv64/rbd_internal_riscv64.d \
+./source/riscv64/reliability_riscv64.d \
 ./source/riscv64/series_riscv64.d 
 
 OBJS_AR += \
@@ -30,6 +32,7 @@ OBJS_AR += \
 ./source/riscv64/parallel_riscv64.ar.o \
 ./source/riscv64/processor_riscv64.ar.o \
 ./source/riscv64/rbd_internal_riscv64.ar.o \
+./source/riscv64/reliability_riscv64.ar.o \
 ./source/riscv64/series_riscv64.ar.o 
 
 OBJS_SO += \
@@ -41,6 +44,7 @@ OBJS_SO += \
 ./source/riscv64/parallel_riscv64.so.o \
 ./source/riscv64/processor_riscv64.so.o \
 ./source/riscv64/rbd_internal_riscv64.so.o \
+./source/riscv64/reliability_riscv64.so.o \
 ./source/riscv64/series_riscv64.so.o 
 
 

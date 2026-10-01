@@ -8,6 +8,7 @@ C_SRCS += \
 ../source/riscv64/rvv/integral_riscv64_rvv.c \
 ../source/riscv64/rvv/parallel_riscv64_rvv.c \
 ../source/riscv64/rvv/processor_riscv64_rvv.c \
+../source/riscv64/rvv/reliability_riscv64_rvv.c \
 ../source/riscv64/rvv/series_riscv64_rvv.c 
 
 C_DEPS += \
@@ -19,6 +20,7 @@ C_DEPS += \
 ./source/riscv64/rvv/integral_riscv64_rvv.d \
 ./source/riscv64/rvv/parallel_riscv64_rvv.d \
 ./source/riscv64/rvv/processor_riscv64_rvv.d \
+./source/riscv64/rvv/reliability_riscv64_rvv.d \
 ./source/riscv64/rvv/series_riscv64_rvv.d 
 
 OBJS_AR += \
@@ -30,6 +32,7 @@ OBJS_AR += \
 ./source/riscv64/rvv/integral_riscv64_rvv.ar.o \
 ./source/riscv64/rvv/parallel_riscv64_rvv.ar.o \
 ./source/riscv64/rvv/processor_riscv64_rvv.ar.o \
+./source/riscv64/rvv/reliability_riscv64_rvv.ar.o \
 ./source/riscv64/rvv/series_riscv64_rvv.ar.o 
 
 OBJS_SO += \
@@ -41,6 +44,7 @@ OBJS_SO += \
 ./source/riscv64/rvv/integral_riscv64_rvv.ar.o \
 ./source/riscv64/rvv/parallel_riscv64_rvv.so.o \
 ./source/riscv64/rvv/processor_riscv64_rvv.so.o \
+./source/riscv64/rvv/reliability_riscv64_rvv.so.o \
 ./source/riscv64/rvv/series_riscv64_rvv.so.o 
 
 ./source/riscv64/rvv/integral_riscv64_rvv.ar.o: override C_FLAGS += $(C_FLAGS_STRICT_MATH)

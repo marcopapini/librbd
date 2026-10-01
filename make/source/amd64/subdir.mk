@@ -8,6 +8,7 @@ C_SRCS += \
 ../source/amd64/parallel_amd64.c \
 ../source/amd64/processor_amd64.c \
 ../source/amd64/rbd_internal_amd64.c \
+../source/amd64/reliability_amd64.c \
 ../source/amd64/series_amd64.c 
 
 C_DEPS += \
@@ -19,6 +20,7 @@ C_DEPS += \
 ./source/amd64/parallel_amd64.d \
 ./source/amd64/processor_amd64.d \
 ./source/amd64/rbd_internal_amd64.d \
+./source/amd64/reliability_amd64.d \
 ./source/amd64/series_amd64.d 
 
 OBJS_AR += \
@@ -30,6 +32,7 @@ OBJS_AR += \
 ./source/amd64/parallel_amd64.ar.o \
 ./source/amd64/processor_amd64.ar.o \
 ./source/amd64/rbd_internal_amd64.ar.o \
+./source/amd64/reliability_amd64.ar.o \
 ./source/amd64/series_amd64.ar.o 
 
 OBJS_SO += \
@@ -41,6 +44,7 @@ OBJS_SO += \
 ./source/amd64/parallel_amd64.so.o \
 ./source/amd64/processor_amd64.so.o \
 ./source/amd64/rbd_internal_amd64.so.o \
+./source/amd64/reliability_amd64.so.o \
 ./source/amd64/series_amd64.so.o 
 
 
