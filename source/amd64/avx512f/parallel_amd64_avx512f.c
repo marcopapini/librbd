@@ -25,7 +25,6 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../parallel_amd64.h"
-#include "../../x86/parallel_x86.h"
 
 
 /**

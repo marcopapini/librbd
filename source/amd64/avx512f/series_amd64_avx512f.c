@@ -25,7 +25,6 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../series_amd64.h"
-#include "../../x86/series_x86.h"
 
 
 /**

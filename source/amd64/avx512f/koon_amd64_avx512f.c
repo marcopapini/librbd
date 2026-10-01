@@ -25,7 +25,6 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../koon_amd64.h"
-#include "../../x86/koon_x86.h"
 #include "../../generic/combinations.h"
 
 
