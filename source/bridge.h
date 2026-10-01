@@ -48,8 +48,5 @@ void *rbdBridgeIdenticalWorker(void *arg);
 void *rbdBridgeGenericWorkerNoarch(struct rbdBridgeData *data);
 void *rbdBridgeIdenticalWorkerNoarch(struct rbdBridgeData *data);
 
-void rbdBridgeGenericStepS1d(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepS1d(struct rbdBridgeData *data, unsigned int time);
-
 
 #endif /* BRIDGE_H_ */

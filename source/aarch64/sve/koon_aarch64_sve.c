@@ -29,6 +29,10 @@
 
 
 #if !defined(COMPILER_VS)
+static void rbdKooNGenericShannonVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time);
+static void rbdKooNBddStepVNdSve(svbool_t pg, double *r, double *h, double *l, double *o);
+static void rbdKooNIdenticalSuccessStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time);
 static svfloat64_t rbdKooNGenericShannonStepVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static double *rbdKooNBddSve(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 #endif /* !defined(COMPILER_VS) */
@@ -304,7 +308,7 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdKooNIdenticalWorkerSve(struct rbdKooNIde
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdKooNGenericShannonVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time)
+static FUNCTION_TARGET("+sve") void rbdKooNGenericShannonVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     svfloat64_t vNdRes;
 
@@ -342,7 +346,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNGenericShannonVNdSve(svbool_t pg, str
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdKooNBddStepVNdSve(svbool_t pg, double *r, double *h, double *l, double *o)
+static FUNCTION_TARGET("+sve") void rbdKooNBddStepVNdSve(svbool_t pg, double *r, double *h, double *l, double *o)
 {
     svfloat64_t vNdR;
     svfloat64_t vNdH;
@@ -384,7 +388,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNBddStepVNdSve(svbool_t pg, double *r,
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalSuccessStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("+sve") void rbdKooNIdenticalSuccessStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time)
 {
     svfloat64_t vNdR;
     svfloat64_t vNdTmp1, vNdTmp2;
@@ -450,7 +454,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalSuccessStepVNdSve(svbool_t p
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("+sve") void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time)
 {
     svfloat64_t vNdU;
     svfloat64_t vNdTmp1, vNdTmp2;

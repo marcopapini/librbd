@@ -25,10 +25,21 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../koon_amd64.h"
-#include "../../x86/koon_x86.h"
 #include "../../generic/combinations.h"
 
 
+static void rbdKooNGenericShannonV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time);
+static void rbdKooNBddStepV4dFma3(double *r, double *h, double *l, double *o);
+static void rbdKooNIdenticalSuccessStepV4dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNIdenticalFailStepV4dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNGenericShannonV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time);
+static void rbdKooNBddStepV2dFma3(double *r, double *h, double *l, double *o);
+static void rbdKooNIdenticalSuccessStepV2dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNIdenticalFailStepV2dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNGenericShannonV1dFma3(struct rbdKooNGenericShannonData *data, unsigned int time);
+static void rbdKooNBddStepV1dFma3(double *r, double *h, double *l, double *o);
+static void rbdKooNIdenticalSuccessStepV1dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNIdenticalFailStepV1dFma3(struct rbdKooNIdenticalData *data, unsigned int time);
 static __m256d rbdKooNGenericShannonStepV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static __m128d rbdKooNGenericShannonStepV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static __m128d rbdKooNGenericShannonStepV1dFma3(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
@@ -225,13 +236,13 @@ HIDDEN void *rbdKooNIdenticalWorkerFma3(struct rbdKooNIdenticalData *data)
             if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
                 if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                     /* Compute reliability of KooN RBD at current time instant from failed components */
-                    rbdKooNIdenticalFailStepV1dSse2(data, time);
+                    rbdKooNIdenticalFailStepV1dFma3(data, time);
                     /* Increment current time instant */
                     time += S1D;
                 }
                 if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
                     /* Compute reliability of KooN RBD at current time instant from failed components */
-                    rbdKooNIdenticalFailStepV2dSse2(data, time);
+                    rbdKooNIdenticalFailStepV2dFma3(data, time);
                     /* Increment current time instant */
                     time += V2D;
                 }
@@ -243,21 +254,21 @@ HIDDEN void *rbdKooNIdenticalWorkerFma3(struct rbdKooNIdenticalData *data)
             prefetchRead(data->reliabilities, 1, data->numTimes, time + (data->numCores * V4D));
             prefetchWrite(data->output, 1, data->numTimes, time + (data->numCores * V4D));
             /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepV4dAvx(data, time);
+            rbdKooNIdenticalFailStepV4dFma3(data, time);
             /* Increment current time instant */
             time += (data->numCores * V4D);
         }
         /* Are (at least) 2 time instants remaining? */
         if ((time + V2D) <= data->numTimes) {
             /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepV2dSse2(data, time);
+            rbdKooNIdenticalFailStepV2dFma3(data, time);
             /* Increment current time instant */
             time += V2D;
         }
         /* Is 1 time instant remaining? */
         if (time < data->numTimes) {
             /* Compute reliability of KooN RBD at current time instant from failed components */
-            rbdKooNIdenticalFailStepV1dSse2(data, time);
+            rbdKooNIdenticalFailStepV1dFma3(data, time);
         }
     }
 
@@ -287,7 +298,7 @@ HIDDEN void *rbdKooNIdenticalWorkerFma3(struct rbdKooNIdenticalData *data)
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdKooNGenericShannonV4dFma3(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     __m256d v4dRes;
 
@@ -323,7 +334,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV4dFma3(struct rbdKooNGe
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNBddStepV4dFma3(double *r, double *h, double *l, double *o)
+static FUNCTION_TARGET("fma") void rbdKooNBddStepV4dFma3(double *r, double *h, double *l, double *o)
 {
     __m256d v4dR;
     __m256d v4dH;
@@ -363,7 +374,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNBddStepV4dFma3(double *r, double *h, d
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m256d v4dR;
     __m256d v4dTmp1, v4dTmp2;
@@ -404,6 +415,72 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma3(struct rbd
 }
 
 /**
+ * rbdKooNIdenticalFailStepV4dFma3
+ *
+ * Identical KooN RBD Step function from failed components with amd64 FMA3 256bit
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD function exploiting amd64 FMA3 256bit.
+ *  It is responsible to compute the reliability of a KooN RBD system
+ *  taking into account the failed components
+ *
+ * Parameters:
+ *      data: Identical KooN RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *
+ * Return:
+ *  None
+ */
+static FUNCTION_TARGET("fma") void rbdKooNIdenticalFailStepV4dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
+{
+    __m256d v4dU;
+    __m256d v4dTmp1, v4dTmp2;
+    __m256d v4dRes;
+    int numWork, numFail;
+    int ii, jj;
+
+    /* Retrieve reliability */
+    v4dTmp2 = _mm256_loadu_pd(&data->reliabilities[time]);
+    /* Compute unreliability */
+    v4dU = _mm256_sub_pd(v4dOnes, v4dTmp2);
+    /* Initialize reliability to 1 */
+    v4dRes = v4dOnes;
+    /* Compute product between reliability and unreliability */
+    v4dTmp2 = _mm256_mul_pd(v4dTmp2, v4dU);
+
+    /* For each iteration... */
+    for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
+        /* Initialize step reliability to nCi */
+        v4dTmp1 = _mm256_set1_pd((double)data->nCi[ii]);
+        /* Compute number of working and failed components */
+        numWork = data->numComponents - data->minComponents - ii;
+        numFail = data->minComponents + ii;
+        /* For each working component... */
+        for (jj = (numWork - 1); jj >= 0; --jj) {
+            /* Multiply step unreliability for product of reliability and unreliability of component */
+            v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dTmp2);
+        }
+        /* For each non-considered failed component... */
+        for (jj = (numFail - numWork - 1); jj >= 0; --jj) {
+            /* Multiply step unreliability for unreliability of component */
+            v4dTmp1 = _mm256_mul_pd(v4dTmp1, v4dU);
+        }
+        /* Subtract unreliability of current iteration */
+        v4dRes = _mm256_sub_pd(v4dRes, v4dTmp1);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+}
+
+/**
  * rbdKooNGenericShannonV2dFma3
  *
  * Compute KooN RBD through Shannon Decomposition method with amd64 FMA3 128bit
@@ -426,14 +503,14 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV4dFma3(struct rbd
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdKooNGenericShannonV2dFma3(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     __m128d v2dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
     v2dRes = rbdKooNGenericShannonStepV2dFma3(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -462,7 +539,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV2dFma3(struct rbdKooNGe
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNBddStepV2dFma3(double *r, double *h, double *l, double *o)
+static FUNCTION_TARGET("fma") void rbdKooNBddStepV2dFma3(double *r, double *h, double *l, double *o)
 {
     __m128d v2dR;
     __m128d v2dH;
@@ -475,7 +552,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNBddStepV2dFma3(double *r, double *h, d
     v2dRes = _mm_fnmadd_pd(v2dR, v2dL, v2dL);
     v2dH = _mm_loadu_pd(h);
     v2dRes = _mm_fmadd_pd(v2dR, v2dH, v2dRes);
-    _mm_storeu_pd(o, capReliabilityV2dSse2(v2dRes));
+    _mm_storeu_pd(o, capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -502,7 +579,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNBddStepV2dFma3(double *r, double *h, d
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m128d v2dR;
     __m128d v2dTmp1, v2dTmp2;
@@ -539,7 +616,73 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma3(struct rbd
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+}
+
+/**
+ * rbdKooNIdenticalFailStepV2dFma3
+ *
+ * Identical KooN RBD Step function from failed components with amd64 FMA3 128bit
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD function exploiting amd64 FMA3 128bit.
+ *  It is responsible to compute the reliability of a KooN RBD system
+ *  taking into account the failed components
+ *
+ * Parameters:
+ *      data: Identical KooN RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *
+ * Return:
+ *  None
+ */
+static FUNCTION_TARGET("fma") void rbdKooNIdenticalFailStepV2dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
+{
+    __m128d v2dU;
+    __m128d v2dTmp1, v2dTmp2;
+    __m128d v2dRes;
+    int numWork, numFail;
+    int ii, jj;
+
+    /* Retrieve reliability */
+    v2dTmp2 = _mm_loadu_pd(&data->reliabilities[time]);
+    /* Compute unreliability */
+    v2dU = _mm_sub_pd(v2dOnes, v2dTmp2);
+    /* Initialize reliability to 1 */
+    v2dRes = v2dOnes;
+    /* Compute product between reliability and unreliability */
+    v2dTmp2 = _mm_mul_pd(v2dTmp2, v2dU);
+
+    /* For each iteration... */
+    for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
+        /* Initialize step reliability to nCi */
+        v2dTmp1 = _mm_set1_pd((double)data->nCi[ii]);
+        /* Compute number of working and failed components */
+        numWork = data->numComponents - data->minComponents - ii;
+        numFail = data->minComponents + ii;
+        /* For each working component... */
+        for (jj = (numWork - 1); jj >= 0; --jj) {
+            /* Multiply step unreliability for product of reliability and unreliability of component */
+            v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dTmp2);
+        }
+        /* For each non-considered failed component... */
+        for (jj = (numFail - numWork - 1); jj >= 0; --jj) {
+            /* Multiply step unreliability for unreliability of component */
+            v2dTmp1 = _mm_mul_pd(v2dTmp1, v2dU);
+        }
+        /* Subtract unreliability of current iteration */
+        v2dRes = _mm_sub_pd(v2dRes, v2dTmp1);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -565,14 +708,14 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV2dFma3(struct rbd
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV1dFma3(struct rbdKooNGenericShannonData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdKooNGenericShannonV1dFma3(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     __m128d v2dRes;
 
     /* Recursively compute reliability of KooN RBD at current time instant */
     v2dRes = rbdKooNGenericShannonStepV1dFma3(data, time, data->numComponents, data->minComponents);
     /* Cap the computed reliability and set it into output array */
-    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -601,7 +744,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNGenericShannonV1dFma3(struct rbdKooNGe
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNBddStepV1dFma3(double *r, double *h, double *l, double *o)
+static FUNCTION_TARGET("fma") void rbdKooNBddStepV1dFma3(double *r, double *h, double *l, double *o)
 {
     __m128d v2dR;
     __m128d v2dH;
@@ -614,7 +757,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNBddStepV1dFma3(double *r, double *h, d
     v2dRes = _mm_fnmadd_sd(v2dR, v2dL, v2dL);
     v2dH = _mm_load_sd(h);
     v2dRes = _mm_fmadd_sd(v2dR, v2dH, v2dRes);
-    _mm_store_sd(o, capReliabilityV2dSse2(v2dRes));
+    _mm_store_sd(o, capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -641,7 +784,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNBddStepV1dFma3(double *r, double *h, d
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV1dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV1dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m128d v2dR;
     __m128d v2dTmp1, v2dTmp2;
@@ -678,7 +821,73 @@ HIDDEN FUNCTION_TARGET("fma") void rbdKooNIdenticalSuccessStepV1dFma3(struct rbd
     }
 
     /* Cap the computed reliability and set it into output array */
-    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+}
+
+/**
+ * rbdKooNIdenticalFailStepV1dFma3
+ *
+ * Identical KooN RBD Step function from failed components with amd64 FMA3 64bit
+ *
+ * Input:
+ *      struct rbdKooNIdenticalData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical KooN RBD function exploiting amd64 FMA3 64bit.
+ *  It is responsible to compute the reliability of a KooN RBD system
+ *  taking into account the failed components
+ *
+ * Parameters:
+ *      data: Identical KooN RBD data structure
+ *      time: current time instant over which KooN RBD shall be computed
+ *
+ * Return:
+ *  None
+ */
+static FUNCTION_TARGET("fma") void rbdKooNIdenticalFailStepV1dFma3(struct rbdKooNIdenticalData *data, unsigned int time)
+{
+    __m128d v2dU;
+    __m128d v2dTmp1, v2dTmp2;
+    __m128d v2dRes;
+    int numWork, numFail;
+    int ii, jj;
+
+    /* Retrieve reliability */
+    v2dTmp2 = _mm_load_sd(&data->reliabilities[time]);
+    /* Compute unreliability */
+    v2dU = _mm_sub_sd(v2dOnes, v2dTmp2);
+    /* Initialize reliability to 1 */
+    v2dRes = v2dOnes;
+    /* Compute product between reliability and unreliability */
+    v2dTmp2 = _mm_mul_sd(v2dTmp2, v2dU);
+
+    /* For each iteration... */
+    for (ii = data->numComponents - data->minComponents; ii >= 0; --ii) {
+        /* Initialize step reliability to nCi */
+        v2dTmp1 = _mm_set_sd((double)data->nCi[ii]);
+        /* Compute number of working and failed components */
+        numWork = data->numComponents - data->minComponents - ii;
+        numFail = data->minComponents + ii;
+        /* For each working component... */
+        for (jj = (numWork - 1); jj >= 0; --jj) {
+            /* Multiply step unreliability for product of reliability and unreliability of component */
+            v2dTmp1 = _mm_mul_sd(v2dTmp1, v2dTmp2);
+        }
+        /* For each non-considered failed component... */
+        for (jj = (numFail - numWork - 1); jj >= 0; --jj) {
+            /* Multiply step unreliability for unreliability of component */
+            v2dTmp1 = _mm_mul_sd(v2dTmp1, v2dU);
+        }
+        /* Subtract unreliability of current iteration */
+        v2dRes = _mm_sub_sd(v2dRes, v2dTmp1);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 /**

@@ -28,6 +28,10 @@
 #include "../integral_power8.h"
 
 
+static void rbdColdStandbyStepV2dVsx(struct rbdColdStandbyData *data, unsigned int time);
+static void rbdColdStandbyStepV1dVsx(struct rbdColdStandbyData *data, unsigned int time);
+
+
 /**
  * rbdColdStandbyWorkerVsx
  *
@@ -97,7 +101,7 @@ HIDDEN void *rbdColdStandbyWorkerVsx(struct rbdColdStandbyData *data)
  *      data: Cold Stand-by RBD data structure
  *      time: current time instant over which Cold Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdColdStandbyStepV2dVsx(struct rbdColdStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdColdStandbyStepV2dVsx(struct rbdColdStandbyData *data, unsigned int time)
 {
     double64x2 v2dTmp;
     double64x2 v2dPri;
@@ -132,7 +136,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdColdStandbyStepV2dVsx(struct rbdColdStandb
  *      data: Cold Stand-by RBD data structure
  *      time: current time instant over which Cold Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdColdStandbyStepV1dVsx(struct rbdColdStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdColdStandbyStepV1dVsx(struct rbdColdStandbyData *data, unsigned int time)
 {
     double64x2 v2dTmp;
     double64x2 v2dPri;

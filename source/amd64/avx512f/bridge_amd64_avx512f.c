@@ -27,6 +27,10 @@
 #include "../bridge_amd64.h"
 
 
+static void rbdBridgeGenericStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time);
+
+
 /**
  * rbdBridgeGenericWorkerAvx512f
  *
@@ -168,7 +172,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdBridgeIdenticalWorkerAvx512f(struct r
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time)
 {
     __m512d vNdR1, vNdR2, vNdR3, vNdR4, vNdR5;
     __m512d vNdTmp1, vNdTmp2;
@@ -233,7 +237,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeGenericStepVNdAvx512f(__mmask8 m
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdBridgeIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdBridgeIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time)
 {
     __m512d vNdR, vNdU;
     __m512d vNdTmp;

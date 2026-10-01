@@ -32,26 +32,13 @@
 void *rbdBridgeGenericWorkerAvx(struct rbdBridgeData *data);
 void *rbdBridgeIdenticalWorkerAvx(struct rbdBridgeData *data);
 
-void rbdBridgeGenericStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV4dAvx(struct rbdBridgeData *data, unsigned int time);
-
 /* Platform-specific functions for amd64 FMA3 instruction set */
 void *rbdBridgeGenericWorkerFma3(struct rbdBridgeData *data);
 void *rbdBridgeIdenticalWorkerFma3(struct rbdBridgeData *data);
 
-void rbdBridgeGenericStepV4dFma3(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV4dFma3(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeGenericStepV2dFma3(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV2dFma3(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeGenericStepV1dFma3(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV1dFma3(struct rbdBridgeData *data, unsigned int time);
-
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void *rbdBridgeGenericWorkerAvx512f(struct rbdBridgeData *data);
 void *rbdBridgeIdenticalWorkerAvx512f(struct rbdBridgeData *data);
-
-void rbdBridgeGenericStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdBridgeData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 

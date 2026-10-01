@@ -28,6 +28,9 @@
 #include "../integral_amd64.h"
 
 
+static void rbdColdStandbyStepVNdAvx512f(__mmask8 mask, struct rbdColdStandbyData *data, unsigned int time);
+
+
 /**
  * rbdColdStandbyWorkerAvx512f
  *
@@ -102,7 +105,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdColdStandbyWorkerAvx512f(struct rbdCo
  *      data: Cold Stand-by RBD data structure
  *      time: current time instant over which Cold Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdColdStandbyStepVNdAvx512f(__mmask8 mask, struct rbdColdStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdColdStandbyStepVNdAvx512f(__mmask8 mask, struct rbdColdStandbyData *data, unsigned int time)
 {
     __m512d vNdTmp;
     __m512d vNdPri;

@@ -27,6 +27,11 @@
 #include "../parallel_amd64.h"
 
 
+static void rbdParallelGenericStepV4dFma3(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelGenericStepV2dFma3(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelGenericStepV1dFma3(struct rbdParallelData *data, unsigned int time);
+
+
 /**
  * rbdParallelGenericWorkerFma3
  *
@@ -102,7 +107,7 @@ HIDDEN void *rbdParallelGenericWorkerFma3(struct rbdParallelData *data)
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV4dFma3(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdParallelGenericStepV4dFma3(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m256d v4dTmp;
@@ -142,7 +147,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV4dFma3(struct rbdParal
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV2dFma3(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdParallelGenericStepV2dFma3(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;
@@ -158,7 +163,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV2dFma3(struct rbdParal
     v2dRes = _mm_sub_pd(v2dOnes, v2dRes);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -182,7 +187,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV2dFma3(struct rbdParal
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV1dFma3(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdParallelGenericStepV1dFma3(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;
@@ -198,7 +203,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdParallelGenericStepV1dFma3(struct rbdParal
     v2dRes = _mm_sub_sd(v2dOnes, v2dRes);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 

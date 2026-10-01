@@ -44,18 +44,19 @@ struct rbdKooNGenericShannonRecursionData
 };
 
 
-VARIABLE_TARGET("avx") extern const __m256d v4dZeros;
-VARIABLE_TARGET("avx") extern const __m256d v4dOnes;
-VARIABLE_TARGET("avx") extern const __m256d v4dTwos;
-VARIABLE_TARGET("avx") extern const __m256d v4dHalfs;
-VARIABLE_TARGET("avx512f") extern const __m512d v8dZeros;
-VARIABLE_TARGET("avx512f") extern const __m512d v8dOnes;
-VARIABLE_TARGET("avx512f") extern const __m512d v8dTwos;
-VARIABLE_TARGET("avx512f") extern const __m512d v8dHalfs;
+extern const __m256d v4dZeros;
+extern const __m256d v4dOnes;
+extern const __m256d v4dTwos;
+extern const __m256d v4dHalfs;
+extern const __m512d v8dZeros;
+extern const __m512d v8dOnes;
+extern const __m512d v8dTwos;
+extern const __m512d v8dHalfs;
 
 
-FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR);
-FUNCTION_TARGET("avx512f") __m512d capReliabilityVNdAvx512f(__mmask8 mask, __m512d vNdR);
+__m256d capReliabilityV4dAvx(__m256d v4dR);
+__m128d capReliabilityV2dAvx(__m128d v2dR);
+__m512d capReliabilityVNdAvx512f(__mmask8 mask, __m512d vNdR);
 
 
 /**
@@ -85,28 +86,6 @@ static inline ALWAYS_INLINE void initKooNRecursionData(struct rbdKooNGenericShan
     data->v4dR = (__m256d *)alignAddr;
     data->v8dR = (__m512d *)alignAddr;
 }
-
-/**
- * amd64Sse2Supported
- *
- * SSE2 instruction set supported by the amd64 system
- *
- * Input:
- *      None
- *
- * Output:
- *      None
- *
- * Description:
- *  This function retrieves the availability of SSE2 instruction set
- *
- * Parameters:
- *      None
- *
- * Return (unsigned int):
- *  1 if SSE2 instruction set is available, 0 otherwise
- */
-unsigned int amd64Sse2Supported(void);
 
 /**
  * amd64AvxSupported

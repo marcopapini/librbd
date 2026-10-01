@@ -28,6 +28,10 @@
 #include "../integral_x86.h"
 
 
+static void rbdHotStandbyStepV2dSse2(struct rbdHotStandbyData *data, unsigned int time);
+static void rbdHotStandbyStepV1dSse2(struct rbdHotStandbyData *data, unsigned int time);
+
+
 /**
  * rbdHotStandbyWorkerSse2
  *
@@ -96,7 +100,7 @@ HIDDEN void *rbdHotStandbyWorkerSse2(struct rbdHotStandbyData *data)
  *      data: Hot Stand-by RBD data structure
  *      time: current time instant over which Hot Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdHotStandbyStepV2dSse2(struct rbdHotStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdHotStandbyStepV2dSse2(struct rbdHotStandbyData *data, unsigned int time)
 {
     __m128d v2dTmp;
     __m128d v2dPri;
@@ -133,7 +137,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdHotStandbyStepV2dSse2(struct rbdHotStandb
  *      data: Hot Stand-by RBD data structure
  *      time: current time instant over which Hot Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdHotStandbyStepV1dSse2(struct rbdHotStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdHotStandbyStepV1dSse2(struct rbdHotStandbyData *data, unsigned int time)
 {
     __m128d v2dTmp;
     __m128d v2dPri;

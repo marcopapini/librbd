@@ -27,6 +27,10 @@
 #include "../series_amd64.h"
 
 
+static void rbdSeriesGenericStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time);
+
+
 /**
  * rbdSeriesGenericWorkerAvx512f
  *
@@ -168,7 +172,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdSeriesIdenticalWorkerAvx512f(struct r
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesGenericStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdSeriesGenericStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m512d vNdTmp;
@@ -208,7 +212,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesGenericStepVNdAvx512f(__mmask8 m
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdSeriesIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdSeriesIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m512d vNdTmp;

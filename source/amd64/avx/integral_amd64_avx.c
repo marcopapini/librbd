@@ -25,7 +25,6 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../integral_amd64.h"
-#include "../../x86/integral_x86.h"
 
 
 /**
@@ -276,7 +275,7 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV4dAvx(struct rbdCol
     /* Manage the case when the first integral is computed over the empty time domain */
     if (time == 0) {
         v4dSum = rbdIntegralColdStandbyV1dAvx(data, 1);
-        v4dC = _mm256_castpd128_pd256(rbdIntegralColdStandbyV2dSse2(data, 2));
+        v4dC = _mm256_castpd128_pd256(rbdIntegralColdStandbyV2dAvx(data, 2));
         return _mm256_insertf128_pd(
                     _mm256_castpd128_pd256(
                             _mm_shuffle_pd(v2dZeros, _mm256_castpd256_pd128(v4dSum), 0x00)),
@@ -429,6 +428,144 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralColdStandbyV4dAvx(struct rbdCol
     v4dSum = _mm256_mul_pd(v4dSum, v4dTmp);
 
     return v4dSum;
+}
+
+
+/**
+ * rbdIntegralColdStandbyV2dAvx
+ *
+ * Compute integrals for Cold Stand-by function with amd64 AVX 128bit
+ *
+ * Input:
+ *      struct rbdColdStandbyData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function computes two integrals for a Cold Stand-by RBD step
+ *  exploiting amd64 AVX 128bit.
+ *  It is responsible to compute:
+ *  - $\int_0^t{f_{pri}(\tau) R_{swi}(\tau) R_{sec}(t-\tau) d\tau}$
+ *  - $\int_0^{t+1}{f_{pri}(\tau) R_{swi}(\tau) R_{sec}(t+1-\tau) d\tau}$
+ *  where f_{pri} is the failure density of the primary component, R_{swi} is the
+ *  reliability of the switch component and R_{sec} is the reliability of
+ *  the stand-by component.
+ *  To minimize the numerical error, this function uses the Kahan's method.
+ *
+ * Parameters:
+ *      data: Cold Stand-by RBD data structure
+ *      time: current time instant over which Cold Stand-by RBD shall be computed
+ *
+ * Return (__m128d):
+ *  The result of the two integrals for Cold Stand-by computation
+ */
+HIDDEN FUNCTION_TARGET("avx") __m128d rbdIntegralColdStandbyV2dAvx(struct rbdColdStandbyData *data, unsigned int time)
+{
+    __m128d v2dSum;
+    __m128d v2dC;
+    __m128d v2dY;
+    __m128d v2dTSum;
+    __m128d v2dTmp;
+    __m128d v2dFailP;
+    __m128d v2dRelS;
+    unsigned int idx;
+    unsigned int startRevIdxT;
+    unsigned int startRevIdxT1;
+
+    /* Manage the case when the first integral is computed over the empty time domain */
+    if (time == 0) {
+        return _mm_shuffle_pd(v2dZeros, _mm256_castpd256_pd128(rbdIntegralColdStandbyV1dAvx(data, 1)), 0);
+    }
+
+    v2dSum = v2dZeros;
+    v2dC = v2dZeros;
+
+    /* Compute the first index to be used over the reversed stand-by reliability */
+    startRevIdxT = data->numTimes - 1 - time;
+    startRevIdxT1 = startRevIdxT - (V2D - 1);
+
+    /* For each internal time instant... */
+    for (idx = 1; idx < time; ++idx) {
+        v2dFailP = _mm_load1_pd(&data->primaryFailureDensity[idx]);
+        v2dTmp = _mm_load1_pd(&data->switchReliability[idx]);
+        v2dRelS = _mm_loadu_pd(&data->standbyReliabilityRev[startRevIdxT1 + idx]);
+        v2dRelS = _mm_shuffle_pd(v2dRelS, v2dRelS, 1);
+        /**
+         * Compute $R_{swi}(\tau) \cdot f_{pri}(\tau) \cdot R_{sec}(t-\tau)$
+         * The weight is 1.0 (trapezoidal rule for internal time instants)
+         */
+        v2dTmp = _mm_mul_pd(v2dFailP, v2dTmp);
+        v2dTmp = _mm_mul_pd(v2dTmp, v2dRelS);
+
+        /* Add the current product to the result using the Kahan's method */
+        v2dY = _mm_sub_pd(v2dTmp, v2dC);
+        v2dTSum = _mm_add_pd(v2dSum, v2dY);
+        v2dC = _mm_sub_pd(_mm_sub_pd(v2dTSum, v2dSum), v2dY);
+        v2dSum = v2dTSum;
+    }
+
+    /**
+     * First step - Compute $f_{pri}(0) \cdot R_{swi}(0) \cdot R_{sec}(currIdx)$
+     * The weight is 0.5 (trapezoidal rule for external left instant)
+     */
+    v2dFailP = _mm_load1_pd(&data->primaryFailureDensity[0]);
+    v2dTmp = _mm_load1_pd(&data->switchReliability[0]);
+    v2dRelS = _mm_loadu_pd(&data->standbyReliabilityRev[startRevIdxT1]);
+    v2dRelS = _mm_shuffle_pd(v2dRelS, v2dRelS, 1);
+    v2dTmp = _mm_mul_pd(v2dFailP, v2dTmp);
+    v2dTmp = _mm_mul_pd(v2dTmp, v2dRelS);
+    v2dTmp = _mm_mul_pd(v2dTmp, v2dHalfs);
+
+    /* Add the current product to the result using the Kahan's method */
+    v2dY = _mm_sub_pd(v2dTmp, v2dC);
+    v2dTSum = _mm_add_pd(v2dSum, v2dY);
+    v2dC = _mm_sub_pd(_mm_sub_pd(v2dTSum, v2dSum), v2dY);
+    v2dSum = v2dTSum;
+
+    /**
+     * Second step - Compute missing internal nodes in interval [time, currIdx)
+     * The weight is 1.0 (trapezoidal rule for internal time instants)
+     * - Lane 0 does not have missing nodes
+     * - Lane 1 has a single missing node for \tau=time
+     */
+    v2dFailP = _mm_set_pd(data->primaryFailureDensity[time], 0.0);
+    v2dTmp = _mm_set_pd(data->switchReliability[time], 0.0);
+    v2dRelS = _mm_set_pd(data->standbyReliabilityRev[data->numTimes - 2], 0.0);
+    v2dTmp = _mm_mul_pd(v2dFailP, v2dTmp);
+    v2dTmp = _mm_mul_pd(v2dTmp, v2dRelS);
+
+    /* Add the current product to the result using the Kahan's method */
+    v2dY = _mm_sub_pd(v2dTmp, v2dC);
+    v2dTSum = _mm_add_pd(v2dSum, v2dY);
+    v2dC = _mm_sub_pd(_mm_sub_pd(v2dTSum, v2dSum), v2dY);
+    v2dSum = v2dTSum;
+
+    /**
+     * Third step - Compute $f_{pri}(currIdx) \cdot R_{swi}(currIdx) \cdot R_{sec}(0)$
+     * The weight is 0.5 (trapezoidal rule for external right instant)
+     */
+    v2dFailP = _mm_loadu_pd(&data->primaryFailureDensity[time]);
+    v2dTmp = _mm_loadu_pd(&data->switchReliability[time]);
+    v2dRelS = _mm_load1_pd(&data->standbyReliabilityRev[data->numTimes - 1]);
+    v2dTmp = _mm_mul_pd(v2dFailP, v2dTmp);
+    v2dTmp = _mm_mul_pd(v2dTmp, v2dRelS);
+    v2dTmp = _mm_mul_pd(v2dTmp, v2dHalfs);
+
+    /* Add the current product to the result using the Kahan's method */
+    v2dY = _mm_sub_pd(v2dTmp, v2dC);
+    v2dTSum = _mm_add_pd(v2dSum, v2dY);
+    v2dC = _mm_sub_pd(_mm_sub_pd(v2dTSum, v2dSum), v2dY);
+
+    /* Apply Kahan compensation to clean the accumulated sums */
+    v2dSum = _mm_sub_pd(v2dTSum, v2dC);
+
+    /* Multiply the partial result with the delta time */
+    v2dTmp = _mm_set1_pd(data->deltaT);
+    v2dSum = _mm_mul_pd(v2dSum, v2dTmp);
+
+    return v2dSum;
 }
 
 /**
@@ -700,7 +837,7 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralHotStandbyV4dAvx(struct rbdHotS
     /* Manage the case when the first integral is computed over the empty time domain */
     if (time == 0) {
         v4dSum = rbdIntegralHotStandbyV1dAvx(data, 1);
-        v4dC = _mm256_castpd128_pd256(rbdIntegralHotStandbyV2dSse2(data, 2));
+        v4dC = _mm256_castpd128_pd256(rbdIntegralHotStandbyV2dAvx(data, 2));
         return _mm256_insertf128_pd(
                     _mm256_castpd128_pd256(
                             _mm_shuffle_pd(v2dZeros, _mm256_castpd256_pd128(v4dSum), 0x00)),
@@ -792,6 +929,94 @@ HIDDEN FUNCTION_TARGET("avx") __m256d rbdIntegralHotStandbyV4dAvx(struct rbdHotS
     v4dSum = _mm256_mul_pd(v4dSum, v4dTmp);
 
     return v4dSum;
+}
+
+/**
+ * rbdIntegralHotStandbyV2dAvx
+ *
+ * Compute integrals for Hot Stand-by function with amd64 AVX 128bit
+ *
+ * Input:
+ *      struct rbdHotStandbyData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function computes two integrals for a Hot Stand-by RBD step
+ *  exploiting amd64 AVX 128bit.
+ *  It is responsible to compute:
+ *  - $\int_0^t{f_{pri}(\tau) R_{swi}(\tau) d\tau}$
+ *  - $\int_0^{t+1}{f_{pri}(\tau) R_{swi}(\tau) d\tau}$
+ *  where f_{pri} is the failure density of the primary component and R_{swi} is the
+ *  reliability of the switch component.
+ *  To minimize the numerical error, this function uses the Kahan's method.
+ *
+ * Parameters:
+ *      data: Hot Stand-by RBD data structure
+ *      time: current time instant over which Hot Stand-by RBD shall be computed
+ *
+ * Return (__m128d):
+ *  The result of the two integrals for Hot Stand-by computation
+ */
+HIDDEN FUNCTION_TARGET("avx") __m128d rbdIntegralHotStandbyV2dAvx(struct rbdHotStandbyData *data, unsigned int time)
+{
+    __m256d v4dTmp;
+    __m128d v2dSum;
+    __m128d v2dC;
+    __m128d v2dY;
+    __m128d v2dTSum;
+    __m128d v2dTmp;
+    __m128d v2dFailP;
+
+    /* Manage the case when the first integral is computed over the empty time domain */
+    if (time == 0) {
+        return _mm_shuffle_pd(v2dZeros, _mm256_castpd256_pd128(rbdIntegralHotStandbyV1dAvx(data, 1)), 0);
+    }
+
+    /* Compute the common part of the integral for Hot Stand-by */
+    v2dSum = _mm256_castpd256_pd128(rbdIntegralHotStandbyCommonAvx(data, time, &v4dTmp));
+    v2dC = _mm256_castpd256_pd128(v4dTmp);
+
+    /**
+     * First step - Compute missing internal nodes in interval [time, time + 1)
+     * The weight is 1.0 (trapezoidal rule for internal time instants)
+     * - Lane 0 does not have missing nodes
+     * - Lane 1 has a single missing node for \tau=time
+     */
+    v2dFailP = _mm_set_pd(data->primaryFailureDensity[time], 0.0);
+    v2dTmp = _mm_set_pd(data->switchReliability[time], 0.0);
+    v2dTmp = _mm_mul_pd(v2dFailP, v2dTmp);
+
+    /* Add the current product to the result using the Kahan's method */
+    v2dY = _mm_sub_pd(v2dTmp, v2dC);
+    v2dTSum = _mm_add_pd(v2dSum, v2dY);
+    v2dC = _mm_sub_pd(_mm_sub_pd(v2dTSum, v2dSum), v2dY);
+    v2dSum = v2dTSum;
+
+    /**
+     * Second step - Compute $f_{pri}(\tau) \cdot R_{swi}(\tau)$
+     * The weight is 0.5 (trapezoidal rule for external right instant)
+     */
+    v2dFailP = _mm_loadu_pd(&data->primaryFailureDensity[time]);
+    v2dTmp = _mm_loadu_pd(&data->switchReliability[time]);
+    v2dTmp = _mm_mul_pd(v2dFailP, v2dTmp);
+    v2dTmp = _mm_mul_pd(v2dTmp, v2dHalfs);
+
+    /* Add the current product to the result using the Kahan's method */
+    v2dY = _mm_sub_pd(v2dTmp, v2dC);
+    v2dTSum = _mm_add_pd(v2dSum, v2dY);
+    v2dC = _mm_sub_pd(_mm_sub_pd(v2dTSum, v2dSum), v2dY);
+
+    /* Apply Kahan compensation to clean the accumulated sums */
+    v2dSum = _mm_sub_pd(v2dTSum, v2dC);
+
+    /* Multiply the partial result with the delta time */
+    v2dTmp = _mm_set1_pd(data->deltaT);
+    v2dSum = _mm_mul_pd(v2dSum, v2dTmp);
+
+    return v2dSum;
 }
 
 /**

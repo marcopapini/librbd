@@ -49,7 +49,5 @@ void *rbdColdStandbyWorker(void *arg);
 /* Platform-generic functions */
 void *rbdColdStandbyWorkerNoarch(struct rbdColdStandbyData *data);
 
-void rbdColdStandbyStepS1d(struct rbdColdStandbyData *data, unsigned int time);
-
 
 #endif /* COLD_STANDBY_H_ */

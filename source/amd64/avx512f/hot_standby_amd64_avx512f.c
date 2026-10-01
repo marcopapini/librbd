@@ -28,6 +28,9 @@
 #include "../integral_amd64.h"
 
 
+static void rbdHotStandbyStepVNdAvx512f(__mmask8 mask, struct rbdHotStandbyData *data, unsigned int time);
+
+
 /**
  * rbdHotStandbyWorkerAvx512f
  *
@@ -101,7 +104,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdHotStandbyWorkerAvx512f(struct rbdHot
  *      data: Hot Stand-by RBD data structure
  *      time: current time instant over which Hot Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdHotStandbyStepVNdAvx512f(__mmask8 mask, struct rbdHotStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdHotStandbyStepVNdAvx512f(__mmask8 mask, struct rbdHotStandbyData *data, unsigned int time)
 {
     __m512d vNdTmp;
     __m512d vNdPri;

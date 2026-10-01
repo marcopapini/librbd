@@ -27,6 +27,12 @@
 #include "../parallel_power8.h"
 
 
+static void rbdParallelGenericStepV2dVsx(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepV2dVsx(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelGenericStepV1dVsx(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepV1dVsx(struct rbdParallelData *data, unsigned int time);
+
+
 /**
  * rbdParallelGenericWorkerVsx
  *
@@ -154,7 +160,7 @@ HIDDEN void *rbdParallelIdenticalWorkerVsx(struct rbdParallelData *data)
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdParallelGenericStepV2dVsx(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdParallelGenericStepV2dVsx(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     double64x2 v2dTmp;
@@ -194,7 +200,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdParallelGenericStepV2dVsx(struct rbdParall
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdParallelIdenticalStepV2dVsx(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdParallelIdenticalStepV2dVsx(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     double64x2 v2dU;
@@ -236,7 +242,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdParallelIdenticalStepV2dVsx(struct rbdPara
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdParallelGenericStepV1dVsx(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdParallelGenericStepV1dVsx(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     double64x2 v2dTmp;
@@ -276,7 +282,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdParallelGenericStepV1dVsx(struct rbdParall
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdParallelIdenticalStepV1dVsx(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdParallelIdenticalStepV1dVsx(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     double64x2 v2dU;

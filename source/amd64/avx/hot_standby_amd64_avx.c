@@ -26,7 +26,11 @@
 #include "../rbd_internal_amd64.h"
 #include "../hot_standby_amd64.h"
 #include "../integral_amd64.h"
-#include "../../x86/hot_standby_x86.h"
+
+
+static void rbdHotStandbyStepV4dAvx(struct rbdHotStandbyData *data, unsigned int time);
+static void rbdHotStandbyStepV2dAvx(struct rbdHotStandbyData *data, unsigned int time);
+static void rbdHotStandbyStepV1dAvx(struct rbdHotStandbyData *data, unsigned int time);
 
 
 /**
@@ -71,14 +75,14 @@ HIDDEN void *rbdHotStandbyWorkerAvx(struct rbdHotStandbyData *data)
     /* Are (at least) 2 time instants remaining? */
     if ((time + V2D) <= data->numTimes) {
         /* Compute reliability of Hot Stand-by RBD at current time instant */
-        rbdHotStandbyStepV2dSse2(data, time);
+        rbdHotStandbyStepV2dAvx(data, time);
         /* Increment current time instant */
         time += V2D;
     }
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Hot Stand-by RBD at current time instant */
-        rbdHotStandbyStepV1dSse2(data, time);
+        rbdHotStandbyStepV1dAvx(data, time);
     }
 
     return NULL;
@@ -104,7 +108,7 @@ HIDDEN void *rbdHotStandbyWorkerAvx(struct rbdHotStandbyData *data)
  *      data: Hot Stand-by RBD data structure
  *      time: current time instant over which Hot Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdHotStandbyStepV4dAvx(struct rbdHotStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("avx") void rbdHotStandbyStepV4dAvx(struct rbdHotStandbyData *data, unsigned int time)
 {
     __m256d v4dTmp;
     __m256d v4dPri;
@@ -119,6 +123,80 @@ HIDDEN FUNCTION_TARGET("avx") void rbdHotStandbyStepV4dAvx(struct rbdHotStandbyD
 
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+}
+
+/**
+ * rbdHotStandbyStepV2dAvx
+ *
+ * Hot Stand-by RBD step function with amd64 AVX 128bit
+ *
+ * Input:
+ *      struct rbdHotStandbyData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the Hot Stand-by RBD step exploiting amd64 AVX 128bit.
+ *  It is responsible to compute the reliability of a Hot Stand-by block
+ *
+ * Parameters:
+ *      data: Hot Stand-by RBD data structure
+ *      time: current time instant over which Hot Stand-by RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdHotStandbyStepV2dAvx(struct rbdHotStandbyData *data, unsigned int time)
+{
+    __m128d v2dTmp;
+    __m128d v2dPri;
+    __m128d v2dRes;
+
+    /* Compute reliability of Hot Stand-by RBD at current time instant */
+    v2dPri = _mm_loadu_pd(&data->primaryReliability[time]);
+    v2dTmp = _mm_loadu_pd(&data->standbyReliability[time]);
+    v2dRes = rbdIntegralHotStandbyV2dAvx(data, time);
+    v2dRes = _mm_mul_pd(v2dRes, v2dTmp);
+    v2dRes = _mm_add_pd(v2dRes, v2dPri);
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+}
+
+/**
+ * rbdHotStandbyStepV1dAvx
+ *
+ * Hot Stand-by RBD step function with amd64 AVX 64bit
+ *
+ * Input:
+ *      struct rbdHotStandbyData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the Hot Stand-by RBD step exploiting amd64 AVX 64bit.
+ *  It is responsible to compute the reliability of a Hot Stand-by block
+ *
+ * Parameters:
+ *      data: Hot Stand-by RBD data structure
+ *      time: current time instant over which Hot Stand-by RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdHotStandbyStepV1dAvx(struct rbdHotStandbyData *data, unsigned int time)
+{
+    __m128d v2dTmp;
+    __m128d v2dPri;
+    __m128d v2dRes;
+
+    /* Compute reliability of Hot Stand-by RBD at current time instant */
+    v2dPri = _mm_load_sd(&data->primaryReliability[time]);
+    v2dTmp = _mm_load_sd(&data->standbyReliability[time]);
+    v2dRes = _mm256_castpd256_pd128(rbdIntegralHotStandbyV1dAvx(data, time));
+    v2dRes = _mm_mul_sd(v2dRes, v2dTmp);
+    v2dRes = _mm_add_sd(v2dRes, v2dPri);
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 

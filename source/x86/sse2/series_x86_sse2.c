@@ -27,6 +27,12 @@
 #include "../series_x86.h"
 
 
+static void rbdSeriesGenericStepV2dSse2(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepV2dSse2(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesGenericStepV1dSse2(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepV1dSse2(struct rbdSeriesData *data, unsigned int time);
+
+
 /**
  * rbdSeriesGenericWorkerSse2
  *
@@ -154,7 +160,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerSse2(struct rbdSeriesData *data)
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesGenericStepV2dSse2(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdSeriesGenericStepV2dSse2(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;
@@ -192,7 +198,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesGenericStepV2dSse2(struct rbdSeries
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesIdenticalStepV2dSse2(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdSeriesIdenticalStepV2dSse2(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;
@@ -232,7 +238,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesIdenticalStepV2dSse2(struct rbdSeri
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesGenericStepV1dSse2(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdSeriesGenericStepV1dSse2(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;
@@ -270,7 +276,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesGenericStepV1dSse2(struct rbdSeries
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdSeriesIdenticalStepV1dSse2(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdSeriesIdenticalStepV1dSse2(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;

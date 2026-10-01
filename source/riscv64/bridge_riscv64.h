@@ -31,9 +31,6 @@
 /* Platform-specific functions for RISC-V 64bit RVV instruction set */
 void *rbdBridgeGenericWorkerRvv(struct rbdBridgeData *data);
 void *rbdBridgeIdenticalWorkerRvv(struct rbdBridgeData *data);
-
-void rbdBridgeGenericStepVNdRvv(struct rbdBridgeData *data, unsigned int time, unsigned long int vl);
-void rbdBridgeIdenticalStepVNdRvv(struct rbdBridgeData *data, unsigned int time, unsigned long int vl);
 #endif /* defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0) */
 
 

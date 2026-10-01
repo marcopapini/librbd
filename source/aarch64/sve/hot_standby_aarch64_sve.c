@@ -28,6 +28,11 @@
 #include "../integral_aarch64.h"
 
 
+#if !defined(COMPILER_VS)
+static void rbdHotStandbyStepVNdSve(svbool_t pg, struct rbdHotStandbyData *data, unsigned int time);
+#endif /* !defined(COMPILER_VS) */
+
+
 /**
  * rbdHotStandbyWorkerSve
  *
@@ -109,7 +114,7 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdHotStandbyWorkerSve(struct rbdHotStandby
  *      data: Hot Stand-by RBD data structure
  *      time: current time instant over which Hot Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdHotStandbyStepVNdSve(svbool_t pg, struct rbdHotStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("+sve") void rbdHotStandbyStepVNdSve(svbool_t pg, struct rbdHotStandbyData *data, unsigned int time)
 {
     svfloat64_t vNdTmp;
     svfloat64_t vNdPri;

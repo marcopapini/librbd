@@ -32,15 +32,9 @@
 void *rbdSeriesGenericWorkerAvx(struct rbdSeriesData *data);
 void *rbdSeriesIdenticalWorkerAvx(struct rbdSeriesData *data);
 
-void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time);
-void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time);
-
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void *rbdSeriesGenericWorkerAvx512f(struct rbdSeriesData *data);
 void *rbdSeriesIdenticalWorkerAvx512f(struct rbdSeriesData *data);
-
-void rbdSeriesGenericStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time);
-void rbdSeriesIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdSeriesData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 

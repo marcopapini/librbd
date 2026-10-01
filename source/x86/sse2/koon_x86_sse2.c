@@ -28,6 +28,15 @@
 #include "../../generic/combinations.h"
 
 
+
+static void rbdKooNGenericShannonV2dSse2(struct rbdKooNGenericShannonData *data, unsigned int time);
+static void rbdKooNBddStepV2dSse2(double *r, double *h, double *l, double *o);
+static void rbdKooNIdenticalSuccessStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNGenericShannonV1dSse2(struct rbdKooNGenericShannonData *data, unsigned int time);
+static void rbdKooNBddStepV1dSse2(double *r, double *h, double *l, double *o);
+static void rbdKooNIdenticalSuccessStepV1dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNIdenticalFailStepV1dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
 static __m128d rbdKooNGenericShannonStepV2dSse2(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static __m128d rbdKooNGenericShannonStepV1dSse2(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static double *rbdKooNBddSse2(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
@@ -297,7 +306,7 @@ HIDDEN void *rbdKooNIdenticalWorkerSse2(struct rbdKooNIdenticalData *data)
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericShannonV2dSse2(struct rbdKooNGenericShannonData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdKooNGenericShannonV2dSse2(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     __m128d v2dRes;
 
@@ -333,7 +342,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericShannonV2dSse2(struct rbdKooNG
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNBddStepV2dSse2(double *r, double *h, double *l, double *o)
+static FUNCTION_TARGET("sse2") void rbdKooNBddStepV2dSse2(double *r, double *h, double *l, double *o)
 {
     __m128d v2dR;
     __m128d v2dRes;
@@ -374,7 +383,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNBddStepV2dSse2(double *r, double *h, 
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m128d v2dR;
     __m128d v2dTmp1, v2dTmp2;
@@ -439,7 +448,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV2dSse2(struct rb
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m128d v2dU;
     __m128d v2dTmp1, v2dTmp2;
@@ -504,7 +513,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV2dSse2(struct rbdKo
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericShannonV1dSse2(struct rbdKooNGenericShannonData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdKooNGenericShannonV1dSse2(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     __m128d v2dRes;
 
@@ -540,7 +549,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNGenericShannonV1dSse2(struct rbdKooNG
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNBddStepV1dSse2(double *r, double *h, double *l, double *o)
+static FUNCTION_TARGET("sse2") void rbdKooNBddStepV1dSse2(double *r, double *h, double *l, double *o)
 {
     __m128d v2dR;
     __m128d v2dRes;
@@ -581,7 +590,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNBddStepV1dSse2(double *r, double *h, 
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV1dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV1dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m128d v2dR;
     __m128d v2dTmp1, v2dTmp2;
@@ -646,7 +655,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalSuccessStepV1dSse2(struct rb
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV1dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdKooNIdenticalFailStepV1dSse2(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m128d v2dU;
     __m128d v2dTmp1, v2dTmp2;

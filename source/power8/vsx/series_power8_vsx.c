@@ -27,6 +27,12 @@
 #include "../series_power8.h"
 
 
+static void rbdSeriesGenericStepV2dVsx(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepV2dVsx(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesGenericStepV1dVsx(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepV1dVsx(struct rbdSeriesData *data, unsigned int time);
+
+
 /**
  * rbdSeriesGenericWorkerVsx
  *
@@ -154,7 +160,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerVsx(struct rbdSeriesData *data)
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdSeriesGenericStepV2dVsx(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdSeriesGenericStepV2dVsx(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     double64x2 v2dTmp;
@@ -192,7 +198,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdSeriesGenericStepV2dVsx(struct rbdSeriesDa
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdSeriesIdenticalStepV2dVsx(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdSeriesIdenticalStepV2dVsx(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     double64x2 v2dTmp;
@@ -232,7 +238,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdSeriesIdenticalStepV2dVsx(struct rbdSeries
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdSeriesGenericStepV1dVsx(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdSeriesGenericStepV1dVsx(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     double64x2 v2dTmp;
@@ -270,7 +276,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdSeriesGenericStepV1dVsx(struct rbdSeriesDa
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdSeriesIdenticalStepV1dVsx(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdSeriesIdenticalStepV1dVsx(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     double64x2 v2dTmp;

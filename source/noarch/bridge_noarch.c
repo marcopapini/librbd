@@ -25,6 +25,10 @@
 #include "../bridge.h"
 
 
+static void rbdBridgeGenericStepS1d(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeIdenticalStepS1d(struct rbdBridgeData *data, unsigned int time);
+
+
 #if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
 /**
  * rbdBridgeGenericWorker
@@ -190,7 +194,7 @@ HIDDEN void *rbdBridgeIdenticalWorkerNoarch(struct rbdBridgeData *data)
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN void rbdBridgeGenericStepS1d(struct rbdBridgeData *data, unsigned int time)
+static void rbdBridgeGenericStepS1d(struct rbdBridgeData *data, unsigned int time)
 {
     double s1dR1, s1dR2, s1dR3, s1dR4, s1dR5;
     double s1dTmp1, s1dTmp2;
@@ -252,7 +256,7 @@ HIDDEN void rbdBridgeGenericStepS1d(struct rbdBridgeData *data, unsigned int tim
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN void rbdBridgeIdenticalStepS1d(struct rbdBridgeData *data, unsigned int time)
+static void rbdBridgeIdenticalStepS1d(struct rbdBridgeData *data, unsigned int time)
 {
     double s1dR, s1dU;
     double s1dRes;

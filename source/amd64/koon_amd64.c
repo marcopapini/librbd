@@ -66,11 +66,7 @@ HIDDEN void *rbdKooNFillWorker(void *arg)
         return rbdKooNFillWorkerAvx(data);
     }
 
-    if (amd64Sse2Supported()) {
-        return rbdKooNFillWorkerSse2(data);
-    }
-
-    return rbdKooNFillWorkerNoarch(data);
+    return rbdKooNFillWorkerSse2(data);
 }
 
 /**
@@ -117,11 +113,7 @@ HIDDEN void *rbdKooNGenericShannonWorker(void *arg)
         return rbdKooNGenericShannonWorkerAvx(data);
     }
 
-    if (amd64Sse2Supported()) {
-        return rbdKooNGenericShannonWorkerSse2(data);
-    }
-
-    return rbdKooNGenericShannonWorkerNoarch(data);
+    return rbdKooNGenericShannonWorkerSse2(data);
 }
 
 /**
@@ -168,11 +160,7 @@ HIDDEN void *rbdKooNBddWorker(void *arg)
         return rbdKooNBddWorkerAvx(data);
     }
 
-    if (amd64Sse2Supported()) {
-        return rbdKooNBddWorkerSse2(data);
-    }
-
-    return rbdKooNBddWorkerNoarch(data);
+    return rbdKooNBddWorkerSse2(data);
 }
 
 /**
@@ -216,11 +204,7 @@ HIDDEN void *rbdKooNIdenticalWorker(void *arg)
         return rbdKooNIdenticalWorkerAvx(data);
     }
 
-    if (amd64Sse2Supported()) {
-        return rbdKooNIdenticalWorkerSse2(data);
-    }
-
-    return rbdKooNIdenticalWorkerNoarch(data);
+    return rbdKooNIdenticalWorkerSse2(data);
 }
 
 

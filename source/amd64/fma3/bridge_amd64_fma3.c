@@ -27,6 +27,14 @@
 #include "../bridge_amd64.h"
 
 
+static void rbdBridgeGenericStepV4dFma3(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeIdenticalStepV4dFma3(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeGenericStepV2dFma3(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeIdenticalStepV2dFma3(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeGenericStepV1dFma3(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeIdenticalStepV1dFma3(struct rbdBridgeData *data, unsigned int time);
+
+
 /**
  * rbdBridgeGenericWorkerFma3
  *
@@ -174,7 +182,7 @@ HIDDEN void *rbdBridgeIdenticalWorkerFma3(struct rbdBridgeData *data)
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV4dFma3(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdBridgeGenericStepV4dFma3(struct rbdBridgeData *data, unsigned int time)
 {
     __m256d v4dR1, v4dR2, v4dR3, v4dR4, v4dR5;
     __m256d v4dTmp1, v4dTmp2;
@@ -236,7 +244,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV4dFma3(struct rbdBridgeD
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV4dFma3(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV4dFma3(struct rbdBridgeData *data, unsigned int time)
 {
     __m256d v4dR, v4dU;
     __m256d v4dTmp;
@@ -283,7 +291,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV4dFma3(struct rbdBridg
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma3(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma3(struct rbdBridgeData *data, unsigned int time)
 {
     __m128d v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
     __m128d v2dTmp1, v2dTmp2;
@@ -322,7 +330,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma3(struct rbdBridgeD
     v2dRes = _mm_fmadd_pd(v2dR5, v2dRes, v2dTmp1);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -346,7 +354,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV2dFma3(struct rbdBridgeD
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV2dFma3(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV2dFma3(struct rbdBridgeData *data, unsigned int time)
 {
     __m128d v2dR, v2dU;
     __m128d v2dTmp;
@@ -369,7 +377,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV2dFma3(struct rbdBridg
     v2dRes = _mm_mul_pd(v2dTmp, v2dR);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -393,7 +401,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV2dFma3(struct rbdBridg
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV1dFma3(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdBridgeGenericStepV1dFma3(struct rbdBridgeData *data, unsigned int time)
 {
     __m128d v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
     __m128d v2dTmp1, v2dTmp2;
@@ -432,7 +440,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV1dFma3(struct rbdBridgeD
     v2dRes = _mm_fmadd_sd(v2dR5, v2dRes, v2dTmp1);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -456,7 +464,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeGenericStepV1dFma3(struct rbdBridgeD
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV1dFma3(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV1dFma3(struct rbdBridgeData *data, unsigned int time)
 {
     __m128d v2dR, v2dU;
     __m128d v2dTmp;
@@ -479,7 +487,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdBridgeIdenticalStepV1dFma3(struct rbdBridg
     v2dRes = _mm_mul_sd(v2dTmp, v2dR);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 

@@ -42,13 +42,13 @@ struct rbdKooNGenericShannonRecursionData
 #endif /* defined(ARC_X86) */
 
 
-VARIABLE_TARGET("sse2") extern const __m128d v2dZeros;
-VARIABLE_TARGET("sse2") extern const __m128d v2dOnes;
-VARIABLE_TARGET("sse2") extern const __m128d v2dTwos;
-VARIABLE_TARGET("sse2") extern const __m128d v2dHalfs;
+extern const __m128d v2dZeros;
+extern const __m128d v2dOnes;
+extern const __m128d v2dTwos;
+extern const __m128d v2dHalfs;
 
 
-FUNCTION_TARGET("sse2") __m128d capReliabilityV2dSse2(__m128d v2dR);
+__m128d capReliabilityV2dSse2(__m128d v2dR);
 
 #endif /* (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0) */
 

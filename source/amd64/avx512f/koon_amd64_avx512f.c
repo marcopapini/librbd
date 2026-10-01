@@ -28,6 +28,10 @@
 #include "../../generic/combinations.h"
 
 
+static void rbdKooNGenericShannonVNdAvx512f(__mmask8 mask, struct rbdKooNGenericShannonData *data, unsigned int time);
+static void rbdKooNBddStepVNdAvx512f(__mmask8 mask, double *r, double *h, double *l, double *o);
+static void rbdKooNIdenticalSuccessStepVNdAvx512f(__mmask8 mask, struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNIdenticalFailStepVNdAvx512f(__mmask8 mask, struct rbdKooNIdenticalData *data, unsigned int time);
 static __m512d rbdKooNGenericShannonStepVNdAvx512f(__mmask8 mask, struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static double *rbdKooNBddAvx512f(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 
@@ -322,7 +326,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdKooNIdenticalWorkerAvx512f(struct rbd
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericShannonVNdAvx512f(__mmask8 mask, struct rbdKooNGenericShannonData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdKooNGenericShannonVNdAvx512f(__mmask8 mask, struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     __m512d vNdRes;
 
@@ -360,7 +364,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNGenericShannonVNdAvx512f(__mmask8 
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNBddStepVNdAvx512f(__mmask8 mask, double *r, double *h, double *l, double *o)
+static FUNCTION_TARGET("avx512f") void rbdKooNBddStepVNdAvx512f(__mmask8 mask, double *r, double *h, double *l, double *o)
 {
     __m512d vNdR;
     __m512d vNdH;
@@ -402,7 +406,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNBddStepVNdAvx512f(__mmask8 mask, d
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalSuccessStepVNdAvx512f(__mmask8 mask, struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdKooNIdenticalSuccessStepVNdAvx512f(__mmask8 mask, struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m512d vNdR;
     __m512d vNdTmp1, vNdTmp2;
@@ -468,7 +472,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalSuccessStepVNdAvx512f(__m
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepVNdAvx512f(__mmask8 mask, struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdKooNIdenticalFailStepVNdAvx512f(__mmask8 mask, struct rbdKooNIdenticalData *data, unsigned int time)
 {
     __m512d vNdU;
     __m512d vNdTmp1, vNdTmp2;

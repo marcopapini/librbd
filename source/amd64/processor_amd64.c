@@ -30,9 +30,6 @@
 #if defined(COMPILER_VS)
 #include <intrin.h>
 
-#define SSE2_ID             1       /* cpuid identifier to retrieve SSE2 support */
-#define SSE2_REG            3       /* Register identifier (EDX) to retrieve SSE2 support */
-#define SSE2_BIT            26      /* Bit to retrieve to retrieve SSE2 support */
 #define AVX_ID              1       /* cpuid identifier to retrieve AVX support */
 #define AVX_REG             2       /* Register identifier (ECX) to retrieve AVX support */
 #define AVX_BIT             28      /* Bit to retrieve to retrieve AVX support */
@@ -51,7 +48,6 @@
 
 struct amd64Cpu
 {
-    unsigned int sse2Supported;     /* amd64 SSE2 instruction set supported */
     unsigned int avxSupported;      /* amd64 AVX instruction set supported */
     unsigned int fma3Supported;     /* amd64 FMA3 instruction set supported */
     unsigned int avx512fSupported;  /* amd64 AVX512F instruction set supported */
@@ -59,35 +55,6 @@ struct amd64Cpu
 
 
 static struct amd64Cpu amd64Cpu;
-
-/**
- * amd64Sse2Supported
- *
- * SSE2 instruction set supported by the amd64 system
- *
- * Input:
- *      None
- *
- * Output:
- *      None
- *
- * Description:
- *  This function retrieves the availability of SSE2 instruction set
- *
- * Parameters:
- *      None
- *
- * Return (unsigned int):
- *  1 if SSE2 instruction set is available, 0 otherwise
- */
-HIDDEN unsigned int amd64Sse2Supported(void)
-{
-    /* Get CPU-specific information */
-    getCpuInfo();
-
-    /* Return x86 SSE2 instruction set supported by the system */
-    return amd64Cpu.sse2Supported;
-}
 
 /**
  * amd64AvxSupported
@@ -209,9 +176,8 @@ HIDDEN unsigned int retrieveAmd64CpuInfo(unsigned int numCores)
 
     /**
      * Default processor info:
-     * - no SSE2, no AVX, no FMA3, no AVX512F
+     * - no AVX, no FMA3, no AVX512F
      */
-    amd64Cpu.sse2Supported = 0;
     amd64Cpu.avxSupported = 0;
     amd64Cpu.fma3Supported = 0;
     amd64Cpu.avx512fSupported = 0;
@@ -221,36 +187,28 @@ HIDDEN unsigned int retrieveAmd64CpuInfo(unsigned int numCores)
     __cpuid(cpuInfo, 0);
     nIds = cpuInfo[0];
 
-    if (nIds >= SSE2_ID) {
-        /* Calling __cpuidex with Function ID SSE2_ID gets availability of SSE2, AVX, FMA3. */
-        __cpuidex(cpuInfo, SSE2_ID, 0);
-        if (((cpuInfo[SSE2_REG] >> SSE2_BIT) & 0x1) != 0) {
-            amd64Cpu.sse2Supported = 1;
-            if (((cpuInfo[AVX_REG] >> AVX_BIT) & 0x1) != 0) {
-                amd64Cpu.avxSupported = 1;
-                if (((cpuInfo[FMA3_REG] >> FMA3_BIT) & 0x1) != 0) {
-                    amd64Cpu.fma3Supported = 1;
-                    if (nIds >= AVX512F_ID) {
-                        /* Calling __cpuidex with Function ID AVX512F_ID gets availability of AVX512F. */
-                        __cpuidex(cpuInfo, AVX512F_ID, 0);
-                        if (((cpuInfo[AVX512F_REG] >> AVX512F_BIT) & 0x1) != 0) {
-                            amd64Cpu.avx512fSupported = 1;
-                        }
-                    }
+    /* Calling __cpuidex with Function ID AVX_ID gets availability of AVX, FMA3. */
+    __cpuidex(cpuInfo, SSE2_ID, 0);
+    if (((cpuInfo[AVX_REG] >> AVX_BIT) & 0x1) != 0) {
+        amd64Cpu.avxSupported = 1;
+        if (((cpuInfo[FMA3_REG] >> FMA3_BIT) & 0x1) != 0) {
+            amd64Cpu.fma3Supported = 1;
+            if (nIds >= AVX512F_ID) {
+                /* Calling __cpuidex with Function ID AVX512F_ID gets availability of AVX512F. */
+                __cpuidex(cpuInfo, AVX512F_ID, 0);
+                if (((cpuInfo[AVX512F_REG] >> AVX512F_BIT) & 0x1) != 0) {
+                    amd64Cpu.avx512fSupported = 1;
                 }
             }
         }
     }
 #else
-    if (__builtin_cpu_supports("sse2") > 0) {
-        amd64Cpu.sse2Supported = 1;
-        if (__builtin_cpu_supports("avx") > 0) {
-            amd64Cpu.avxSupported = 1;
-            if (__builtin_cpu_supports("fma") > 0) {
-                amd64Cpu.fma3Supported = 1;
-                if (__builtin_cpu_supports("avx512f") > 0) {
-                    amd64Cpu.avx512fSupported = 1;
-                }
+    if (__builtin_cpu_supports("avx") > 0) {
+        amd64Cpu.avxSupported = 1;
+        if (__builtin_cpu_supports("fma") > 0) {
+            amd64Cpu.fma3Supported = 1;
+            if (__builtin_cpu_supports("avx512f") > 0) {
+                amd64Cpu.avx512fSupported = 1;
             }
         }
     }

@@ -25,7 +25,14 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../series_amd64.h"
-#include "../../x86/series_x86.h"
+
+
+static void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesGenericStepV2dAvx(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepV2dAvx(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesGenericStepV1dAvx(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepV1dAvx(struct rbdSeriesData *data, unsigned int time);
 
 
 /**
@@ -69,14 +76,14 @@ HIDDEN void *rbdSeriesGenericWorkerAvx(struct rbdSeriesData *data)
     /* Are (at least) 2 time instants remaining? */
     if ((time + V2D) <= data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepV2dSse2(data, time);
+        rbdSeriesGenericStepV2dAvx(data, time);
         /* Increment current time instant */
         time += V2D;
     }
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesGenericStepV1dSse2(data, time);
+        rbdSeriesGenericStepV1dAvx(data, time);
     }
 
     return NULL;
@@ -116,13 +123,13 @@ HIDDEN void *rbdSeriesIdenticalWorkerAvx(struct rbdSeriesData *data)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Series RBD at current time instant */
-                rbdSeriesIdenticalStepV1dSse2(data, time);
+                rbdSeriesIdenticalStepV1dAvx(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
             if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Series RBD at current time instant */
-                rbdSeriesIdenticalStepV2dSse2(data, time);
+                rbdSeriesIdenticalStepV2dAvx(data, time);
                 /* Increment current time instant */
                 time += V2D;
             }
@@ -141,14 +148,14 @@ HIDDEN void *rbdSeriesIdenticalWorkerAvx(struct rbdSeriesData *data)
     /* Are (at least) 2 time instants remaining? */
     if ((time + V2D) <= data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepV2dSse2(data, time);
+        rbdSeriesIdenticalStepV2dAvx(data, time);
         /* Increment current time instant */
         time += V2D;
     }
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Series RBD at current time instant */
-        rbdSeriesIdenticalStepV1dSse2(data, time);
+        rbdSeriesIdenticalStepV1dAvx(data, time);
     }
 
     return NULL;
@@ -175,7 +182,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerAvx(struct rbdSeriesData *data)
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("avx") void rbdSeriesGenericStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m256d v4dTmp;
@@ -213,7 +220,7 @@ HIDDEN FUNCTION_TARGET("avx") void rbdSeriesGenericStepV4dAvx(struct rbdSeriesDa
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("avx") void rbdSeriesIdenticalStepV4dAvx(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     __m256d v4dTmp;
@@ -230,6 +237,162 @@ HIDDEN FUNCTION_TARGET("avx") void rbdSeriesIdenticalStepV4dAvx(struct rbdSeries
 
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+}
+
+/**
+ * rbdSeriesGenericStepV2dAvx
+ *
+ * Generic Series RBD step function with amd64 AVX 128bit
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Series RBD step exploiting amd64 AVX 128bit.
+ *  It is responsible to compute the reliability of a Series block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdSeriesGenericStepV2dAvx(struct rbdSeriesData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dTmp;
+    __m128d v2dRes;
+
+    /* Compute reliability of Series RBD at current time instant */
+    v2dRes = _mm_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
+    for (component = 1; component < data->numComponents; ++component) {
+        v2dTmp = _mm_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
+        v2dRes = _mm_mul_pd(v2dRes, v2dTmp);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+}
+
+/**
+ * rbdSeriesIdenticalStepV2dAvx
+ *
+ * Identical Series RBD step function with amd64 AVX 128bit
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Series RBD step exploiting amd64 AVX 128bit.
+ *  It is responsible to compute the reliability of a Series block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdSeriesIdenticalStepV2dAvx(struct rbdSeriesData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dTmp;
+    __m128d v2dRes;
+
+    /* Load reliability */
+    v2dTmp = _mm_loadu_pd(&data->reliabilities[time]);
+
+    /* Compute reliability of Series RBD at current time instant */
+    v2dRes = v2dTmp;
+    for (component = (data->numComponents - 1); component > 0; --component) {
+        v2dRes = _mm_mul_pd(v2dRes, v2dTmp);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+}
+
+/**
+ * rbdSeriesGenericStepV1dAvx
+ *
+ * Generic Series RBD step function with amd64 AVX 64bit
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Series RBD step exploiting amd64 AVX 64bit.
+ *  It is responsible to compute the reliability of a Series block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdSeriesGenericStepV1dAvx(struct rbdSeriesData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dTmp;
+    __m128d v2dRes;
+
+    /* Compute reliability of Series RBD at current time instant */
+    v2dRes = _mm_load_sd(&data->reliabilities[(0 * data->numTimes) + time]);
+    for (component = 1; component < data->numComponents; ++component) {
+        v2dTmp = _mm_load_sd(&data->reliabilities[(component * data->numTimes) + time]);
+        v2dRes = _mm_mul_sd(v2dRes, v2dTmp);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+}
+
+/**
+ * rbdSeriesIdenticalStepV1dAvx
+ *
+ * Identical Series RBD step function with amd64 AVX 64bit
+ *
+ * Input:
+ *      struct rbdSeriesData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Series RBD step exploiting amd64 AVX 64bit.
+ *  It is responsible to compute the reliability of a Series block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Series RBD data structure
+ *      time: current time instant over which Series RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdSeriesIdenticalStepV1dAvx(struct rbdSeriesData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dTmp;
+    __m128d v2dRes;
+
+    /* Load reliability */
+    v2dTmp = _mm_load_sd(&data->reliabilities[time]);
+
+    /* Compute reliability of Series RBD at current time instant */
+    v2dRes = v2dTmp;
+    for (component = (data->numComponents - 1); component > 0; --component) {
+        v2dRes = _mm_mul_sd(v2dRes, v2dTmp);
+    }
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 

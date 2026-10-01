@@ -27,6 +27,12 @@
 #include "../bridge_aarch64.h"
 
 
+static void rbdBridgeGenericStepV2dNeon(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeIdenticalStepV2dNeon(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeGenericStepV1dNeon(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeIdenticalStepV1dNeon(struct rbdBridgeData *data, unsigned int time);
+
+
 /**
  * rbdBridgeGenericWorkerNeon
  *
@@ -154,7 +160,7 @@ HIDDEN void *rbdBridgeIdenticalWorkerNeon(struct rbdBridgeData *data)
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeGenericStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdBridgeGenericStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
 {
     float64x2_t v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
     float64x2_t v2dTmp1, v2dTmp2;
@@ -217,7 +223,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeGenericStepV2dNeon(struct rbdBridg
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeIdenticalStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdBridgeIdenticalStepV2dNeon(struct rbdBridgeData *data, unsigned int time)
 {
     float64x2_t v2dR, v2dU;
     float64x2_t v2dTmp;
@@ -262,7 +268,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeIdenticalStepV2dNeon(struct rbdBri
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeGenericStepV1dNeon(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdBridgeGenericStepV1dNeon(struct rbdBridgeData *data, unsigned int time)
 {
     float64x1_t v1dR1, v1dR2, v1dR3, v1dR4, v1dR5;
     float64x1_t v1dTmp1, v1dTmp2;
@@ -325,7 +331,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeGenericStepV1dNeon(struct rbdBridg
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdBridgeIdenticalStepV1dNeon(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdBridgeIdenticalStepV1dNeon(struct rbdBridgeData *data, unsigned int time)
 {
     float64x1_t v1dR, v1dU;
     float64x1_t v1dTmp;

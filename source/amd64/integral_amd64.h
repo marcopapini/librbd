@@ -30,8 +30,10 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for amd64 AVX instruction set */
 __m256d rbdIntegralColdStandbyV4dAvx(struct rbdColdStandbyData *data, unsigned int time);
+__m128d rbdIntegralColdStandbyV2dAvx(struct rbdColdStandbyData *data, unsigned int time);
 __m256d rbdIntegralColdStandbyV1dAvx(struct rbdColdStandbyData *data, unsigned int time);
 __m256d rbdIntegralHotStandbyV4dAvx(struct rbdHotStandbyData *data, unsigned int time);
+__m128d rbdIntegralHotStandbyV2dAvx(struct rbdHotStandbyData *data, unsigned int time);
 __m256d rbdIntegralHotStandbyV1dAvx(struct rbdHotStandbyData *data, unsigned int time);
 
 /* Platform-specific functions for amd64 FMA3 instruction set */

@@ -31,11 +31,6 @@
 /* Platform-specific functions for POWER8 VSX instruction set */
 void *rbdParallelGenericWorkerVsx(struct rbdParallelData *data);
 void *rbdParallelIdenticalWorkerVsx(struct rbdParallelData *data);
-
-void rbdParallelGenericStepV2dVsx(struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepV2dVsx(struct rbdParallelData *data, unsigned int time);
-void rbdParallelGenericStepV1dVsx(struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepV1dVsx(struct rbdParallelData *data, unsigned int time);
 #endif /* defined(ARCH_POWER8) && (CPU_ENABLE_SIMD != 0) */
 
 

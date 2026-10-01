@@ -29,6 +29,10 @@
 #include "../../generic/combinations.h"
 
 
+static void rbdKooNGenericShannonVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned long int vl);
+static void rbdKooNBddStepVNdRvv(double *r, double *h, double *l, double *o, unsigned long int vl);
+static void rbdKooNIdenticalSuccessStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time, unsigned long int vl);
+static void rbdKooNIdenticalFailStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time, unsigned long int vl);
 static vfloat64m1_t rbdKooNGenericShannonStepVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k, unsigned long int vl);
 static double *rbdKooNBddRvv(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 
@@ -286,7 +290,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdKooNIdenticalWorkerRvv(struct rbdKooN
  * Return:
  *      None
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNGenericShannonVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdKooNGenericShannonVNdRvv(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned long int vl)
 {
     vfloat64m1_t vNdRes;
 
@@ -322,7 +326,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNGenericShannonVNdRvv(struct rbdKoo
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNBddStepVNdRvv(double *r, double *h, double *l, double *o, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdKooNBddStepVNdRvv(double *r, double *h, double *l, double *o, unsigned long int vl)
 {
     vfloat64m1_t vNdR;
     vfloat64m1_t vNdH;
@@ -364,7 +368,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNBddStepVNdRvv(double *r, double *h
  * Return:
  *      None
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalSuccessStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalSuccessStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time, unsigned long int vl)
 {
     vfloat64m1_t vNdR;
     vfloat64m1_t vNdTmp1, vNdTmp2;
@@ -430,7 +434,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalSuccessStepVNdRvv(struct 
  * Return:
  *      None
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdKooNIdenticalFailStepVNdRvv(struct rbdKooNIdenticalData *data, unsigned int time, unsigned long int vl)
 {
     vfloat64m1_t vNdU;
     vfloat64m1_t vNdTmp1, vNdTmp2;

@@ -28,6 +28,10 @@
 #include "../series_riscv64.h"
 
 
+static void rbdSeriesGenericStepVNdRvv(struct rbdSeriesData *data, unsigned int time, unsigned long int vl);
+static void rbdSeriesIdenticalStepVNdRvv(struct rbdSeriesData *data, unsigned int time, unsigned long int vl);
+
+
 /**
  * rbdSeriesGenericWorkerRvv
  *
@@ -157,7 +161,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdSeriesIdenticalWorkerRvv(struct rbdSe
  *      time: current time instant over which Series RBD shall be computed
  *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdSeriesGenericStepVNdRvv(struct rbdSeriesData *data, unsigned int time, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdSeriesGenericStepVNdRvv(struct rbdSeriesData *data, unsigned int time, unsigned long int vl)
 {
     unsigned char component;
     vfloat64m1_t vNdTmp;
@@ -197,7 +201,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdSeriesGenericStepVNdRvv(struct rbdSeri
  *      time: current time instant over which Series RBD shall be computed
  *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdSeriesIdenticalStepVNdRvv(struct rbdSeriesData *data, unsigned int time, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdSeriesIdenticalStepVNdRvv(struct rbdSeriesData *data, unsigned int time, unsigned long int vl)
 {
     unsigned char component;
     vfloat64m1_t vNdTmp;

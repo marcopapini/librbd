@@ -26,7 +26,11 @@
 #include "../rbd_internal_amd64.h"
 #include "../cold_standby_amd64.h"
 #include "../integral_amd64.h"
-#include "../../x86/cold_standby_x86.h"
+
+
+static void rbdColdStandbyStepV4dAvx(struct rbdColdStandbyData *data, unsigned int time);
+static void rbdColdStandbyStepV2dAvx(struct rbdColdStandbyData *data, unsigned int time);
+static void rbdColdStandbyStepV1dAvx(struct rbdColdStandbyData *data, unsigned int time);
 
 
 /**
@@ -72,7 +76,7 @@ HIDDEN void *rbdColdStandbyWorkerAvx(struct rbdColdStandbyData *data)
     /* Are (at least) 2 time instants remaining? */
     if ((time + V2D) <= data->numTimes) {
         /* Compute reliability of Cold Stand-by RBD at current time instant */
-        rbdColdStandbyStepV2dSse2(data, time);
+        rbdColdStandbyStepV2dAvx(data, time);
         /* Increment current time instant */
         time += V2D;
     }
@@ -105,7 +109,7 @@ HIDDEN void *rbdColdStandbyWorkerAvx(struct rbdColdStandbyData *data)
  *      data: Cold Stand-by RBD data structure
  *      time: current time instant over which Cold Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdColdStandbyStepV4dAvx(struct rbdColdStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("avx") void rbdColdStandbyStepV4dAvx(struct rbdColdStandbyData *data, unsigned int time)
 {
     __m256d v4dTmp;
     __m256d v4dPri;
@@ -118,6 +122,41 @@ HIDDEN FUNCTION_TARGET("avx") void rbdColdStandbyStepV4dAvx(struct rbdColdStandb
 
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+}
+
+/**
+ * rbdColdStandbyStepV2dAvx
+ *
+ * Cold Stand-by RBD step function with amd64 AVX 128bit
+ *
+ * Input:
+ *      struct rbdColdStandbyData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the Cold Stand-by RBD step exploiting amd64 AVX 128bit.
+ *  It is responsible to compute the reliability of a Cold Stand-by block
+ *
+ * Parameters:
+ *      data: Cold Stand-by RBD data structure
+ *      time: current time instant over which Cold Stand-by RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdColdStandbyStepV2dAvx(struct rbdColdStandbyData *data, unsigned int time)
+{
+    __m128d v2dTmp;
+    __m128d v2dPri;
+    __m128d v2dRes;
+
+    /* Compute reliability of Cold Stand-by RBD at current time instant */
+    v2dPri = _mm_loadu_pd(&data->primaryReliability[time]);
+    v2dTmp = rbdIntegralColdStandbyV2dAvx(data, time);
+    v2dRes = _mm_add_pd(v2dTmp, v2dPri);
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -140,7 +179,7 @@ HIDDEN FUNCTION_TARGET("avx") void rbdColdStandbyStepV4dAvx(struct rbdColdStandb
  *      data: Cold Stand-by RBD data structure
  *      time: current time instant over which Cold Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdColdStandbyStepV1dAvx(struct rbdColdStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("avx") void rbdColdStandbyStepV1dAvx(struct rbdColdStandbyData *data, unsigned int time)
 {
     __m128d v2dTmp;
     __m128d v2dPri;
@@ -152,7 +191,7 @@ HIDDEN FUNCTION_TARGET("avx") void rbdColdStandbyStepV1dAvx(struct rbdColdStandb
     v2dRes = _mm_add_sd(v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 

@@ -32,19 +32,9 @@
 void *rbdParallelGenericWorkerNeon(struct rbdParallelData *data);
 void *rbdParallelIdenticalWorkerNeon(struct rbdParallelData *data);
 
-void rbdParallelGenericStepV2dNeon(struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int time);
-void rbdParallelGenericStepV1dNeon(struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepV1dNeon(struct rbdParallelData *data, unsigned int time);
-
 /* Platform-specific functions for AArch64 SVE instruction set */
 void *rbdParallelGenericWorkerSve(struct rbdParallelData *data);
 void *rbdParallelIdenticalWorkerSve(struct rbdParallelData *data);
-
-#if !defined(COMPILER_VS)
-void rbdParallelGenericStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time);
-#endif /* !defined(COMPILER_VS) */
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 

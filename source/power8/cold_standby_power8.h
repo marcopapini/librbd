@@ -30,9 +30,6 @@
 #if defined(ARCH_POWER8) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for POWER8 VSX instruction set */
 void *rbdColdStandbyWorkerVsx(struct rbdColdStandbyData *data);
-
-void rbdColdStandbyStepV2dVsx(struct rbdColdStandbyData *data, unsigned int time);
-void rbdColdStandbyStepV1dVsx(struct rbdColdStandbyData *data, unsigned int time);
 #endif /* defined(ARCH_POWER8) && (CPU_ENABLE_SIMD != 0) */
 
 

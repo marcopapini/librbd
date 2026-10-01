@@ -49,7 +49,5 @@ void *rbdHotStandbyWorker(void *arg);
 /* Platform-generic functions */
 void *rbdHotStandbyWorkerNoarch(struct rbdHotStandbyData *data);
 
-void rbdHotStandbyStepS1d(struct rbdHotStandbyData *data, unsigned int time);
-
 
 #endif /* HOT_STANDBY_H_ */

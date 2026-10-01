@@ -31,15 +31,8 @@
 /* Platform-specific functions for AArch64 NEON instruction set */
 void *rbdColdStandbyWorkerNeon(struct rbdColdStandbyData *data);
 
-void rbdColdStandbyStepV2dNeon(struct rbdColdStandbyData *data, unsigned int time);
-void rbdColdStandbyStepV1dNeon(struct rbdColdStandbyData *data, unsigned int time);
-
 /* Platform-specific functions for AArch64 SVE instruction set */
 void *rbdColdStandbyWorkerSve(struct rbdColdStandbyData *data);
-
-#if !defined(COMPILER_VS)
-void rbdColdStandbyStepVNdSve(svbool_t pg, struct rbdColdStandbyData *data, unsigned int time);
-#endif /* !defined(COMPILER_VS) */
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 

@@ -27,6 +27,12 @@
 #include "../parallel_aarch64.h"
 
 
+#if !defined(COMPILER_VS)
+static void rbdParallelGenericStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time);
+#endif /* !defined(COMPILER_VS) */
+
+
 /**
  * rbdParallelGenericWorkerSve
  *
@@ -165,7 +171,7 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdParallelIdenticalWorkerSve(struct rbdPar
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdParallelGenericStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("+sve") void rbdParallelGenericStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     svfloat64_t vNdTmp;
@@ -207,7 +213,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdParallelGenericStepVNdSve(svbool_t pg, st
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdParallelIdenticalStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("+sve") void rbdParallelIdenticalStepVNdSve(svbool_t pg, struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     svfloat64_t vNdU;

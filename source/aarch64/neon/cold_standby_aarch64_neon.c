@@ -28,6 +28,10 @@
 #include "../integral_aarch64.h"
 
 
+static void rbdColdStandbyStepV2dNeon(struct rbdColdStandbyData *data, unsigned int time);
+static void rbdColdStandbyStepV1dNeon(struct rbdColdStandbyData *data, unsigned int time);
+
+
 /**
  * rbdColdStandbyWorkerNeon
  *
@@ -97,7 +101,7 @@ HIDDEN void *rbdColdStandbyWorkerNeon(struct rbdColdStandbyData *data)
  *      data: Cold Stand-by RBD data structure
  *      time: current time instant over which Cold Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdColdStandbyStepV2dNeon(struct rbdColdStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdColdStandbyStepV2dNeon(struct rbdColdStandbyData *data, unsigned int time)
 {
     float64x2_t v2dTmp;
     float64x2_t v2dPri;
@@ -132,7 +136,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdColdStandbyStepV2dNeon(struct rbdColdSta
  *      data: Cold Stand-by RBD data structure
  *      time: current time instant over which Cold Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdColdStandbyStepV1dNeon(struct rbdColdStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdColdStandbyStepV1dNeon(struct rbdColdStandbyData *data, unsigned int time)
 {
     float64x1_t v1dPri;
     float64x1_t v1dTmp;

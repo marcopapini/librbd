@@ -31,11 +31,6 @@
 /* Platform-specific functions for POWER8 VSX instruction set */
 void *rbdBridgeGenericWorkerVsx(struct rbdBridgeData *data);
 void *rbdBridgeIdenticalWorkerVsx(struct rbdBridgeData *data);
-
-void rbdBridgeGenericStepV2dVsx(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV2dVsx(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeGenericStepV1dVsx(struct rbdBridgeData *data, unsigned int time);
-void rbdBridgeIdenticalStepV1dVsx(struct rbdBridgeData *data, unsigned int time);
 #endif /* defined(ARCH_POWER8) && (CPU_ENABLE_SIMD != 0) */
 
 

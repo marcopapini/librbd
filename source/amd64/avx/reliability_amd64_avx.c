@@ -74,7 +74,7 @@ HIDDEN FUNCTION_TARGET("avx") void *rbdUnreliabilityWorkerAvx(struct rbdUnreliab
         /* Compute unreliability at current time instant */
         v2dRes = _mm_loadu_pd(&data->reliability[time]);
         v2dRes = _mm_sub_pd(v2dOnes, v2dRes);
-        _mm_storeu_pd(&data->unreliability[time], capReliabilityV2dSse2(v2dRes));
+        _mm_storeu_pd(&data->unreliability[time], capReliabilityV2dAvx(v2dRes));
         /* Increment current time instant */
         time += V2D;
     }
@@ -83,7 +83,7 @@ HIDDEN FUNCTION_TARGET("avx") void *rbdUnreliabilityWorkerAvx(struct rbdUnreliab
         /* Compute unreliability at current time instant */
         v2dRes = _mm_load_sd(&data->reliability[time]);
         v2dRes = _mm_sub_sd(v2dOnes, v2dRes);
-        _mm_store_sd(&data->unreliability[time], capReliabilityV2dSse2(v2dRes));
+        _mm_store_sd(&data->unreliability[time], capReliabilityV2dAvx(v2dRes));
     }
 
     return NULL;
@@ -141,7 +141,7 @@ HIDDEN FUNCTION_TARGET("avx") void *rbdReliabilitySumWorkerAvx(struct rbdReliabi
         v2dRes = _mm_loadu_pd(&data->r1[time]);
         v2dTmp = _mm_loadu_pd(&data->r2[time]);
         v2dRes = _mm_add_pd(v2dRes, v2dTmp);
-        _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+        _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
         /* Increment current time instant */
         time += V2D;
     }
@@ -151,7 +151,7 @@ HIDDEN FUNCTION_TARGET("avx") void *rbdReliabilitySumWorkerAvx(struct rbdReliabi
         v2dRes = _mm_load_sd(&data->r1[time]);
         v2dTmp = _mm_load_sd(&data->r2[time]);
         v2dRes = _mm_add_sd(v2dRes, v2dTmp);
-        _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+        _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
     }
 
     return NULL;

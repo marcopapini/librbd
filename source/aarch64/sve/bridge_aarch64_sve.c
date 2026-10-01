@@ -27,6 +27,12 @@
 #include "../bridge_aarch64.h"
 
 
+#if !defined(COMPILER_VS)
+static void rbdBridgeGenericStepVNdSve(svbool_t pg, struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeIdenticalStepVNdSve(svbool_t pg, struct rbdBridgeData *data, unsigned int time);
+#endif /* !defined(COMPILER_VS) */
+
+
 /**
  * rbdBridgeGenericWorkerSve
  *
@@ -165,7 +171,7 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdBridgeIdenticalWorkerSve(struct rbdBridg
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeGenericStepVNdSve(svbool_t pg, struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("+sve") void rbdBridgeGenericStepVNdSve(svbool_t pg, struct rbdBridgeData *data, unsigned int time)
 {
     svfloat64_t vNdR1, vNdR2, vNdR3, vNdR4, vNdR5;
     svfloat64_t vNdTmp1, vNdTmp2;
@@ -230,7 +236,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeGenericStepVNdSve(svbool_t pg, stru
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdBridgeIdenticalStepVNdSve(svbool_t pg, struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("+sve") void rbdBridgeIdenticalStepVNdSve(svbool_t pg, struct rbdBridgeData *data, unsigned int time)
 {
     svfloat64_t vNdR, vNdU;
     svfloat64_t vNdTmp;

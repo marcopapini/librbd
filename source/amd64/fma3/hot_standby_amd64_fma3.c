@@ -28,6 +28,11 @@
 #include "../integral_amd64.h"
 
 
+static void rbdHotStandbyStepV4dFma3(struct rbdHotStandbyData *data, unsigned int time);
+static void rbdHotStandbyStepV2dFma3(struct rbdHotStandbyData *data, unsigned int time);
+static void rbdHotStandbyStepV1dFma3(struct rbdHotStandbyData *data, unsigned int time);
+
+
 /**
  * rbdHotStandbyWorkerFma3
  *
@@ -103,7 +108,7 @@ HIDDEN void *rbdHotStandbyWorkerFma3(struct rbdHotStandbyData *data)
  *      data: Hot Stand-by RBD data structure
  *      time: current time instant over which Hot Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdHotStandbyStepV4dFma3(struct rbdHotStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdHotStandbyStepV4dFma3(struct rbdHotStandbyData *data, unsigned int time)
 {
     __m256d v4dTmp;
     __m256d v4dPri;
@@ -139,7 +144,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdHotStandbyStepV4dFma3(struct rbdHotStandby
  *      data: Hot Stand-by RBD data structure
  *      time: current time instant over which Hot Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdHotStandbyStepV2dFma3(struct rbdHotStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdHotStandbyStepV2dFma3(struct rbdHotStandbyData *data, unsigned int time)
 {
     __m128d v2dTmp;
     __m128d v2dPri;
@@ -152,7 +157,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdHotStandbyStepV2dFma3(struct rbdHotStandby
     v2dRes = _mm_fmadd_pd(v2dRes, v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_storeu_pd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 /**
@@ -175,7 +180,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdHotStandbyStepV2dFma3(struct rbdHotStandby
  *      data: Hot Stand-by RBD data structure
  *      time: current time instant over which Hot Stand-by RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("fma") void rbdHotStandbyStepV1dFma3(struct rbdHotStandbyData *data, unsigned int time)
+static FUNCTION_TARGET("fma") void rbdHotStandbyStepV1dFma3(struct rbdHotStandbyData *data, unsigned int time)
 {
     __m128d v2dTmp;
     __m128d v2dPri;
@@ -188,7 +193,7 @@ HIDDEN FUNCTION_TARGET("fma") void rbdHotStandbyStepV1dFma3(struct rbdHotStandby
     v2dRes = _mm_fmadd_sd(v2dRes, v2dTmp, v2dPri);
 
     /* Cap the computed reliability and set it into output array */
-    _mm_store_sd(&data->output[time], capReliabilityV2dSse2(v2dRes));
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 

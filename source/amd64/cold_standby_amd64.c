@@ -70,11 +70,7 @@ HIDDEN void *rbdColdStandbyWorker(void *arg)
         return rbdColdStandbyWorkerAvx(data);
     }
 
-    if (amd64Sse2Supported()) {
-        return rbdColdStandbyWorkerSse2(data);
-    }
-
-    return rbdColdStandbyWorkerNoarch(data);
+    return rbdColdStandbyWorkerSse2(data);
 }
 
 #endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */

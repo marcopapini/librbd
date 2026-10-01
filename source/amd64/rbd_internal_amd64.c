@@ -64,6 +64,33 @@ HIDDEN FUNCTION_TARGET("avx") __m256d capReliabilityV4dAvx(__m256d v4dR)
 }
 
 /**
+ * capReliabilityV2dAvx
+ *
+ * Cap reliability to accepted bounds [0.0, 1.0] with amd64 AVX 128bit
+ *
+ * Input:
+ *      __m128d v2dR
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function caps the provided reliability (vector of 2 values, double-precision FP)
+ *      to the accepted bounds exploiting amd64 AVX 128bit
+ *
+ * Parameters:
+ *      v2dR: Reliability
+ *
+ * Return (__m128d):
+ *  Reliability within accepted bounds
+ */
+HIDDEN FUNCTION_TARGET("avx") __m128d capReliabilityV2dAvx(__m128d v2dR)
+{
+    /* Cap computed reliability to accepted bounds [0, 1] */
+    return _mm_max_pd(_mm_min_pd(v2dOnes, v2dR), v2dZeros);
+}
+
+/**
  * capReliabilityVNdAvx512f
  *
  * Cap reliability to accepted bounds [0.0, 1.0] with amd64 AVX512F 512bit

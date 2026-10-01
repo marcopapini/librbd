@@ -28,6 +28,10 @@
 #include "../bridge_riscv64.h"
 
 
+static void rbdBridgeGenericStepVNdRvv(struct rbdBridgeData *data, unsigned int time, unsigned long int vl);
+static void rbdBridgeIdenticalStepVNdRvv(struct rbdBridgeData *data, unsigned int time, unsigned long int vl);
+
+
 /**
  * rbdBridgeGenericWorkerRvv
  *
@@ -157,7 +161,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdBridgeIdenticalWorkerRvv(struct rbdBr
  *      time: current time instant over which Bridge RBD shall be computed
  *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdBridgeGenericStepVNdRvv(struct rbdBridgeData *data, unsigned int time, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdBridgeGenericStepVNdRvv(struct rbdBridgeData *data, unsigned int time, unsigned long int vl)
 {
     vfloat64m1_t vNdR1, vNdR2, vNdR3, vNdR4, vNdR5;
     vfloat64m1_t vNdTmp1, vNdTmp2;
@@ -222,7 +226,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdBridgeGenericStepVNdRvv(struct rbdBrid
  *      time: current time instant over which Bridge RBD shall be computed
  *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdBridgeIdenticalStepVNdRvv(struct rbdBridgeData *data, unsigned int time, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdBridgeIdenticalStepVNdRvv(struct rbdBridgeData *data, unsigned int time, unsigned long int vl)
 {
     vfloat64m1_t vNdR, vNdU;
     vfloat64m1_t vNdTmp;

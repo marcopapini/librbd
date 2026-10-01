@@ -65,11 +65,7 @@ HIDDEN void *rbdUnreliabilityWorker(void *arg)
         return rbdUnreliabilityWorkerAvx(data);
     }
 
-    if (amd64Sse2Supported()) {
-        return rbdUnreliabilityWorkerSse2(data);
-    }
-
-    return rbdUnreliabilityWorkerNoarch(data);
+    return rbdUnreliabilityWorkerSse2(data);
 }
 
 /**
@@ -108,11 +104,7 @@ HIDDEN void *rbdReliabilitySumWorker(void *arg)
         return rbdReliabilitySumWorkerAvx(data);
     }
 
-    if (amd64Sse2Supported()) {
-        return rbdReliabilitySumWorkerSse2(data);
-    }
-
-    return rbdReliabilitySumWorkerNoarch(data);
+    return rbdReliabilitySumWorkerSse2(data);
 }
 
 #endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */

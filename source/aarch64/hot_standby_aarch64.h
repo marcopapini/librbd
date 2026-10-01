@@ -31,15 +31,8 @@
 /* Platform-specific functions for AArch64 NEON instruction set */
 void *rbdHotStandbyWorkerNeon(struct rbdHotStandbyData *data);
 
-void rbdHotStandbyStepV2dNeon(struct rbdHotStandbyData *data, unsigned int time);
-void rbdHotStandbyStepV1dNeon(struct rbdHotStandbyData *data, unsigned int time);
-
 /* Platform-specific functions for AArch64 SVE instruction set */
 void *rbdHotStandbyWorkerSve(struct rbdHotStandbyData *data);
-
-#if !defined(COMPILER_VS)
-void rbdHotStandbyStepVNdSve(svbool_t pg, struct rbdHotStandbyData *data, unsigned int time);
-#endif /* !defined(COMPILER_VS) */
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 

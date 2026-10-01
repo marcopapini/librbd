@@ -34,27 +34,11 @@ void *rbdKooNGenericShannonWorkerNeon(struct rbdKooNGenericShannonData *data);
 void *rbdKooNBddWorkerNeon(struct rbdKooNBddData *data);
 void *rbdKooNIdenticalWorkerNeon(struct rbdKooNIdenticalData *data);
 
-void rbdKooNGenericShannonV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time);
-void rbdKooNBddStepV2dNeon(double *r, double *h, double *l, double *o);
-void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNGenericShannonV1dNeon(struct rbdKooNGenericShannonData *data, unsigned int time);
-void rbdKooNBddStepV1dNeon(double *r, double *h, double *l, double *o);
-void rbdKooNIdenticalSuccessStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNIdenticalFailStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
-
 /* Platform-specific functions for AArch64 SVE instruction set */
 void *rbdKooNFillWorkerSve(struct rbdKooNFillData *data);
 void *rbdKooNGenericShannonWorkerSve(struct rbdKooNGenericShannonData *data);
 void *rbdKooNBddWorkerSve(struct rbdKooNBddData *data);
 void *rbdKooNIdenticalWorkerSve(struct rbdKooNIdenticalData *data);
-
-#if !defined(COMPILER_VS)
-void rbdKooNGenericShannonVNdSve(svbool_t pg, struct rbdKooNGenericShannonData *data, unsigned int time);
-void rbdKooNBddStepVNdSve(svbool_t pg, double *r, double *h, double *l, double *o);
-void rbdKooNIdenticalSuccessStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNIdenticalFailStepVNdSve(svbool_t pg, struct rbdKooNIdenticalData *data, unsigned int time);
-#endif /* !defined(COMPILER_VS) */
 #endif /* defined(ARCH_AARCH64) && (CPU_ENABLE_SIMD != 0) */
 
 

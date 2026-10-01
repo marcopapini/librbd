@@ -30,9 +30,6 @@
 #if (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for x86 SSE2 instruction set */
 void *rbdColdStandbyWorkerSse2(struct rbdColdStandbyData *data);
-
-void rbdColdStandbyStepV2dSse2(struct rbdColdStandbyData *data, unsigned int time);
-void rbdColdStandbyStepV1dSse2(struct rbdColdStandbyData *data, unsigned int time);
 #endif /* (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0) */
 
 

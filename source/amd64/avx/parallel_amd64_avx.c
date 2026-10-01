@@ -25,7 +25,14 @@
 #if defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0)
 #include "../rbd_internal_amd64.h"
 #include "../parallel_amd64.h"
-#include "../../x86/parallel_x86.h"
+
+
+static void rbdParallelGenericStepV4dAvx(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepV4dAvx(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelGenericStepV2dAvx(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepV2dAvx(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelGenericStepV1dAvx(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepV1dAvx(struct rbdParallelData *data, unsigned int time);
 
 
 /**
@@ -69,14 +76,14 @@ HIDDEN void *rbdParallelGenericWorkerAvx(struct rbdParallelData *data)
     /* Are (at least) 2 time instants remaining? */
     if ((time + V2D) <= data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepV2dSse2(data, time);
+        rbdParallelGenericStepV2dAvx(data, time);
         /* Increment current time instant */
         time += V2D;
     }
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelGenericStepV1dSse2(data, time);
+        rbdParallelGenericStepV1dAvx(data, time);
     }
 
     return NULL;
@@ -119,13 +126,13 @@ HIDDEN void *rbdParallelIdenticalWorkerAvx(void *arg)
         if (((uintptr_t)&data->reliabilities[time] & (S1D * sizeof(double) - 1)) == 0) {
             if (((uintptr_t)&data->reliabilities[time] & (V2D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Parallel RBD at current time instant */
-                rbdParallelIdenticalStepV1dSse2(data, time);
+                rbdParallelIdenticalStepV1dAvx(data, time);
                 /* Increment current time instant */
                 time += S1D;
             }
             if (((uintptr_t)&data->reliabilities[time] & (V4D * sizeof(double) - 1)) != 0) {
                 /* Compute reliability of Parallel RBD at current time instant */
-                rbdParallelIdenticalStepV2dSse2(data, time);
+                rbdParallelIdenticalStepV2dAvx(data, time);
                 /* Increment current time instant */
                 time += V2D;
             }
@@ -144,14 +151,14 @@ HIDDEN void *rbdParallelIdenticalWorkerAvx(void *arg)
     /* Are (at least) 2 time instants remaining? */
     if ((time + V2D) <= data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelIdenticalStepV2dSse2(data, time);
+        rbdParallelIdenticalStepV2dAvx(data, time);
         /* Increment current time instant */
         time += V2D;
     }
     /* Is 1 time instant remaining? */
     if (time < data->numTimes) {
         /* Compute reliability of Parallel RBD at current time instant */
-        rbdParallelIdenticalStepV1dSse2(data, time);
+        rbdParallelIdenticalStepV1dAvx(data, time);
     }
 
     return NULL;
@@ -178,7 +185,7 @@ HIDDEN void *rbdParallelIdenticalWorkerAvx(void *arg)
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdParallelGenericStepV4dAvx(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("avx") void rbdParallelGenericStepV4dAvx(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m256d v4dTmp;
@@ -219,7 +226,7 @@ HIDDEN FUNCTION_TARGET("avx") void rbdParallelGenericStepV4dAvx(struct rbdParall
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx") void rbdParallelIdenticalStepV4dAvx(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("avx") void rbdParallelIdenticalStepV4dAvx(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m256d v4dU;
@@ -238,6 +245,172 @@ HIDDEN FUNCTION_TARGET("avx") void rbdParallelIdenticalStepV4dAvx(struct rbdPara
 
     /* Cap the computed reliability and set it into output array */
     _mm256_storeu_pd(&data->output[time], capReliabilityV4dAvx(v4dRes));
+}
+
+/**
+ * rbdParallelGenericStepV2dAvx
+ *
+ * Generic Parallel RBD step function with amd64 AVX 128bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Parallel RBD step exploiting amd64 AVX 128bit.
+ *  It is responsible to compute the reliability of a Parallel block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdParallelGenericStepV2dAvx(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dTmp;
+    __m128d v2dRes;
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v2dRes = _mm_loadu_pd(&data->reliabilities[(0 * data->numTimes) + time]);
+    v2dRes = _mm_sub_pd(v2dOnes, v2dRes);
+    for (component = 1; component < data->numComponents; ++component) {
+        v2dTmp = _mm_loadu_pd(&data->reliabilities[(component * data->numTimes) + time]);
+        v2dTmp = _mm_sub_pd(v2dOnes, v2dTmp);
+        v2dRes = _mm_mul_pd(v2dRes, v2dTmp);
+    }
+    v2dRes = _mm_sub_pd(v2dOnes, v2dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+}
+
+/**
+ * rbdParallelIdenticalStepV2dAvx
+ *
+ * Identical Parallel RBD step function with amd64 AVX 128bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Parallel RBD step exploiting amd64 AVX 128bit.
+ *  It is responsible to compute the reliability of a Parallel block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdParallelIdenticalStepV2dAvx(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dU;
+    __m128d v2dRes;
+
+    /* Load unreliability */
+    v2dU = _mm_loadu_pd(&data->reliabilities[time]);
+    v2dU = _mm_sub_pd(v2dOnes, v2dU);
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v2dRes = v2dU;
+    for (component = (data->numComponents - 1); component > 0; --component) {
+        v2dRes = _mm_mul_pd(v2dRes, v2dU);
+    }
+    v2dRes = _mm_sub_pd(v2dOnes, v2dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_storeu_pd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+}
+
+/**
+ * rbdParallelGenericStepV1dSse2
+ *
+ * Generic Parallel RBD step function with amd64 AVX 64bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the generic Parallel RBD step exploiting amd64 AVX 64bit.
+ *  It is responsible to compute the reliability of a Parallel block with generic components
+ *  given their reliabilities
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdParallelGenericStepV1dAvx(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dTmp;
+    __m128d v2dRes;
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v2dRes = _mm_load_sd(&data->reliabilities[(0 * data->numTimes) + time]);
+    v2dRes = _mm_sub_sd(v2dOnes, v2dRes);
+    for (component = 1; component < data->numComponents; ++component) {
+        v2dTmp = _mm_load_sd(&data->reliabilities[(component * data->numTimes) + time]);
+        v2dTmp = _mm_sub_sd(v2dOnes, v2dTmp);
+        v2dRes = _mm_mul_sd(v2dRes, v2dTmp);
+    }
+    v2dRes = _mm_sub_sd(v2dOnes, v2dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
+}
+
+/**
+ * rbdParallelIdenticalStepV1dSse2
+ *
+ * Identical Parallel RBD step function with amd64 AVX 64bit
+ *
+ * Input:
+ *      struct rbdParallelData *data
+ *      unsigned int time
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function implements the identical Parallel RBD step exploiting amd64 AVX 64bit.
+ *  It is responsible to compute the reliability of a Parallel block with identical components
+ *  given their reliability
+ *
+ * Parameters:
+ *      data: Parallel RBD data structure
+ *      time: current time instant over which Parallel RBD shall be computed
+ */
+static FUNCTION_TARGET("avx") void rbdParallelIdenticalStepV1dAvx(struct rbdParallelData *data, unsigned int time)
+{
+    unsigned char component;
+    __m128d v2dU;
+    __m128d v2dRes;
+
+    /* Load unreliability */
+    v2dU = _mm_load_sd(&data->reliabilities[time]);
+    v2dU = _mm_sub_sd(v2dOnes, v2dU);
+
+    /* Compute reliability of Parallel RBD at current time instant */
+    v2dRes = v2dU;
+    for (component = (data->numComponents - 1); component > 0; --component) {
+        v2dRes = _mm_mul_sd(v2dRes, v2dU);
+    }
+    v2dRes = _mm_sub_sd(v2dOnes, v2dRes);
+
+    /* Cap the computed reliability and set it into output array */
+    _mm_store_sd(&data->output[time], capReliabilityV2dAvx(v2dRes));
 }
 
 

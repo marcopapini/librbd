@@ -27,6 +27,12 @@
 #include "../parallel_x86.h"
 
 
+static void rbdParallelGenericStepV2dSse2(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelGenericStepV1dSse2(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepV1dSse2(struct rbdParallelData *data, unsigned int time);
+
+
 /**
  * rbdParallelGenericWorkerSse2
  *
@@ -154,7 +160,7 @@ HIDDEN void *rbdParallelIdenticalWorkerSse2(struct rbdParallelData *data)
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdParallelGenericStepV2dSse2(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdParallelGenericStepV2dSse2(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;
@@ -195,7 +201,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdParallelGenericStepV2dSse2(struct rbdPara
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdParallelIdenticalStepV2dSse2(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dU;
@@ -237,7 +243,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdParallelIdenticalStepV2dSse2(struct rbdPa
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdParallelGenericStepV1dSse2(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdParallelGenericStepV1dSse2(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dTmp;
@@ -278,7 +284,7 @@ HIDDEN FUNCTION_TARGET("sse2") void rbdParallelGenericStepV1dSse2(struct rbdPara
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("sse2") void rbdParallelIdenticalStepV1dSse2(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("sse2") void rbdParallelIdenticalStepV1dSse2(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m128d v2dU;

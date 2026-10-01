@@ -26,6 +26,9 @@
 #include "../integral.h"
 
 
+static void rbdColdStandbyStepS1d(struct rbdColdStandbyData *data, unsigned int time);
+
+
 #if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
 /**
  * rbdColdStandbyWorker
@@ -119,7 +122,7 @@ HIDDEN void *rbdColdStandbyWorkerNoarch(struct rbdColdStandbyData *data)
  *      data: Cold Stand-by RBD data structure
  *      time: current time instant over which Cold Stand-by RBD shall be computed
  */
-HIDDEN void rbdColdStandbyStepS1d(struct rbdColdStandbyData *data, unsigned int time)
+static void rbdColdStandbyStepS1d(struct rbdColdStandbyData *data, unsigned int time)
 {
     double s1dRes;
 

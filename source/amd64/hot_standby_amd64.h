@@ -31,19 +31,11 @@
 /* Platform-specific functions for amd64 AVX instruction set */
 void *rbdHotStandbyWorkerAvx(struct rbdHotStandbyData *data);
 
-void rbdHotStandbyStepV4dAvx(struct rbdHotStandbyData *data, unsigned int time);
-
 /* Platform-specific functions for amd64 FMA3 instruction set */
 void *rbdHotStandbyWorkerFma3(struct rbdHotStandbyData *data);
 
-void rbdHotStandbyStepV4dFma3(struct rbdHotStandbyData *data, unsigned int time);
-void rbdHotStandbyStepV2dFma3(struct rbdHotStandbyData *data, unsigned int time);
-void rbdHotStandbyStepV1dFma3(struct rbdHotStandbyData *data, unsigned int time);
-
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void *rbdHotStandbyWorkerAvx512f(struct rbdHotStandbyData *data);
-
-void rbdHotStandbyStepVNdAvx512f(__mmask8 mask, struct rbdHotStandbyData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 

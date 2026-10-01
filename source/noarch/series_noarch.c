@@ -25,6 +25,10 @@
 #include "../series.h"
 
 
+static void rbdSeriesGenericStepS1d(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepS1d(struct rbdSeriesData *data, unsigned int time);
+
+
 #if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
 /**
  * rbdSeriesGenericWorker
@@ -190,7 +194,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerNoarch(struct rbdSeriesData *data)
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN void rbdSeriesGenericStepS1d(struct rbdSeriesData *data, unsigned int time)
+static void rbdSeriesGenericStepS1d(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     double s1dRes;
@@ -226,7 +230,7 @@ HIDDEN void rbdSeriesGenericStepS1d(struct rbdSeriesData *data, unsigned int tim
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN void rbdSeriesIdenticalStepS1d(struct rbdSeriesData *data, unsigned int time)
+static void rbdSeriesIdenticalStepS1d(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     double s1dTmp;

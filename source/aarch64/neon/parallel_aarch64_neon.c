@@ -27,6 +27,12 @@
 #include "../parallel_aarch64.h"
 
 
+static void rbdParallelGenericStepV2dNeon(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelGenericStepV1dNeon(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepV1dNeon(struct rbdParallelData *data, unsigned int time);
+
+
 /**
  * rbdParallelGenericWorkerNeon
  *
@@ -154,7 +160,7 @@ HIDDEN void *rbdParallelIdenticalWorkerNeon(struct rbdParallelData *data)
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdParallelGenericStepV2dNeon(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdParallelGenericStepV2dNeon(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dTmp;
@@ -194,7 +200,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdParallelGenericStepV2dNeon(struct rbdPar
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdParallelIdenticalStepV2dNeon(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dU;
@@ -236,7 +242,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdParallelIdenticalStepV2dNeon(struct rbdP
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdParallelGenericStepV1dNeon(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdParallelGenericStepV1dNeon(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     float64x1_t v1dTmp;
@@ -276,7 +282,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdParallelGenericStepV1dNeon(struct rbdPar
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdParallelIdenticalStepV1dNeon(struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdParallelIdenticalStepV1dNeon(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     float64x1_t v1dU;

@@ -27,6 +27,12 @@
 #include "../series_aarch64.h"
 
 
+static void rbdSeriesGenericStepV2dNeon(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepV2dNeon(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesGenericStepV1dNeon(struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepV1dNeon(struct rbdSeriesData *data, unsigned int time);
+
+
 /**
  * rbdSeriesGenericWorkerNeon
  *
@@ -154,7 +160,7 @@ HIDDEN void *rbdSeriesIdenticalWorkerNeon(struct rbdSeriesData *data)
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesGenericStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdSeriesGenericStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dTmp;
@@ -192,7 +198,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesGenericStepV2dNeon(struct rbdSerie
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesIdenticalStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdSeriesIdenticalStepV2dNeon(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     float64x2_t v2dTmp;
@@ -232,7 +238,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesIdenticalStepV2dNeon(struct rbdSer
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesGenericStepV1dNeon(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdSeriesGenericStepV1dNeon(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     float64x1_t v1dTmp;
@@ -270,7 +276,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesGenericStepV1dNeon(struct rbdSerie
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdSeriesIdenticalStepV1dNeon(struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdSeriesIdenticalStepV1dNeon(struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     float64x1_t v1dTmp;

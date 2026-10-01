@@ -56,16 +56,16 @@ struct rbdKooNGenericShannonRecursionData
 };
 
 
-VARIABLE_TARGET("+simd") extern const float64x2_t v2dZeros;
-VARIABLE_TARGET("+simd") extern const float64x2_t v2dOnes;
-VARIABLE_TARGET("+simd") extern const float64x2_t v2dTwos;
-VARIABLE_TARGET("+simd") extern const float64x2_t v2dMinusTwos;
-VARIABLE_TARGET("+simd") extern const float64x2_t v2dHalfs;
-VARIABLE_TARGET("+simd") extern const float64x1_t v1dZeros;
-VARIABLE_TARGET("+simd") extern const float64x1_t v1dOnes;
-VARIABLE_TARGET("+simd") extern const float64x1_t v1dTwos;
-VARIABLE_TARGET("+simd") extern const float64x1_t v1dMinusTwos;
-VARIABLE_TARGET("+simd") extern const float64x1_t v1dHalfs;
+extern const float64x2_t v2dZeros;
+extern const float64x2_t v2dOnes;
+extern const float64x2_t v2dTwos;
+extern const float64x2_t v2dMinusTwos;
+extern const float64x2_t v2dHalfs;
+extern const float64x1_t v1dZeros;
+extern const float64x1_t v1dOnes;
+extern const float64x1_t v1dTwos;
+extern const float64x1_t v1dMinusTwos;
+extern const float64x1_t v1dHalfs;
 
 
 float64x2_t capReliabilityV2dNeon(float64x2_t v2dR);

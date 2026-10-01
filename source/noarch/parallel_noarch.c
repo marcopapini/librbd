@@ -25,6 +25,10 @@
 #include "../parallel.h"
 
 
+static void rbdParallelGenericStepS1d(struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepS1d(struct rbdParallelData *data, unsigned int time);
+
+
 #if defined(ARCH_UNKNOWN) || CPU_ENABLE_SIMD == 0
 /**
  * rbdParallelGenericWorker
@@ -190,7 +194,7 @@ HIDDEN void *rbdParallelIdenticalWorkerNoarch(struct rbdParallelData *data)
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN void rbdParallelGenericStepS1d(struct rbdParallelData *data, unsigned int time)
+static void rbdParallelGenericStepS1d(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     double s1dRes;
@@ -227,7 +231,7 @@ HIDDEN void rbdParallelGenericStepS1d(struct rbdParallelData *data, unsigned int
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN void rbdParallelIdenticalStepS1d(struct rbdParallelData *data, unsigned int time)
+static void rbdParallelIdenticalStepS1d(struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     double s1dU;

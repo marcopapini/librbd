@@ -48,8 +48,5 @@ void *rbdSeriesIdenticalWorker(void *arg);
 void *rbdSeriesGenericWorkerNoarch(struct rbdSeriesData *data);
 void *rbdSeriesIdenticalWorkerNoarch(struct rbdSeriesData *data);
 
-void rbdSeriesGenericStepS1d(struct rbdSeriesData *data, unsigned int time);
-void rbdSeriesIdenticalStepS1d(struct rbdSeriesData *data, unsigned int time);
-
 
 #endif /* SERIES_H_ */

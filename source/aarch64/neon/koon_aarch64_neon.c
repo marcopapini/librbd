@@ -28,6 +28,14 @@
 #include "../../generic/combinations.h"
 
 
+static void rbdKooNGenericShannonV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time);
+static void rbdKooNBddStepV2dNeon(double *r, double *h, double *l, double *o);
+static void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNGenericShannonV1dNeon(struct rbdKooNGenericShannonData *data, unsigned int time);
+static void rbdKooNBddStepV1dNeon(double *r, double *h, double *l, double *o);
+static void rbdKooNIdenticalSuccessStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNIdenticalFailStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time);
 static float64x2_t rbdKooNGenericShannonStepV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static float64x1_t rbdKooNGenericShannonStepV1dNeon(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static double *rbdKooNBddNeon(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
@@ -297,7 +305,7 @@ HIDDEN void *rbdKooNIdenticalWorkerNeon(struct rbdKooNIdenticalData *data)
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdKooNGenericShannonV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdKooNGenericShannonV2dNeon(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     float64x2_t v2dRes;
 
@@ -333,7 +341,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNGenericShannonV2dNeon(struct rbdKooN
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdKooNBddStepV2dNeon(double *r, double *h, double *l, double *o)
+static FUNCTION_TARGET("+simd") void rbdKooNBddStepV2dNeon(double *r, double *h, double *l, double *o)
 {
     float64x2_t v2dR;
     float64x2_t v2dH;
@@ -373,7 +381,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNBddStepV2dNeon(double *r, double *h,
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdKooNIdenticalSuccessStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     float64x2_t v2dR;
     float64x2_t v2dTmp1, v2dTmp2;
@@ -437,7 +445,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalSuccessStepV2dNeon(struct r
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdKooNIdenticalFailStepV2dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     float64x2_t v2dU;
     float64x2_t v2dTmp1, v2dTmp2;
@@ -502,7 +510,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalFailStepV2dNeon(struct rbdK
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdKooNGenericShannonV1dNeon(struct rbdKooNGenericShannonData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdKooNGenericShannonV1dNeon(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     float64x1_t v1dRes;
 
@@ -538,7 +546,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNGenericShannonV1dNeon(struct rbdKooN
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdKooNBddStepV1dNeon(double *r, double *h, double *l, double *o)
+static FUNCTION_TARGET("+simd") void rbdKooNBddStepV1dNeon(double *r, double *h, double *l, double *o)
 {
     float64x1_t v1dR;
     float64x1_t v1dH;
@@ -578,7 +586,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNBddStepV1dNeon(double *r, double *h,
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalSuccessStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdKooNIdenticalSuccessStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     float64x1_t v1dR;
     float64x1_t v1dTmp1, v1dTmp2;
@@ -642,7 +650,7 @@ HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalSuccessStepV1dNeon(struct r
  * Return:
  *  None
  */
-HIDDEN FUNCTION_TARGET("+simd") void rbdKooNIdenticalFailStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
+static FUNCTION_TARGET("+simd") void rbdKooNIdenticalFailStepV1dNeon(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     float64x1_t v1dU;
     float64x1_t v1dTmp1, v1dTmp2;

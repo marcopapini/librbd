@@ -28,6 +28,10 @@
 #include "../parallel_riscv64.h"
 
 
+static void rbdParallelGenericStepVNdRvv(struct rbdParallelData *data, unsigned int time, unsigned long int vl);
+static void rbdParallelIdenticalStepVNdRvv(struct rbdParallelData *data, unsigned int time, unsigned long int vl);
+
+
 /**
  * rbdParallelGenericWorkerRvv
  *
@@ -157,7 +161,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdParallelIdenticalWorkerRvv(struct rbd
  *      time: current time instant over which Parallel RBD shall be computed
  *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdParallelGenericStepVNdRvv(struct rbdParallelData *data, unsigned int time, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdParallelGenericStepVNdRvv(struct rbdParallelData *data, unsigned int time, unsigned long int vl)
 {
     unsigned char component;
     vfloat64m1_t vNdTmp;
@@ -199,7 +203,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void rbdParallelGenericStepVNdRvv(struct rbdPa
  *      time: current time instant over which Parallel RBD shall be computed
  *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdParallelIdenticalStepVNdRvv(struct rbdParallelData *data, unsigned int time, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdParallelIdenticalStepVNdRvv(struct rbdParallelData *data, unsigned int time, unsigned long int vl)
 {
     unsigned char component;
     vfloat64m1_t vNdU;

@@ -27,6 +27,12 @@
 #include "../bridge_power8.h"
 
 
+static void rbdBridgeGenericStepV2dVsx(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeIdenticalStepV2dVsx(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeGenericStepV1dVsx(struct rbdBridgeData *data, unsigned int time);
+static void rbdBridgeIdenticalStepV1dVsx(struct rbdBridgeData *data, unsigned int time);
+
+
 /**
  * rbdBridgeGenericWorkerVsx
  *
@@ -154,7 +160,7 @@ HIDDEN void *rbdBridgeIdenticalWorkerVsx(struct rbdBridgeData *data)
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeGenericStepV2dVsx(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdBridgeGenericStepV2dVsx(struct rbdBridgeData *data, unsigned int time)
 {
     double64x2 v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
     double64x2 v2dTmp1, v2dTmp2;
@@ -217,7 +223,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeGenericStepV2dVsx(struct rbdBridgeDa
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeIdenticalStepV2dVsx(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdBridgeIdenticalStepV2dVsx(struct rbdBridgeData *data, unsigned int time)
 {
     double64x2 v2dR, v2dU;
     double64x2 v2dTmp;
@@ -262,7 +268,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeIdenticalStepV2dVsx(struct rbdBridge
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeGenericStepV1dVsx(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdBridgeGenericStepV1dVsx(struct rbdBridgeData *data, unsigned int time)
 {
     double64x2 v2dR1, v2dR2, v2dR3, v2dR4, v2dR5;
     double64x2 v2dTmp1, v2dTmp2;
@@ -325,7 +331,7 @@ HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeGenericStepV1dVsx(struct rbdBridgeDa
  *      data: Bridge RBD data structure
  *      time: current time instant over which Bridge RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("vsx") void rbdBridgeIdenticalStepV1dVsx(struct rbdBridgeData *data, unsigned int time)
+static FUNCTION_TARGET("vsx") void rbdBridgeIdenticalStepV1dVsx(struct rbdBridgeData *data, unsigned int time)
 {
     double64x2 v2dR, v2dU;
     double64x2 v2dTmp;

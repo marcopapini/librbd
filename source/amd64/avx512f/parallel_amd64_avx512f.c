@@ -27,6 +27,10 @@
 #include "../parallel_amd64.h"
 
 
+static void rbdParallelGenericStepVNdAvx512f(__mmask8 mask, struct rbdParallelData *data, unsigned int time);
+static void rbdParallelIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdParallelData *data, unsigned int time);
+
+
 /**
  * rbdParallelGenericWorkerAvx512f
  *
@@ -168,7 +172,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void *rbdParallelIdenticalWorkerAvx512f(struct
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdParallelGenericStepVNdAvx512f(__mmask8 mask, struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdParallelGenericStepVNdAvx512f(__mmask8 mask, struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m512d vNdTmp;
@@ -210,7 +214,7 @@ HIDDEN FUNCTION_TARGET("avx512f") void rbdParallelGenericStepVNdAvx512f(__mmask8
  *      data: Parallel RBD data structure
  *      time: current time instant over which Parallel RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("avx512f") void rbdParallelIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdParallelData *data, unsigned int time)
+static FUNCTION_TARGET("avx512f") void rbdParallelIdenticalStepVNdAvx512f(__mmask8 mask, struct rbdParallelData *data, unsigned int time)
 {
     unsigned char component;
     __m512d vNdU;

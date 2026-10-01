@@ -31,20 +31,11 @@
 /* Platform-specific functions for amd64 AVX instruction set */
 void *rbdColdStandbyWorkerAvx(struct rbdColdStandbyData *data);
 
-void rbdColdStandbyStepV4dAvx(struct rbdColdStandbyData *data, unsigned int time);
-void rbdColdStandbyStepV1dAvx(struct rbdColdStandbyData *data, unsigned int time);
-
 /* Platform-specific functions for amd64 FMA3 instruction set */
 void *rbdColdStandbyWorkerFma3(struct rbdColdStandbyData *data);
 
-void rbdColdStandbyStepV4dFma3(struct rbdColdStandbyData *data, unsigned int time);
-void rbdColdStandbyStepV2dFma3(struct rbdColdStandbyData *data, unsigned int time);
-void rbdColdStandbyStepV1dFma3(struct rbdColdStandbyData *data, unsigned int time);
-
 /* Platform-specific functions for amd64 AVX512F instruction set */
 void *rbdColdStandbyWorkerAvx512f(struct rbdColdStandbyData *data);
-
-void rbdColdStandbyStepVNdAvx512f(__mmask8 mask, struct rbdColdStandbyData *data, unsigned int time);
 #endif /* defined(ARCH_AMD64) && (CPU_ENABLE_SIMD != 0) */
 
 

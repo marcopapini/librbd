@@ -70,11 +70,7 @@ HIDDEN void *rbdHotStandbyWorker(void *arg)
         return rbdHotStandbyWorkerAvx(data);
     }
 
-    if (amd64Sse2Supported()) {
-        return rbdHotStandbyWorkerSse2(data);
-    }
-
-    return rbdHotStandbyWorkerNoarch(data);
+    return rbdHotStandbyWorkerSse2(data);
 }
 
 #endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */

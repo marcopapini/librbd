@@ -64,12 +64,7 @@ HIDDEN void rbdFailureDensityWorker(double *reliability, double *failureDensity,
         return;
     }
 
-    if (amd64Sse2Supported()) {
-        rbdFailureDensityWorkerSse2(reliability, failureDensity, numTimes, deltaT);
-        return;
-    }
-
-    rbdFailureDensityWorkerNoarch(reliability, failureDensity, numTimes, deltaT);
+    rbdFailureDensityWorkerSse2(reliability, failureDensity, numTimes, deltaT);
 }
 
 #endif /* defined(ARCH_AMD64) && CPU_ENABLE_SIMD != 0 */

@@ -47,10 +47,10 @@ struct rbdKooNGenericShannonRecursionData
 };
 
 
-VARIABLE_TARGET("vsx") extern const double64x2 v2dZeros;
-VARIABLE_TARGET("vsx") extern const double64x2 v2dOnes;
-VARIABLE_TARGET("vsx") extern const double64x2 v2dTwos;
-VARIABLE_TARGET("vsx") extern const double64x2 v2dHalfs;
+extern const double64x2 v2dZeros;
+extern const double64x2 v2dOnes;
+extern const double64x2 v2dTwos;
+extern const double64x2 v2dHalfs;
 
 
 /**
@@ -139,7 +139,7 @@ static inline ALWAYS_INLINE FUNCTION_TARGET("vsx") void vectorStore(double *addr
 }
 
 
-FUNCTION_TARGET("vsx") double64x2 capReliabilityV2dVsx(double64x2 v2dR);
+double64x2 capReliabilityV2dVsx(double64x2 v2dR);
 
 
 #endif /* defined(ARCH_POWER8) && (CPU_ENABLE_SIMD != 0) */

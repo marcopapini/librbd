@@ -48,8 +48,5 @@ void *rbdParallelIdenticalWorker(void *arg);
 void *rbdParallelGenericWorkerNoarch(struct rbdParallelData *data);
 void *rbdParallelIdenticalWorkerNoarch(struct rbdParallelData *data);
 
-void rbdParallelGenericStepS1d(struct rbdParallelData *data, unsigned int time);
-void rbdParallelIdenticalStepS1d(struct rbdParallelData *data, unsigned int time);
-
 
 #endif /* PARALLEL_H_ */

@@ -27,6 +27,12 @@
 #include "../series_aarch64.h"
 
 
+#if !defined(COMPILER_VS)
+static void rbdSeriesGenericStepVNdSve(svbool_t pg, struct rbdSeriesData *data, unsigned int time);
+static void rbdSeriesIdenticalStepVNdSve(svbool_t pg, struct rbdSeriesData *data, unsigned int time);
+#endif /* !defined(COMPILER_VS) */
+
+
 /**
  * rbdSeriesGenericWorkerSve
  *
@@ -165,7 +171,7 @@ HIDDEN FUNCTION_TARGET("+sve") void *rbdSeriesIdenticalWorkerSve(struct rbdSerie
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdSeriesGenericStepVNdSve(svbool_t pg, struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("+sve") void rbdSeriesGenericStepVNdSve(svbool_t pg, struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     svfloat64_t vNdTmp;
@@ -205,7 +211,7 @@ HIDDEN FUNCTION_TARGET("+sve") void rbdSeriesGenericStepVNdSve(svbool_t pg, stru
  *      data: Series RBD data structure
  *      time: current time instant over which Series RBD shall be computed
  */
-HIDDEN FUNCTION_TARGET("+sve") void rbdSeriesIdenticalStepVNdSve(svbool_t pg, struct rbdSeriesData *data, unsigned int time)
+static FUNCTION_TARGET("+sve") void rbdSeriesIdenticalStepVNdSve(svbool_t pg, struct rbdSeriesData *data, unsigned int time)
 {
     unsigned char component;
     svfloat64_t vNdTmp;

@@ -29,6 +29,9 @@
 #include "../integral_riscv64.h"
 
 
+static void rbdColdStandbyStepVNdRvv(struct rbdColdStandbyData *data, unsigned int time, unsigned long int vl);
+
+
 /**
  * rbdColdStandbyWorkerRvv
  *
@@ -106,7 +109,7 @@ HIDDEN FUNCTION_TARGET("arch=+v") void *rbdColdStandbyWorkerRvv(struct rbdColdSt
  *      time: current time instant over which Cold Stand-by RBD shall be computed
  *      vl: Vector Length
  */
-HIDDEN FUNCTION_TARGET("arch=+v") void rbdColdStandbyStepVNdRvv(struct rbdColdStandbyData *data, unsigned int time, unsigned long int vl)
+static FUNCTION_TARGET("arch=+v") void rbdColdStandbyStepVNdRvv(struct rbdColdStandbyData *data, unsigned int time, unsigned long int vl)
 {
     vfloat64m1_t vNdTmp;
     vfloat64m1_t vNdPri;

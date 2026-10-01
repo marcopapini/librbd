@@ -30,8 +30,6 @@
 #if defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0)
 /* Platform-specific functions for RISC-V 64bit RVV instruction set */
 void *rbdHotStandbyWorkerRvv(struct rbdHotStandbyData *data);
-
-void rbdHotStandbyStepVNdRvv(struct rbdHotStandbyData *data, unsigned int time, unsigned long int vl);
 #endif /* defined(ARCH_RISCV64) && (CPU_ENABLE_SIMD != 0) */
 
 

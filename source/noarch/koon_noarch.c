@@ -29,6 +29,10 @@
 #include <limits.h>
 
 
+static void rbdKooNGenericShannonS1d(struct rbdKooNGenericShannonData *data, unsigned int time);
+static void rbdKooNBddStepS1d(double *r, double *h, double *l, double *o);
+static void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);
+static void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);
 static double rbdKooNGenericShannonStepS1d(struct rbdKooNGenericShannonData *data, unsigned int time, unsigned char n, unsigned char k);
 static double *rbdKooNBddNoarch(struct rbdKooNBddData *data, int nodeIdx, unsigned int timeStart, unsigned int numSteps);
 
@@ -369,7 +373,7 @@ HIDDEN void *rbdKooNIdenticalWorkerNoarch(struct rbdKooNIdenticalData *data)
  * Return:
  *  None
  */
-HIDDEN void rbdKooNGenericShannonS1d(struct rbdKooNGenericShannonData *data, unsigned int time)
+static void rbdKooNGenericShannonS1d(struct rbdKooNGenericShannonData *data, unsigned int time)
 {
     double s1dRes;
 
@@ -404,7 +408,7 @@ HIDDEN void rbdKooNGenericShannonS1d(struct rbdKooNGenericShannonData *data, uns
  * Return:
  *  None
  */
-HIDDEN void rbdKooNBddStepS1d(double *r, double *h, double *l, double *o)
+static void rbdKooNBddStepS1d(double *r, double *h, double *l, double *o)
 {
     *o = capReliabilityS1d(((*r) * (*h)) + ((1.0 - (*r)) * (*l)));
 }
@@ -433,7 +437,7 @@ HIDDEN void rbdKooNBddStepS1d(double *r, double *h, double *l, double *o)
  * Return:
  *  None
  */
-HIDDEN void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, unsigned int time)
+static void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     double s1dR;
     double s1dTmp1, s1dTmp2;
@@ -497,7 +501,7 @@ HIDDEN void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, un
  * Return:
  *  None
  */
-HIDDEN void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsigned int time)
+static void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsigned int time)
 {
     double s1dU;
     double s1dTmp1, s1dTmp2;

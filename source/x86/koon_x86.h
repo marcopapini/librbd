@@ -33,15 +33,6 @@ void *rbdKooNFillWorkerSse2(struct rbdKooNFillData *data);
 void *rbdKooNGenericShannonWorkerSse2(struct rbdKooNGenericShannonData *data);
 void *rbdKooNBddWorkerSse2(struct rbdKooNBddData *data);
 void *rbdKooNIdenticalWorkerSse2(struct rbdKooNIdenticalData *data);
-
-void rbdKooNGenericShannonV2dSse2(struct rbdKooNGenericShannonData *data, unsigned int time);
-void rbdKooNBddStepV2dSse2(double *r, double *h, double *l, double *o);
-void rbdKooNIdenticalSuccessStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNIdenticalFailStepV2dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNGenericShannonV1dSse2(struct rbdKooNGenericShannonData *data, unsigned int time);
-void rbdKooNBddStepV1dSse2(double *r, double *h, double *l, double *o);
-void rbdKooNIdenticalSuccessStepV1dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNIdenticalFailStepV1dSse2(struct rbdKooNIdenticalData *data, unsigned int time);
 #endif /* (defined(ARCH_X86) || defined(ARCH_AMD64)) && (CPU_ENABLE_SIMD != 0) */
 
 

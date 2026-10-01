@@ -86,10 +86,5 @@ void *rbdKooNGenericShannonWorkerNoarch(struct rbdKooNGenericShannonData *data);
 void *rbdKooNBddWorkerNoarch(struct rbdKooNBddData *data);
 void *rbdKooNIdenticalWorkerNoarch(struct rbdKooNIdenticalData *data);
 
-void rbdKooNGenericShannonS1d(struct rbdKooNGenericShannonData *data, unsigned int time);
-void rbdKooNBddStepS1d(double *r, double *h, double *l, double *o);
-void rbdKooNIdenticalSuccessStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);
-void rbdKooNIdenticalFailStepS1d(struct rbdKooNIdenticalData *data, unsigned int time);
-
 
 #endif /* KOON_H_ */
