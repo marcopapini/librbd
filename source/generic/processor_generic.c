@@ -24,6 +24,7 @@
 
 #include "../aarch64/rbd_internal_aarch64.h"
 #include "../amd64/rbd_internal_amd64.h"
+#include "../riscv64/rbd_internal_riscv64.h"
 #include "../x86/rbd_internal_x86.h"
 #include "../os/os.h"
 

@@ -72,6 +72,7 @@ static sigjmp_buf jmpbuf;
 
 
 #if defined(OS_LINUX)
+static size_t testRvvSupport();
 static void sigill_handler(int signo);
 #endif /* defined(OS_LINUX) */
 
@@ -153,6 +154,9 @@ HIDDEN unsigned int retrieveRiscv64CpuInfo(unsigned int numCores)
     ret = syscall(__NR_riscv_hwprobe, &probe, 1, 0, NULL, 0);
     if (ret == 0) {
         rvv_found = (probe.value & RISCV_HWPROBE_IMA_V) ? 1 : 0;
+
+        /* Copy if RVV is supported */
+        riscv64Cpu.rvvSupported = rvv_found;
     }
 #endif /* defined(RISCV64_RVV_LINUX_USE_HWPROBE) */
 
@@ -162,6 +166,9 @@ HIDDEN unsigned int retrieveRiscv64CpuInfo(unsigned int numCores)
         if (hwcap != 0) {
             /* Check 21st bit */
             rvv_found = (hwcap & (1UL << ('V' - 'A'))) ? 1 : 0;
+
+            /* Copy if RVV is supported */
+            riscv64Cpu.rvvSupported = rvv_found;
         }
     }
 
@@ -175,12 +182,9 @@ HIDDEN unsigned int retrieveRiscv64CpuInfo(unsigned int numCores)
         sigaction(SIGILL, &sa_new, &sa_old);
 
         if (sigsetjmp(jmpbuf, 1) == 0) {
-            /* Try a harmless RVV instruction */
-            vl = __riscv_vsetvl_e8m1(1);
+            /* Check if RVV instruction set is supported */
+            vl = testRvvSupport();
             (void)vl;
-
-            /* Restore sigaction for SIGILL */
-            sigaction(SIGILL, &sa_old, NULL);
 
             /* RVV is supported */
             riscv64Cpu.rvvSupported = 1;
@@ -203,6 +207,35 @@ HIDDEN unsigned int retrieveRiscv64CpuInfo(unsigned int numCores)
 
 
 #if defined(OS_LINUX)
+/**
+ * testRvvSupport
+ *
+ * Test support to RISC-V 64bit RVV instruction set
+ *
+ * Input:
+ *      None
+ *
+ * Output:
+ *      None
+ *
+ * Description:
+ *  This function checks if the current RISC-V 64bit CPU supports the RVV instruction set
+ *
+ * Parameters:
+ *      None && (CPU_SMP != 0)
+ *
+ * Return (size_t):
+ *  This function returns any value if the RVV instruction set is supported, it causes an
+ *  exception otherwise
+ */
+static FUNCTION_TARGET("arch=+v") size_t testRvvSupport()
+{
+    size_t vl;
+    /* Try a harmless RVV instruction */
+    vl = __riscv_vsetvl_e8m1(1);
+    return vl;
+}
+
 /**
  * sigill_handler
  *
