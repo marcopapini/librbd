@@ -373,6 +373,64 @@ EXTERN int rbdHotStandby(double *reliabilities, double *output, unsigned char nu
  */
 EXTERN int rbdColdStandby(double *reliabilities, double *output, unsigned char numComponents, unsigned int numTimes, double deltaT);
 
+/**
+ * rbdUnreliability
+ *
+ * Compute unreliability given the RBD reliability curve
+ *
+ * Input:
+ *      double *reliability
+ *      unsigned int numTimes
+ *
+ * Output:
+ *      double *unreliability
+ *
+ * Description:
+ *  This function computes the unreliability curve over time given its corresponding
+ *  reliability curve
+ *
+ * Parameters:
+ *      reliability: this array contains the input reliability curve at the provided
+ *                      time instants
+ *      unreliability: this array is filled with the unreliability curve at the
+ *                      provided time instants
+ *      numTimes: number of time instants over which unreliability curve shall be computed (T)
+ *
+ * Return (int):
+ *  0 in case of successful computation, < 0 otherwise
+ */
+EXTERN double *rbdUnreliability(double *reliability, double *unreliability, unsigned int numTimes);
+
+/**
+ * rbdReliabilitySum
+ *
+ * Compute the sum of two reliability curves
+ *
+ * Input:
+ *      double *r1
+ *      double *r2
+ *      unsigned int numTimes
+ *
+ * Output:
+ *      double *output
+ *
+ * Description:
+ *  This function computes the sum of the two provided reliability curves over time
+ *
+ * Parameters:
+ *      r1: this array contains the first input reliability curve at the provided
+ *                      time instants
+ *      r2: this array contains the second input reliability curve at the provided
+ *                      time instants
+ *      output: this array is filled with the sum of the reliability curves at the
+ *                      provided time instants
+ *      numTimes: number of time instants over which unreliability curve shall be computed (T)
+ *
+ * Return (int):
+ *  0 in case of successful computation, < 0 otherwise
+ */
+EXTERN double *rbdReliabilitySum(double *r1, double *r2, double *output, unsigned int numTimes);
+
 
 #ifdef  __cplusplus
 }

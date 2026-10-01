@@ -927,7 +927,7 @@ HIDDEN FUNCTION_TARGET("fma") __m256d rbdIntegralHotStandbyV4dFma3(struct rbdHot
     v4dFailP = _mm256_mul_pd(v4dFailP, v4dHalfs);
 
     /* Add the current product to the result using the Kahan's method */
-    v4dY = _mm256_sub_pd(v4dTmp, v4dC);
+    v4dY = _mm256_fmsub_pd(v4dFailP, v4dTmp, v4dC);
     v4dTSum = _mm256_add_pd(v4dSum, v4dY);
     v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
 
@@ -1016,7 +1016,7 @@ HIDDEN FUNCTION_TARGET("fma") __m128d rbdIntegralHotStandbyV2dFma3(struct rbdHot
     v2dFailP = _mm_mul_pd(v2dFailP, v2dHalfs);
 
     /* Add the current product to the result using the Kahan's method */
-    v2dY = _mm_sub_pd(v2dTmp, v2dC);
+    v2dY = _mm_fmsub_pd(v2dFailP, v2dTmp, v2dC);
     v2dTSum = _mm_add_pd(v2dSum, v2dY);
     v2dC = _mm_sub_pd(_mm_sub_pd(v2dTSum, v2dSum), v2dY);
 
@@ -1084,7 +1084,7 @@ HIDDEN FUNCTION_TARGET("fma") __m256d rbdIntegralHotStandbyV1dFma3(struct rbdHot
     v4dTmp = _mm256_set_pd(0.0, 0.0, 0.0, data->switchReliability[time]);
 
     /* Add the current product to the result using the Kahan's method */
-    v4dY = _mm256_sub_pd(v4dTmp, v4dC);
+    v4dY = _mm256_fmsub_pd(v4dFailP, v4dTmp, v4dC);
     v4dTSum = _mm256_add_pd(v4dSum, v4dY);
     v4dC = _mm256_sub_pd(_mm256_sub_pd(v4dTSum, v4dSum), v4dY);
 

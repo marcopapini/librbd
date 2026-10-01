@@ -866,27 +866,6 @@ static int buildBddKooNGeneric(struct rbdKooNBddData *data, int *buildCache, dou
     return res;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
  * rbdKooNIdenticalBinomial
  *
