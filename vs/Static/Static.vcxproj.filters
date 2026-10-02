@@ -297,6 +297,24 @@
     <ClInclude Include="..\..\source\integral.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\source\reliability.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\aarch64\reliability_aarch64.h">
+      <Filter>Header Files\aarch64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\amd64\reliability_amd64.h">
+      <Filter>Header Files\amd64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\power8\reliability_power8.h">
+      <Filter>Header Files\power8</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\riscv64\reliability_riscv64.h">
+      <Filter>Header Files\riscv64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\source\x86\reliability_x86.h">
+      <Filter>Header Files\x86</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\source\bridge.c">
@@ -706,6 +724,48 @@
     </ClCompile>
     <ClCompile Include="..\..\source\cold_standby.c">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\reliability.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\reliability_aarch64.c">
+      <Filter>Source Files\aarch64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\neon\reliability_aarch64_neon.c">
+      <Filter>Source Files\aarch64\neon</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\aarch64\sve\reliability_aarch64_sve.c">
+      <Filter>Source Files\aarch64\sve</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\reliability_amd64.c">
+      <Filter>Source Files\amd64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx\reliability_amd64_avx.c">
+      <Filter>Source Files\amd64\avx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\amd64\avx512f\reliability_amd64_avx512f.c">
+      <Filter>Source Files\amd64\avx512f</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\noarch\reliability_noarch.c">
+      <Filter>Source Files\noarch</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\reliability_power8.c">
+      <Filter>Source Files\power8</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\power8\vsx\reliability_power8_vsx.c">
+      <Filter>Source Files\power8\vsx</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\reliability_riscv64.c">
+      <Filter>Source Files\riscv64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\riscv64\rvv\reliability_riscv64_rvv.c">
+      <Filter>Source Files\riscv64\rvv</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\reliability_x86.c">
+      <Filter>Source Files\x86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\x86\sse2\reliability_x86_sse2.c">
+      <Filter>Source Files\x86\sse2</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

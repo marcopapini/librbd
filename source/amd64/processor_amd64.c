@@ -39,10 +39,6 @@
 #define AVX512F_ID          7       /* cpuid identifier to retrieve AVX512F support */
 #define AVX512F_REG         2       /* Register identifier (ECX) to retrieve AVX512F support */
 #define AVX512F_BIT         16      /* Bit to retrieve to retrieve AVX512F support */
-
-#if (SSE2_ID != AVX_ID) || (SSE2_ID != FMA3_ID)
-#error "Wrong configuration of cpuid IDs"
-#endif /* (SSE2_ID != AVX_ID) || (SSE2_ID != FMA3_ID) */
 #endif /* defined(COMPILER_VS) */
 
 
@@ -188,7 +184,7 @@ HIDDEN unsigned int retrieveAmd64CpuInfo(unsigned int numCores)
     nIds = cpuInfo[0];
 
     /* Calling __cpuidex with Function ID AVX_ID gets availability of AVX, FMA3. */
-    __cpuidex(cpuInfo, SSE2_ID, 0);
+    __cpuidex(cpuInfo, AVX_ID, 0);
     if (((cpuInfo[AVX_REG] >> AVX_BIT) & 0x1) != 0) {
         amd64Cpu.avxSupported = 1;
         if (((cpuInfo[FMA3_REG] >> FMA3_BIT) & 0x1) != 0) {
